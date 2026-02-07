@@ -127,12 +127,40 @@ Estas son mejoras para más adelante, no urgentes:
 
 ---
 
-## Tech Stack (Para los Curiosos)
+## Cómo Usa Inteligencia Artificial
+
+Emiti Metrics usa algoritmos inteligentes para:
+
+**1. Clasificar anuncios**
+- Analiza CPR, CTR, frecuencia y tendencias
+- Compara cada anuncio contra el promedio de la cuenta
+- Detecta patrones de fatiga (cuando la frecuencia sube y el CTR baja)
+
+**2. Detectar patrones**
+- Agrupa anuncios por tipo (video, imagen, carrusel)
+- Calcula rendimiento promedio de cada grupo
+- Identifica qué formato funciona mejor para cada cliente
+
+**3. Predecir saturación**
+- Mide la tendencia de frecuencia en el tiempo
+- Estima cuántos días quedan antes de fatigar la audiencia
+- Sugiere cuándo rotar creativos
+
+**4. Simular escenarios**
+- Modela rendimientos decrecientes (más budget ≠ resultados proporcionales)
+- Proyecta impacto de cambios antes de hacerlos
+- Calcula redistribución óptima de presupuesto
+
+No es "IA mágica" - son algoritmos concretos basados en las mejores prácticas de Meta Ads, aplicados automáticamente a tus datos.
+
+---
+
+## Tech Stack
 
 - **Frontend**: React + TypeScript + Tailwind
-- **Backend**: Python + FastAPI
+- **Backend**: Python + FastAPI + Pandas/NumPy
 - **Base de datos**: SQLite
-- **Hosting**: VPS en Hostinger (mismo que el CRM)
+- **Hosting**: VPS en Hostinger
 
 **Código**: https://github.com/TomasDolino/emiti-metrics
 
