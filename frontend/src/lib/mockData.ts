@@ -379,7 +379,62 @@ export const mockAlerts: Alert[] = [
   { id: 'a3', clientId: 'bf', type: 'CPA_INCREASE', severity: 'CRITICAL', title: 'CPR +45%', message: 'El costo por resultado subió 45% en 48hs', campaignName: 'Inscripciones Gym', previousValue: 120, currentValue: 174, changePercent: 45, createdAt: new Date(Date.now() - 1 * 3600000).toISOString(), acknowledged: false },
   { id: 'a4', clientId: 'cd', type: 'CTR_DROP', severity: 'WARNING', title: 'CTR -25%', message: 'El CTR cayó 25% esta semana', campaignName: 'Muebles - Catálogo', previousValue: 1.8, currentValue: 1.35, changePercent: -25, createdAt: new Date(Date.now() - 12 * 3600000).toISOString(), acknowledged: true },
   { id: 'a5', clientId: 'pm', type: 'PERFORMANCE_SPIKE', severity: 'INFO', title: 'Pico de rendimiento', message: 'Promo 2x1 genera 3x más resultados', adName: 'Promo 2x1', campaignName: 'Pedidos WhatsApp', createdAt: new Date(Date.now() - 8 * 3600000).toISOString(), acknowledged: false },
+  { id: 'a6', clientId: 'tm', type: 'BUDGET_DEPLETED', severity: 'CRITICAL', title: 'Presupuesto agotandose', message: 'Ventas Celulares gastó 92% del presupuesto mensual. Quedan 3 días.', campaignName: 'Ventas Celulares', previousValue: 100000, currentValue: 92000, changePercent: 92, createdAt: new Date(Date.now() - 30 * 60000).toISOString(), acknowledged: false },
+  { id: 'a7', clientId: 'bf', type: 'BUDGET_DEPLETED', severity: 'WARNING', title: 'Presupuesto al 80%', message: 'Inscripciones Gym llegó al 80% del presupuesto con 10 días restantes.', campaignName: 'Inscripciones Gym', previousValue: 60000, currentValue: 48000, changePercent: 80, createdAt: new Date(Date.now() - 4 * 3600000).toISOString(), acknowledged: false },
 ]
+
+// Generate budget alerts dynamically based on pacing
+export function generateBudgetAlerts(clientId?: string): Alert[] {
+  const alerts: Alert[] = []
+  const clients = clientId ? mockClients.filter(c => c.id === clientId) : mockClients.filter(c => c.isActive)
+
+  for (const client of clients) {
+    const campaigns = mockCampaigns.filter(c => c.clientId === client.id && c.status === 'ACTIVE')
+
+    for (const campaign of campaigns) {
+      const now = new Date()
+      const dayOfMonth = now.getDate()
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+      const percentOfMonth = (dayOfMonth / daysInMonth) * 100
+
+      // Get spend for this campaign this month
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+      const campaignMetrics = mockMetrics.filter(m =>
+        m.clientId === client.id &&
+        m.campaignId === campaign.id &&
+        m.date >= monthStart
+      )
+      const spentToDate = campaignMetrics.reduce((sum, m) => sum + m.spend, 0)
+      const percentSpent = campaign.budget > 0 ? (spentToDate / campaign.budget) * 100 : 0
+      const pacingRatio = percentSpent / percentOfMonth
+
+      // Generate alert if overspending
+      if (pacingRatio > 1.2 && percentSpent >= 80) {
+        const dailySpendAvg = dayOfMonth > 0 ? spentToDate / dayOfMonth : 0
+        const daysUntilDepleted = dailySpendAvg > 0
+          ? Math.floor((campaign.budget - spentToDate) / dailySpendAvg)
+          : 0
+
+        alerts.push({
+          id: `budget-${campaign.id}-${Date.now()}`,
+          clientId: client.id,
+          type: percentSpent >= 90 ? 'BUDGET_DEPLETED' : 'BUDGET_DEPLETED',
+          severity: percentSpent >= 90 ? 'CRITICAL' : 'WARNING',
+          title: percentSpent >= 90 ? 'Presupuesto agotandose' : `Presupuesto al ${Math.round(percentSpent)}%`,
+          message: `${campaign.name} gastó ${Math.round(percentSpent)}% del presupuesto mensual. ${daysUntilDepleted > 0 ? `Quedan ~${daysUntilDepleted} días.` : 'Se agota hoy.'}`,
+          campaignName: campaign.name,
+          previousValue: campaign.budget,
+          currentValue: spentToDate,
+          changePercent: percentSpent,
+          createdAt: new Date().toISOString(),
+          acknowledged: false
+        })
+      }
+    }
+  }
+
+  return alerts
+}
 
 // ==================== CLIENT SUMMARY ====================
 
