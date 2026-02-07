@@ -1,221 +1,156 @@
 # Emiti Metrics
-## Plataforma de Analisis de Meta Ads para Agencias
+
+**Tu copiloto para Meta Ads**
 
 ---
 
-### Que Es
+## El Problema
 
-Emiti Metrics es una herramienta que analiza automaticamente las campanas de Meta Ads de tus clientes. En lugar de revisar manualmente cada anuncio, la plataforma:
+Manejar campañas de Meta Ads para varios clientes es un quilombo:
 
-1. **Clasifica anuncios** en 5 categorias: Ganador, Escalable, Testing, Fatigado, Pausar
-2. **Detecta patrones** de que funciona (ej: "videos rinden 40% mejor que carrusel")
-3. **Simula escenarios** antes de hacer cambios ("si subo 20% el budget, cuantos resultados extra obtengo?")
-4. **Genera alertas** automaticas cuando algo cambia (fatiga, CPR sube, nuevo ganador)
-5. **Crea playbooks** por cliente con mejores practicas
+- Revisar cada anuncio manualmente lleva horas
+- Cuando te das cuenta que algo anda mal, ya perdiste plata
+- El cliente pregunta "¿cómo van mis ads?" y tardás en responder
+- No tenés forma fácil de demostrar el valor que generás
 
 ---
 
-### Por Que Sirve
+## La Solución
 
-**Para la agencia:**
-- Ahorra tiempo de analisis manual
-- Detecta problemas antes de que escalen
-- Demuestra valor al cliente con metricas concretas
-- Genera reportes profesionales automaticos
+Emiti Metrics analiza automáticamente todas las campañas y te dice:
+
+**"Este anuncio está funcionando, escalalo"**
+**"Este otro se está agotando, cambiá el creativo"**
+**"Ojo que el presupuesto se acaba en 3 días"**
+
+Sin que tengas que revisar nada manualmente.
+
+---
+
+## Qué Hace
+
+### 1. Clasifica tus anuncios automáticamente
+
+| Clasificación | Qué significa | Qué hacer |
+|---------------|---------------|-----------|
+| **GANADOR** | Rinde muy bien | Mantener, escalar |
+| **ESCALABLE** | Buen potencial | Subir budget |
+| **TESTING** | Muy nuevo | Esperar datos |
+| **FATIGADO** | La gente ya lo vio mucho | Cambiar creativo |
+| **PAUSAR** | No funciona | Cortar pérdidas |
+
+### 2. Detecta patrones
+
+- "Los videos rinden 40% mejor que las imágenes"
+- "Los martes tenés mejor CPR"
+- "Los carruseles no funcionan para este cliente"
+
+Esto lo aprendés automáticamente de los datos, no adivinando.
+
+### 3. Te avisa antes de que sea tarde
+
+**Alertas automáticas:**
+- Presupuesto agotándose
+- CPR subiendo mucho
+- Anuncio fatigado
+- Nuevo ganador detectado
+
+### 4. Simula antes de actuar
+
+¿Querés subir el budget 20%? El simulador te dice:
+- Cuántos resultados extra vas a tener
+- Cuánto va a subir el CPR (rendimientos decrecientes)
+- Si conviene o no
+
+### 5. Demuestra tu valor
+
+**ROI de Agencia**: Muestra cuántos resultados extra generaste vs. si el cliente manejara solo sus ads.
+
+---
+
+## Cómo Funciona
+
+```
+Meta Ads Manager → Exportar CSV → Subir a Emiti → Ver análisis
+```
+
+**Tiempo: 2 minutos**
+
+1. Exportás el CSV desde Meta (como siempre)
+2. Lo subís a Emiti Metrics
+3. Listo - tenés dashboard, alertas, recomendaciones
+
+---
+
+## Para Quién Es
+
+**Para la agencia (nosotros):**
+- Ahorrás horas de análisis manual
+- Detectás problemas antes
+- Tenés argumentos concretos para el cliente
+- Escalás sin contratar más gente
 
 **Para el cliente:**
-- Ve su inversion optimizada
-- Entiende que funciona y que no
-- Tiene visibilidad del trabajo de la agencia
+- Ve su inversión optimizada
+- Entiende qué funciona
+- Confía más en la agencia
 
 ---
 
-### Como Funciona
+## Estado Actual
 
-```
-1. Exportas CSV desde Meta Ads Manager
-2. Lo subis a Emiti Metrics (seleccionando el cliente)
-3. La plataforma analiza automaticamente
-4. Ves dashboard, alertas, recomendaciones
-```
+**Funcionando en:** http://76.13.166.17:8080
 
-**Flujo de datos:**
-```
-Meta Ads → CSV → Upload → Base de Datos → Analisis → Dashboard
-```
-
----
-
-### Arquitectura Tecnica
-
-**Frontend (React + TypeScript + Vite)**
-- 16 paginas completas
-- Sistema de temas personalizable
-- Selector de cliente global
-- Responsive (desktop y mobile)
-
-**Backend (Python + FastAPI)**
-- API REST con 40+ endpoints
-- Base de datos SQLite
-- Procesamiento de CSV
-- Analisis con Pandas/NumPy
-
-**Integracion:**
-- Cliente API en frontend (`/src/lib/api.ts`)
-- Provider que permite usar mock o API real
-- CORS configurado para desarrollo local
+| Feature | Estado |
+|---------|--------|
+| Dashboard con métricas | Listo |
+| Clasificación de anuncios | Listo |
+| Alertas (presupuesto, fatiga, CPR) | Listo |
+| Patrones detectados | Listo |
+| Simulador de budget | Listo |
+| Playbook por cliente | Listo |
+| ROI de agencia | Listo |
+| Upload de CSV | Listo |
+| App instalable (PWA) | Listo |
+| Responsive (mobile) | Listo |
 
 ---
 
-### Features Implementadas
+## Lo Que Viene (Opcional)
 
-| Feature | Estado | Descripcion |
-|---------|--------|-------------|
-| Dashboard | Listo | Metricas, alertas, evolucion |
-| Clientes | Listo | CRUD completo con BD |
-| Alertas | Listo | Sistema de notificaciones |
-| Analisis | Listo | Clasificacion de anuncios |
-| Patrones | Listo | Mining de correlaciones |
-| Simulador | Listo | Budget y pausar ads |
-| Diagnosticos | Listo | Quality score, saturacion |
-| Playbook | Listo | Guia DO/DONT/MONITOR |
-| Upload CSV | Listo | Importacion de datos |
-| API Client | Listo | Conexion front-back |
-| Base de Datos | Listo | SQLite con SQLAlchemy |
+Estas son mejoras para más adelante, no urgentes:
+
+1. **Conectar directo con Meta** - Sin exportar CSV
+2. **Alertas por WhatsApp/email** - Te avisa al toque
+3. **Reportes automáticos** - PDF semanal para el cliente
+4. **Predicciones** - Anticipar problemas antes de que pasen
 
 ---
 
-### Clasificacion de Anuncios
+## Tech Stack (Para los Curiosos)
 
-El sistema clasifica cada anuncio automaticamente:
+- **Frontend**: React + TypeScript + Tailwind
+- **Backend**: Python + FastAPI
+- **Base de datos**: SQLite
+- **Hosting**: VPS en Hostinger (mismo que el CRM)
 
-| Clase | Criterio | Accion |
-|-------|----------|--------|
-| **GANADOR** | CPR bajo + CTR alto + estable | Mantener, escalar si hay budget |
-| **ESCALABLE** | Buen rendimiento, puede crecer | Aumentar budget progresivamente |
-| **TESTING** | Pocos datos, en prueba | Esperar 3-5 dias mas |
-| **FATIGADO** | Frecuencia alta, CPR subiendo | Renovar creativo |
-| **PAUSAR** | Rendimiento muy bajo | Pausar y redistribuir budget |
+**Código**: https://github.com/TomasDolino/emiti-metrics
 
 ---
 
-### Analisis que Hace
+## Resumen
 
-**Pattern Mining:**
-- Detecta que tipo de contenido funciona mejor (video vs imagen vs carrusel)
-- Identifica mejores horarios y dias
-- Encuentra correlaciones en copies y CTAs
+Emiti Metrics es una herramienta que te hace la vida más fácil manejando Meta Ads:
 
-**Simulaciones:**
-- Proyecta impacto de cambiar budget (+/- X%)
-- Calcula que pasa si pausas un anuncio especifico
-- Considera rendimientos decrecientes
+- **Menos tiempo** revisando manualmente
+- **Menos errores** porque te avisa antes
+- **Más valor** demostrable al cliente
+- **Más escala** sin más laburo
 
-**Diagnosticos:**
-- Quality Score (0-100) de la cuenta
-- Prediccion de saturacion de audiencia
-- Deteccion de problemas de estructura
+Ya está funcionando. Entrá y probalo.
 
 ---
 
-### API Endpoints Principales
+**Link:** http://76.13.166.17:8080
 
-```
-GET  /api/clients                    # Lista clientes
-GET  /api/clients/{id}/summary       # Resumen con metricas
-POST /api/advanced/upload/{id}       # Subir CSV
-GET  /api/advanced/patterns/{id}     # Patrones detectados
-POST /api/advanced/simulate/budget   # Simular cambio
-GET  /api/advanced/playbook/{id}     # Generar playbook
-GET  /api/alerts                     # Lista alertas
-POST /api/alerts/{id}/acknowledge    # Marcar como leida
-```
-
----
-
-### Como Correr el Proyecto
-
-**Backend:**
-```bash
-cd emiti-metrics/backend
-pip install -r requirements.txt
-python run.py
-# Corre en http://localhost:8000
-```
-
-**Frontend:**
-```bash
-cd emiti-metrics/frontend
-npm install
-npm run dev
-# Corre en http://localhost:5173
-```
-
-**Para usar API real** (en vez de datos mock):
-```bash
-# Crear archivo frontend/.env
-VITE_USE_API=true
-VITE_API_URL=http://localhost:8000/api
-```
-
----
-
-### Estructura de Archivos
-
-```
-emiti-metrics/
-├── frontend/
-│   ├── src/
-│   │   ├── pages/          # 16 paginas
-│   │   ├── components/     # Layout, Settings
-│   │   └── lib/
-│   │       ├── api.ts          # Cliente HTTP
-│   │       ├── dataProvider.ts # Switch mock/API
-│   │       ├── mockData.ts     # Datos demo
-│   │       └── theme.tsx       # Sistema de temas
-│   └── package.json
-│
-└── backend/
-    ├── app/
-    │   ├── main.py           # FastAPI app
-    │   ├── database.py       # SQLite + modelos
-    │   ├── routers/          # Endpoints
-    │   └── services/         # Logica de negocio
-    ├── data/                 # BD SQLite
-    └── requirements.txt
-```
-
----
-
-### Proximos Pasos (Opcionales)
-
-1. **Deploy en servidor** - Similar al CRM, en Hostinger o similar
-2. **OAuth con Meta** - Conectar directo a la API (sin exportar CSV)
-3. **Reportes PDF** - Generar informes descargables
-4. **Multi-usuario** - Login y permisos por agencia
-
----
-
-### Metricas de Desarrollo
-
-- **Frontend**: 16 paginas, ~70KB de logica de datos
-- **Backend**: 40+ endpoints, 5 routers
-- **Base de Datos**: 8 tablas (clients, campaigns, metrics, alerts, etc.)
-- **Build**: ~7 segundos, 800KB bundle
-
----
-
-### Conclusiones
-
-Emiti Metrics esta listo para usar con datos demo. El siguiente paso logico es:
-
-1. Probar el flujo completo (subir CSV, ver analisis)
-2. Si funciona bien, hacer deploy
-3. Empezar a usar con clientes reales
-
-La plataforma esta disenada para crecer - la arquitectura permite agregar mas analisis, integraciones y features sin reescribir codigo.
-
----
-
-*Documento generado: Febrero 2026*
-*Stack: React + FastAPI + SQLite*
+*Febrero 2026*
