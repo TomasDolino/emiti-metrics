@@ -1,0 +1,129 @@
+import { useSelectedClient } from '../components/Layout'
+import { minePatterns, mockClients } from '../lib/mockData'
+import { Lightbulb, TrendingUp, Clock, MessageSquare, Users, Video } from 'lucide-react'
+
+const categoryIcons: Record<string, React.ReactNode> = {
+  format: <Video className="w-5 h-5" />,
+  creative: <Lightbulb className="w-5 h-5" />,
+  timing: <Clock className="w-5 h-5" />,
+  messaging: <MessageSquare className="w-5 h-5" />,
+  audience: <Users className="w-5 h-5" />,
+}
+
+const categoryColors: Record<string, string> = {
+  format: 'bg-blue-100 text-blue-700 border-blue-200',
+  creative: 'bg-purple-100 text-purple-700 border-purple-200',
+  timing: 'bg-orange-100 text-orange-700 border-orange-200',
+  messaging: 'bg-green-100 text-green-700 border-green-200',
+  audience: 'bg-pink-100 text-pink-700 border-pink-200',
+}
+
+const confidenceColors: Record<string, string> = {
+  high: 'bg-green-500',
+  medium: 'bg-yellow-500',
+  low: 'bg-gray-400',
+}
+
+export default function Patterns() {
+  const { selectedClientId } = useSelectedClient()
+  const client = selectedClientId ? mockClients.find(c => c.id === selectedClientId) : null
+  const patterns = minePatterns(selectedClientId || undefined)
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Pattern Mining</h1>
+        <p className="text-gray-500 mt-1">
+          {client ? `Patrones detectados para ${client.name}` : 'Patrones detectados en todos los clientes'}
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-lg border p-4">
+          <div className="text-2xl font-bold text-gray-900">{patterns.length}</div>
+          <div className="text-sm text-gray-500">Patrones detectados</div>
+        </div>
+        <div className="bg-white rounded-lg border p-4">
+          <div className="text-2xl font-bold text-green-600">
+            {patterns.filter(p => p.confidence === 'high').length}
+          </div>
+          <div className="text-sm text-gray-500">Alta confianza</div>
+        </div>
+        <div className="bg-white rounded-lg border p-4">
+          <div className="text-2xl font-bold text-blue-600">
+            {[...new Set(patterns.map(p => p.category))].length}
+          </div>
+          <div className="text-sm text-gray-500">Categorías</div>
+        </div>
+        <div className="bg-white rounded-lg border p-4">
+          <div className="text-2xl font-bold text-purple-600">
+            {patterns.filter(p => p.category === 'format').length}
+          </div>
+          <div className="text-sm text-gray-500">Patrones de formato</div>
+        </div>
+      </div>
+
+      {/* Patterns Grid */}
+      {patterns.length === 0 ? (
+        <div className="bg-white rounded-lg border p-8 text-center">
+          <Lightbulb className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900">No hay patrones detectados</h3>
+          <p className="text-gray-500 mt-2">
+            Se necesitan más datos para detectar patrones significativos.
+            <br />
+            Mínimo: 10 registros de métricas.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {patterns.map((pattern, idx) => (
+            <div
+              key={idx}
+              className="bg-white rounded-lg border p-5 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${categoryColors[pattern.category] || 'bg-gray-100 text-gray-700'}`}>
+                  {categoryIcons[pattern.category]}
+                  <span className="text-sm font-medium capitalize">{pattern.category}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${confidenceColors[pattern.confidence]}`} />
+                  <span className="text-xs text-gray-500 capitalize">{pattern.confidence}</span>
+                </div>
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {pattern.pattern}
+              </h3>
+
+              <div className="flex items-center gap-2 text-green-600 mb-3">
+                <TrendingUp className="w-4 h-4" />
+                <span className="font-medium">{pattern.impact}</span>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Recomendación</div>
+                <div className="text-sm text-gray-700">{pattern.recommendation}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Legend */}
+      <div className="bg-white rounded-lg border p-4">
+        <h3 className="font-medium text-gray-900 mb-3">Categorías de Patrones</h3>
+        <div className="flex flex-wrap gap-4">
+          {Object.entries(categoryColors).map(([cat, color]) => (
+            <div key={cat} className={`flex items-center gap-2 px-3 py-1 rounded-full border ${color}`}>
+              {categoryIcons[cat]}
+              <span className="text-sm capitalize">{cat}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
