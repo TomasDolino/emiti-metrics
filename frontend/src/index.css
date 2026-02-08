@@ -238,6 +238,36 @@ select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
+  cursor: pointer;
+}
+
+.dark select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+}
+
+/* Select options in dark mode */
+select option {
+  background-color: white;
+  color: #1e293b;
+  padding: 8px;
+}
+
+.dark select option {
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
+
+/* Input styling */
+input, textarea {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #94a3b8;
+}
+
+.dark input::placeholder, .dark textarea::placeholder {
+  color: #64748b;
 }
 
 /* ==================== METRICS SPECIFIC ==================== */

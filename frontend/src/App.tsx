@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { ThemeProvider } from './lib/theme'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Campaigns from './pages/Campaigns'
@@ -19,28 +20,30 @@ import AILab from './pages/AILab'
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="agency" element={<Agency />} />
-          <Route path="upload" element={<Upload />} />
-          <Route path="campaigns" element={<Campaigns />} />
-          <Route path="analysis" element={<Analysis />} />
-          <Route path="ads" element={<Ads />} />
-          <Route path="alerts" element={<Alerts />} />
-          <Route path="patterns" element={<Patterns />} />
-          <Route path="simulator" element={<Simulator />} />
-          <Route path="diagnostics" element={<Diagnostics />} />
-          <Route path="playbook" element={<Playbook />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="metrics" element={<Metrics />} />
-          <Route path="clients" element={<Clients />} />
-          <Route path="compare" element={<Compare />} />
-          <Route path="ai-lab" element={<AILab />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="agency" element={<Agency />} />
+            <Route path="upload" element={<Upload />} />
+            <Route path="campaigns" element={<Campaigns />} />
+            <Route path="analysis" element={<Analysis />} />
+            <Route path="ads" element={<Ads />} />
+            <Route path="alerts" element={<Alerts />} />
+            <Route path="patterns" element={<Patterns />} />
+            <Route path="simulator" element={<Simulator />} />
+            <Route path="diagnostics" element={<Diagnostics />} />
+            <Route path="playbook" element={<Playbook />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="metrics" element={<Metrics />} />
+            <Route path="clients" element={<Clients />} />
+            <Route path="compare" element={<Compare />} />
+            <Route path="ai-lab" element={<AILab />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 
