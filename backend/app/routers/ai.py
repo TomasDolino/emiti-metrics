@@ -1,6 +1,6 @@
 """
 AI Router for Emiti Metrics
-Endpoints for AI-powered features
+Endpoints for AI-powered features with memory and learning
 """
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
@@ -17,6 +17,19 @@ from ..services.ai_service import (
     generate_daily_insights,
     explain_anomaly,
     check_ai_status
+)
+from ..services.ai_memory import (
+    save_message,
+    get_conversation_history,
+    update_preference,
+    get_preferences,
+    add_knowledge,
+    search_knowledge,
+    save_feedback,
+    add_training_example,
+    export_training_data,
+    get_training_stats,
+    build_ai_context
 )
 
 router = APIRouter()
@@ -297,3 +310,130 @@ async def get_suggested_questions():
             }
         ]
     }
+
+
+# ==================== AI MEMORY & LEARNING ====================
+
+class PreferenceUpdate(BaseModel):
+    key: str
+    value: str
+    confidence: float = 0.5
+
+
+class KnowledgeEntry(BaseModel):
+    category: str
+    title: str
+    content: str
+    tags: Optional[List[str]] = None
+    source: Optional[str] = None
+
+
+class FeedbackRequest(BaseModel):
+    conversation_id: int
+    rating: int  # 1-5
+    message_id: Optional[str] = None
+    comment: Optional[str] = None
+
+
+class TrainingExample(BaseModel):
+    prompt: str
+    completion: str
+    category: Optional[str] = None
+    quality_score: float = 1.0
+
+
+@router.get("/memory/history")
+async def get_memory_history(
+    user_id: str = "default",
+    client_id: Optional[str] = None,
+    limit: int = 20
+):
+    """Get conversation history from memory."""
+    return get_conversation_history(user_id, client_id, limit)
+
+
+@router.get("/memory/preferences/{user_id}")
+async def get_user_preferences(user_id: str):
+    """Get learned preferences for a user."""
+    return get_preferences(user_id)
+
+
+@router.post("/memory/preferences/{user_id}")
+async def update_user_preference(user_id: str, pref: PreferenceUpdate):
+    """Update a user preference."""
+    update_preference(user_id, pref.key, pref.value, pref.confidence)
+    return {"success": True}
+
+
+@router.get("/memory/context")
+async def get_ai_context(
+    user_id: str = "default",
+    client_id: Optional[str] = None,
+    query: Optional[str] = None
+):
+    """Build complete AI context with memory, preferences, and knowledge."""
+    return build_ai_context(user_id, client_id, query)
+
+
+@router.post("/knowledge")
+async def add_knowledge_entry(entry: KnowledgeEntry):
+    """Add an entry to the knowledge base."""
+    entry_id = add_knowledge(
+        category=entry.category,
+        title=entry.title,
+        content=entry.content,
+        tags=entry.tags,
+        source=entry.source
+    )
+    return {"id": entry_id}
+
+
+@router.get("/knowledge/search")
+async def search_knowledge_base(
+    query: str,
+    category: Optional[str] = None,
+    limit: int = 5
+):
+    """Search the knowledge base."""
+    return search_knowledge(query, category, limit)
+
+
+@router.post("/feedback")
+async def submit_feedback(feedback: FeedbackRequest):
+    """Submit feedback on an AI response."""
+    save_feedback(
+        conversation_id=feedback.conversation_id,
+        rating=feedback.rating,
+        message_id=feedback.message_id,
+        comment=feedback.comment
+    )
+    return {"success": True}
+
+
+@router.post("/training/example")
+async def add_training_data(example: TrainingExample):
+    """Add a training example for future fine-tuning."""
+    add_training_example(
+        prompt=example.prompt,
+        completion=example.completion,
+        category=example.category,
+        quality_score=example.quality_score
+    )
+    return {"success": True}
+
+
+@router.get("/training/export")
+async def export_training(min_quality: float = 0.7):
+    """Export training data for fine-tuning."""
+    data = export_training_data(min_quality)
+    return {
+        "format": "openai_messages",
+        "count": len(data),
+        "data": data
+    }
+
+
+@router.get("/training/stats")
+async def training_statistics():
+    """Get training data statistics."""
+    return get_training_stats()
