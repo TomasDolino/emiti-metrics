@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, ChevronRight, Building2 } from 'lucide-react'
+import { Plus, ChevronRight, ChevronDown, Building2, Globe, Mail, Phone } from 'lucide-react'
 import { useTheme } from '../lib/theme'
 import { mockClients } from '../lib/mockData'
 import { formatDateFull, cn } from '../lib/utils'
@@ -12,61 +12,118 @@ interface ClientRowProps {
 }
 
 function ClientRow({ client, palette }: ClientRowProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
   const borderColor = client.isActive ? palette.success : '#9ca3af'
   const initials = client.name.split(' ').map(w => w[0]).join('').slice(0, 2)
 
   return (
     <div
-      className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border-l-4 hover:shadow-sm transition-shadow cursor-pointer"
+      className="bg-white dark:bg-gray-800 rounded-lg border-l-4 overflow-hidden hover:shadow-sm transition-shadow"
       style={{ borderLeftColor: borderColor }}
     >
-      {/* Avatar */}
+      {/* Main Row */}
       <div
-        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-white font-semibold"
-        style={{ backgroundColor: palette.accent }}
+        className="flex items-center gap-3 p-3 cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
       >
-        {initials}
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{client.name}</p>
-          <span
-            className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white flex-shrink-0"
-            style={{ backgroundColor: borderColor }}
-          >
-            {client.isActive ? 'Activo' : 'Inactivo'}
-          </span>
+        {/* Avatar */}
+        <div
+          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-white font-semibold"
+          style={{ backgroundColor: palette.accent }}
+        >
+          {initials}
         </div>
-        {client.industry && (
-          <p className="text-xs text-gray-500 truncate">{client.industry}</p>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={client.name}>{client.name}</p>
+            <span
+              className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white flex-shrink-0"
+              style={{ backgroundColor: borderColor }}
+            >
+              {client.isActive ? 'Activo' : 'Inactivo'}
+            </span>
+          </div>
+          {client.industry && (
+            <p className="text-xs text-gray-500 truncate">{client.industry}</p>
+          )}
+        </div>
+
+        {/* Meta Account */}
+        {client.metaAccountId && (
+          <div className="text-right hidden md:block">
+            <p className="text-xs text-gray-500">Meta ID</p>
+            <p className="text-xs font-mono text-gray-700 dark:text-gray-300">{client.metaAccountId}</p>
+          </div>
+        )}
+
+        {/* Created */}
+        <div className="text-right hidden sm:block">
+          <p className="text-xs text-gray-500">Desde</p>
+          <p className="text-xs text-gray-700 dark:text-gray-300">{formatDateFull(client.createdAt)}</p>
+        </div>
+
+        {/* Action */}
+        <button
+          className="px-2 py-1 text-xs font-medium rounded-lg transition-colors"
+          style={{ color: palette.primary, backgroundColor: `${palette.primary}10` }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          Ver
+        </button>
+
+        {isExpanded ? (
+          <ChevronDown className="w-4 h-4 text-gray-400 transition-transform" />
+        ) : (
+          <ChevronRight className="w-4 h-4 text-gray-400 transition-transform hidden sm:block" />
         )}
       </div>
 
-      {/* Meta Account */}
-      {client.metaAccountId && (
-        <div className="text-right hidden md:block">
-          <p className="text-xs text-gray-500">Meta ID</p>
-          <p className="text-xs font-mono text-gray-700 dark:text-gray-300">{client.metaAccountId}</p>
+      {/* Expanded Details */}
+      {isExpanded && (
+        <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
+              <Building2 size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">Industria</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{client.industry || 'Sin especificar'}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
+              <Globe size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">Meta ID</p>
+                <p className="text-sm font-mono text-gray-900 dark:text-white">{client.metaAccountId || 'No conectado'}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
+              <Mail size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">Contacto</p>
+                <p className="text-sm text-gray-900 dark:text-white">contacto@cliente.com</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
+              <Phone size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">Teléfono</p>
+                <p className="text-sm text-gray-900 dark:text-white">+54 11 1234-5678</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-xs text-gray-500">Cliente desde {formatDateFull(client.createdAt)}</p>
+            <button
+              className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+              style={{ backgroundColor: palette.primary, color: 'white' }}
+            >
+              Editar Cliente
+            </button>
+          </div>
         </div>
       )}
-
-      {/* Created */}
-      <div className="text-right hidden sm:block">
-        <p className="text-xs text-gray-500">Desde</p>
-        <p className="text-xs text-gray-700 dark:text-gray-300">{formatDateFull(client.createdAt)}</p>
-      </div>
-
-      {/* Action */}
-      <button
-        className="px-2 py-1 text-xs font-medium rounded-lg transition-colors"
-        style={{ color: palette.primary, backgroundColor: `${palette.primary}10` }}
-      >
-        Ver
-      </button>
-
-      <ChevronRight className="w-4 h-4 text-gray-400 hidden sm:block" />
     </div>
   )
 }

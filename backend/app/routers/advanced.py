@@ -23,6 +23,11 @@ from ..services.advanced_analysis import (
     calculate_agency_roi, generate_playbook
 )
 
+from ..services.ml_predictions import (
+    predict_ad_fatigue, forecast_roas, detect_anomalies,
+    get_anomaly_summary, get_ml_insights
+)
+
 from ..services.persistence import (
     save_snapshot, get_snapshots, get_snapshot, compare_snapshots,
     get_historical_trend, save_learning, get_learnings,
@@ -359,3 +364,76 @@ async def get_full_analysis(client_id: str):
         "learnings": get_learnings(client_id),
         "recent_actions": get_actions_summary(client_id, 30)
     }
+
+
+# ==================== ML PREDICTIONS ====================
+
+@router.get("/ml/fatigue/{client_id}")
+async def get_fatigue_predictions(client_id: str):
+    """
+    Predice fatiga de anuncios usando ML.
+    Retorna lista de anuncios ordenados por urgencia de acción.
+    """
+    df = _get_client_df(client_id)
+    predictions = predict_ad_fatigue(df)
+
+    return {
+        "predictions": predictions,
+        "summary": {
+            "critical": len([p for p in predictions if p['status'] == 'critical']),
+            "warning": len([p for p in predictions if p['status'] == 'warning']),
+            "monitoring": len([p for p in predictions if p['status'] == 'monitoring']),
+            "healthy": len([p for p in predictions if p['status'] == 'healthy'])
+        }
+    }
+
+
+@router.get("/ml/forecast/{client_id}")
+async def get_roas_forecast(client_id: str, days_ahead: int = 7):
+    """
+    Pronostica ROAS/CPR para los próximos días.
+    Usa regresión lineal con análisis de tendencias.
+    """
+    if days_ahead < 1 or days_ahead > 30:
+        raise HTTPException(status_code=400, detail="days_ahead debe estar entre 1 y 30")
+
+    df = _get_client_df(client_id)
+    forecast = forecast_roas(df, days_ahead)
+
+    if 'error' in forecast:
+        raise HTTPException(status_code=400, detail=forecast['error'])
+
+    return forecast
+
+
+@router.get("/ml/anomalies/{client_id}")
+async def get_anomalies(client_id: str, sensitivity: float = 2.0):
+    """
+    Detecta anomalías en las métricas usando análisis estadístico.
+
+    Args:
+        sensitivity: Multiplicador Z-score (2.0 = 95%, 2.5 = 99%, 3.0 = 99.7%)
+    """
+    if sensitivity < 1.5 or sensitivity > 4.0:
+        raise HTTPException(status_code=400, detail="sensitivity debe estar entre 1.5 y 4.0")
+
+    df = _get_client_df(client_id)
+    anomalies = detect_anomalies(df, sensitivity)
+    summary = get_anomaly_summary(anomalies)
+
+    return {
+        "anomalies": anomalies,
+        "summary": summary
+    }
+
+
+@router.get("/ml/insights/{client_id}")
+async def get_consolidated_insights(client_id: str):
+    """
+    Ejecuta todos los modelos ML y devuelve un resumen consolidado.
+    Incluye: predicción de fatiga, forecast de ROAS, detección de anomalías.
+    """
+    df = _get_client_df(client_id)
+    insights = get_ml_insights(df)
+
+    return insights

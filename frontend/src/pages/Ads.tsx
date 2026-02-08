@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Image, Eye, EyeOff, ChevronRight } from 'lucide-react'
+import { Image, Eye, EyeOff, ChevronRight, ChevronDown, TrendingUp, TrendingDown, Target, DollarSign } from 'lucide-react'
 import { useTheme } from '../lib/theme'
 import { mockAdsAnalysis } from '../lib/mockData'
 import { formatMoney, formatNumber, formatPercent, getClassificationColor, cn } from '../lib/utils'
@@ -13,78 +13,140 @@ interface AdRowProps {
 }
 
 function AdRow({ ad, showAmounts }: AdRowProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
   const borderColor = getClassificationColor(ad.classification as AdClassification)
 
   return (
-    <div
-      className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border-l-4 hover:shadow-sm transition-shadow cursor-pointer"
-      style={{ borderLeftColor: borderColor }}
-    >
-      {/* Thumbnail */}
-      <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-        <Image className="w-5 h-5 text-gray-400" />
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{ad.adName}</p>
-        <p className="text-xs text-gray-500 truncate">{ad.adSetName}</p>
-      </div>
-
-      {/* Metrics */}
-      <div className="text-right hidden sm:block">
-        <p className="text-sm font-medium text-gray-900 dark:text-white">
-          {showAmounts ? formatMoney(ad.totalSpend) : '•••'}
-        </p>
-        <p className="text-xs text-gray-500">gasto</p>
-      </div>
-      <div className="text-right hidden md:block">
-        <p className="text-sm font-medium text-gray-900 dark:text-white">{formatNumber(ad.totalResults)}</p>
-        <p className="text-xs text-gray-500">resultados</p>
-      </div>
-      <div className="text-right hidden md:block">
-        <p className="text-sm font-medium text-gray-900 dark:text-white">
-          {showAmounts ? formatMoney(ad.avgCostPerResult) : '•••'}
-        </p>
-        <p className="text-xs text-gray-500">CPR</p>
-      </div>
-      <div className="text-right">
-        <p className="text-sm font-medium text-gray-900 dark:text-white">{formatPercent(ad.avgCtr)}</p>
-        <p className="text-xs text-gray-500">CTR</p>
-      </div>
-      <div className="text-right hidden sm:block">
-        <p className={cn(
-          'text-sm font-medium',
-          ad.avgFrequency > 3.5 ? 'text-red-500' : ad.avgFrequency > 2.5 ? 'text-amber-500' : 'text-gray-900 dark:text-white'
-        )}>
-          {ad.avgFrequency.toFixed(1)}
-        </p>
-        <p className="text-xs text-gray-500">freq</p>
-      </div>
-
-      {/* Fatigue Bar */}
-      <div className="w-12 hidden lg:block">
-        <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className={cn(
-              'h-full rounded-full',
-              ad.fatigueScore > 60 ? 'bg-red-500' : ad.fatigueScore > 30 ? 'bg-amber-500' : 'bg-green-500'
-            )}
-            style={{ width: `${ad.fatigueScore}%` }}
-          />
-        </div>
-        <p className="text-[10px] text-gray-400 text-center mt-0.5">{ad.fatigueScore}%</p>
-      </div>
-
-      {/* Classification Badge */}
-      <span
-        className="px-2 py-0.5 rounded text-xs font-medium text-white flex-shrink-0"
-        style={{ backgroundColor: borderColor }}
+    <div className="bg-white dark:bg-gray-800 rounded-lg border-l-4 overflow-hidden transition-shadow hover:shadow-sm" style={{ borderLeftColor: borderColor }}>
+      {/* Main Row */}
+      <div
+        className="flex items-center gap-3 p-3 cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
       >
-        {ad.classification}
-      </span>
+        {/* Thumbnail */}
+        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+          <Image className="w-5 h-5 text-gray-400" />
+        </div>
 
-      <ChevronRight size={16} className="text-gray-400 hidden sm:block" />
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={ad.adName}>{ad.adName}</p>
+          <p className="text-xs text-gray-500 truncate" title={ad.adSetName}>{ad.adSetName}</p>
+        </div>
+
+        {/* Metrics */}
+        <div className="text-right hidden sm:block">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">
+            {showAmounts ? formatMoney(ad.totalSpend) : '•••'}
+          </p>
+          <p className="text-xs text-gray-500">gasto</p>
+        </div>
+        <div className="text-right hidden md:block">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">{formatNumber(ad.totalResults)}</p>
+          <p className="text-xs text-gray-500">resultados</p>
+        </div>
+        <div className="text-right hidden md:block">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">
+            {showAmounts ? formatMoney(ad.avgCostPerResult) : '•••'}
+          </p>
+          <p className="text-xs text-gray-500">CPR</p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">{formatPercent(ad.avgCtr)}</p>
+          <p className="text-xs text-gray-500">CTR</p>
+        </div>
+        <div className="text-right hidden sm:block">
+          <p className={cn(
+            'text-sm font-medium',
+            ad.avgFrequency > 3.5 ? 'text-red-500' : ad.avgFrequency > 2.5 ? 'text-amber-500' : 'text-gray-900 dark:text-white'
+          )}>
+            {ad.avgFrequency.toFixed(1)}
+          </p>
+          <p className="text-xs text-gray-500">freq</p>
+        </div>
+
+        {/* Fatigue Bar */}
+        <div className="w-12 hidden lg:block">
+          <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className={cn(
+                'h-full rounded-full',
+                ad.fatigueScore > 60 ? 'bg-red-500' : ad.fatigueScore > 30 ? 'bg-amber-500' : 'bg-green-500'
+              )}
+              style={{ width: `${ad.fatigueScore}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-gray-400 text-center mt-0.5">{ad.fatigueScore}%</p>
+        </div>
+
+        {/* Classification Badge */}
+        <span
+          className="px-2 py-0.5 rounded text-xs font-medium text-white flex-shrink-0"
+          style={{ backgroundColor: borderColor }}
+        >
+          {ad.classification}
+        </span>
+
+        {isExpanded ? (
+          <ChevronDown size={16} className="text-gray-400 hidden sm:block transition-transform" />
+        ) : (
+          <ChevronRight size={16} className="text-gray-400 hidden sm:block transition-transform" />
+        )}
+      </div>
+
+      {/* Expanded Details */}
+      {isExpanded && (
+        <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
+              <DollarSign size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">Gasto Total</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {showAmounts ? formatMoney(ad.totalSpend) : '•••'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
+              <Target size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">Resultados</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{formatNumber(ad.totalResults)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
+              <TrendingUp size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">Días Activo</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{ad.daysRunning}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
+              <TrendingDown size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">Frecuencia</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{ad.avgFrequency.toFixed(1)}</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">Fatiga:</span>
+              <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className={cn(
+                    'h-full rounded-full',
+                    ad.fatigueScore > 60 ? 'bg-red-500' : ad.fatigueScore > 30 ? 'bg-amber-500' : 'bg-green-500'
+                  )}
+                  style={{ width: `${ad.fatigueScore}%` }}
+                />
+              </div>
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{ad.fatigueScore}%</span>
+            </div>
+            <span className="text-xs text-gray-500">Campaña: {ad.campaignName}</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

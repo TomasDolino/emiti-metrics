@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useSelectedClient } from '../components/Layout'
+import { useTheme } from '../lib/theme'
 import { mockClients } from '../lib/mockData'
 import { api } from '../lib/api'
 import { Upload as UploadIcon, FileSpreadsheet, CheckCircle, XCircle, AlertCircle, Download, Info } from 'lucide-react'
@@ -16,6 +17,7 @@ interface UploadResult {
 
 export default function Upload() {
   const { selectedClientId } = useSelectedClient()
+  const { palette } = useTheme()
   const client = selectedClientId ? mockClients.find(c => c.id === selectedClientId) : null
 
   const [dragActive, setDragActive] = useState(false)
@@ -155,9 +157,10 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
       <div
         className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
           dragActive
-            ? 'border-primary-500 bg-primary-50'
+            ? 'border-current'
             : 'border-gray-300 hover:border-gray-400'
         }`}
+        style={dragActive ? { borderColor: palette.primary, backgroundColor: `${palette.primary}10` } : undefined}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -170,7 +173,10 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
 
-        <FileSpreadsheet className={`w-12 h-12 mx-auto mb-4 ${dragActive ? 'text-primary-500' : 'text-gray-400'}`} />
+        <FileSpreadsheet
+          className="w-12 h-12 mx-auto mb-4"
+          style={{ color: dragActive ? palette.primary : '#9ca3af' }}
+        />
 
         {selectedFile ? (
           <div>
@@ -197,7 +203,8 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
           <button
             onClick={handleUpload}
             disabled={uploading}
-            className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-6 py-3 text-white rounded-lg transition-colors disabled:opacity-50 hover:opacity-90"
+            style={{ backgroundColor: palette.primary }}
           >
             {uploading ? (
               <>

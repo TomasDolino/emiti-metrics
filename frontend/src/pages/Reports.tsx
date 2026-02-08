@@ -54,7 +54,7 @@ function ReportRow({ report, palette }: ReportRowProps) {
 
   return (
     <div
-      className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border-l-4 hover:shadow-sm transition-shadow cursor-pointer"
+      className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border-l-4 hover:shadow-sm transition-shadow"
       style={{ borderLeftColor: typeColors[report.type] }}
     >
       {/* Icon */}

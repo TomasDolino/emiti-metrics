@@ -1,4 +1,5 @@
 import { useSelectedClient } from '../components/Layout'
+import { useTheme } from '../lib/theme'
 import {
   getAccountQualityScore,
   getAudienceSaturation,
@@ -19,6 +20,7 @@ import {
 
 export default function Diagnostics() {
   const { selectedClientId } = useSelectedClient()
+  const { palette } = useTheme()
   const client = selectedClientId ? mockClients.find(c => c.id === selectedClientId) : null
 
   const quality = getAccountQualityScore(selectedClientId || undefined)
@@ -68,11 +70,17 @@ export default function Diagnostics() {
         <div className="bg-white rounded-lg border p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-primary-600" />
+              <Activity className="w-5 h-5" style={{ color: palette.primary }} />
               Account Quality Score
             </h3>
-            <div className={`px-3 py-1 rounded-full text-sm font-medium border ${getQualityColor(quality.status)}`}>
-              {quality.status === 'ready' ? 'Listo' : quality.status === 'limited' ? 'Limitado' : 'Insuficiente'}
+            <div className={`px-3 py-1 rounded-full text-sm font-medium border flex items-center gap-1.5 ${getQualityColor(quality.status)}`}>
+              {quality.status === 'ready' ? (
+                <><CheckCircle className="w-3.5 h-3.5" /> Listo</>
+              ) : quality.status === 'limited' ? (
+                <><AlertTriangle className="w-3.5 h-3.5" /> Limitado</>
+              ) : (
+                <><XCircle className="w-3.5 h-3.5" /> Insuficiente</>
+              )}
             </div>
           </div>
 
@@ -150,11 +158,17 @@ export default function Diagnostics() {
         <div className="bg-white rounded-lg border p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary-600" />
+              <Users className="w-5 h-5" style={{ color: palette.primary }} />
               Saturación de Audiencia
             </h3>
-            <div className={`px-3 py-1 rounded-full text-sm font-medium border ${getSaturationColor(saturation.status)}`}>
-              {saturation.status === 'healthy' ? 'Saludable' : saturation.status === 'warning' ? 'Atención' : 'Crítico'}
+            <div className={`px-3 py-1 rounded-full text-sm font-medium border flex items-center gap-1.5 ${getSaturationColor(saturation.status)}`}>
+              {saturation.status === 'healthy' ? (
+                <><CheckCircle className="w-3.5 h-3.5" /> Saludable</>
+              ) : saturation.status === 'warning' ? (
+                <><AlertTriangle className="w-3.5 h-3.5" /> Atención</>
+              ) : (
+                <><XCircle className="w-3.5 h-3.5" /> Crítico</>
+              )}
             </div>
           </div>
 
@@ -241,7 +255,7 @@ export default function Diagnostics() {
       {/* Structure Diagnostics */}
       <div className="bg-white rounded-lg border p-6">
         <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
-          <Layers className="w-5 h-5 text-primary-600" />
+          <Layers className="w-5 h-5" style={{ color: palette.primary }} />
           Diagnóstico de Estructura
         </h3>
 

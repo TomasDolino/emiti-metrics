@@ -11,17 +11,17 @@ const categoryIcons: Record<string, React.ReactNode> = {
 }
 
 const categoryColors: Record<string, string> = {
-  format: 'bg-blue-100 text-blue-700 border-blue-200',
-  creative: 'bg-purple-100 text-purple-700 border-purple-200',
-  timing: 'bg-orange-100 text-orange-700 border-orange-200',
-  messaging: 'bg-green-100 text-green-700 border-green-200',
-  audience: 'bg-pink-100 text-pink-700 border-pink-200',
+  format: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30',
+  creative: 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/30',
+  timing: 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/30',
+  messaging: 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/30',
+  audience: 'bg-pink-100 dark:bg-pink-500/20 text-pink-700 dark:text-pink-400 border-pink-200 dark:border-pink-500/30',
 }
 
 const confidenceColors: Record<string, string> = {
-  high: 'bg-green-500',
-  medium: 'bg-yellow-500',
-  low: 'bg-gray-400',
+  high: 'bg-green-500 dark:bg-green-600',
+  medium: 'bg-yellow-500 dark:bg-yellow-600',
+  low: 'bg-gray-400 dark:bg-gray-600',
 }
 
 export default function Patterns() {
@@ -33,20 +33,20 @@ export default function Patterns() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Pattern Mining</h1>
-        <p className="text-gray-500 mt-1">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Pattern Mining</h1>
+        <p className="text-slate-500 mt-1">
           {client ? `Patrones detectados para ${client.name}` : 'Patrones detectados en todos los clientes'}
         </p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border p-4">
-          <div className="text-2xl font-bold text-gray-900">{patterns.length}</div>
-          <div className="text-sm text-gray-500">Patrones detectados</div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">{patterns.length}</div>
+          <div className="text-sm text-slate-500">Patrones detectados</div>
         </div>
-        <div className="bg-white rounded-lg border p-4">
-          <div className="text-2xl font-bold text-green-600">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
             {patterns.filter(p => p.confidence === 'high').length}
           </div>
           <div className="text-sm text-gray-500">Alta confianza</div>

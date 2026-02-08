@@ -15,6 +15,7 @@ import Simulator from './pages/Simulator'
 import Diagnostics from './pages/Diagnostics'
 import Playbook from './pages/Playbook'
 import Upload from './pages/Upload'
+import AILab from './pages/AILab'
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <Route path="metrics" element={<Metrics />} />
           <Route path="clients" element={<Clients />} />
           <Route path="compare" element={<Compare />} />
+          <Route path="ai-lab" element={<AILab />} />
         </Route>
       </Routes>
     </BrowserRouter>

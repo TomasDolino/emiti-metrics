@@ -1,35 +1,70 @@
 @import "tailwindcss";
 
+/* ==================== EMITI METRICS - MODERN AGENCY STYLE ==================== */
+
 :root {
-  --color-primary: #A8B5A0;
-  --color-secondary: #7D8471;
-  --color-accent: #C4A484;
-  --color-success: #22c55e;
+  /* Violet/Indigo palette - Agency feel */
+  --color-primary: #8b5cf6;
+  --color-secondary: #6366f1;
+  --color-accent: #a78bfa;
+  --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
-  --color-bg-page: #f8faf8;
+  --color-bg-page: #fafbff;
   --color-bg-card: #ffffff;
-  --color-bg-muted: #f0f4f0;
+  --color-bg-muted: #f1f5f9;
 }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--color-bg-page);
+  background: linear-gradient(135deg, var(--color-bg-page) 0%, #f8fafc 50%, #eef2ff 100%);
   margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Dark mode */
 .dark {
-  --color-bg-page: #111827;
-  --color-bg-card: #1f2937;
-  --color-bg-muted: #374151;
+  --color-bg-page: #0f172a;
+  --color-bg-card: #1e293b;
+  --color-bg-muted: #334155;
 }
 
 .dark body {
-  background-color: var(--color-bg-page);
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
 }
 
-/* Custom scrollbar - HIDE */
+/* ==================== SCROLLBARS ==================== */
+
+/* Modern thin scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Hide scrollbar option */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
@@ -38,28 +73,162 @@ body {
   scrollbar-width: none;
 }
 
-/* Card shadows */
+/* ==================== CARDS & SHADOWS ==================== */
+
 .shadow-sm {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
-/* Animations */
+.shadow-card {
+  box-shadow: 0 4px 20px -2px rgba(139, 92, 246, 0.08), 0 2px 8px -2px rgba(0, 0, 0, 0.04);
+}
+
+.dark .shadow-card {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ==================== ANIMATIONS ==================== */
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.25s ease-out;
 }
 
-/* Focus styles */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, #334155 0%, #475569 50%, #334155 100%);
+  background-size: 200% 100%;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Stagger animation */
+.stagger-item {
+  animation: fadeIn 0.3s ease-out backwards;
+}
+.stagger-item:nth-child(1) { animation-delay: 0ms; }
+.stagger-item:nth-child(2) { animation-delay: 40ms; }
+.stagger-item:nth-child(3) { animation-delay: 80ms; }
+.stagger-item:nth-child(4) { animation-delay: 120ms; }
+.stagger-item:nth-child(5) { animation-delay: 160ms; }
+
+/* ==================== INTERACTIVE ELEMENTS ==================== */
+
+/* Card hover */
+.card-interactive {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -8px rgba(139, 92, 246, 0.15), 0 4px 12px -4px rgba(0, 0, 0, 0.05);
+}
+
+.card-interactive:active {
+  transform: translateY(0);
+}
+
+/* Button scale */
+.btn-interactive {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-interactive:hover {
+  transform: scale(1.02);
+}
+
+.btn-interactive:active {
+  transform: scale(0.98);
+}
+
+/* Gradient buttons */
+.btn-gradient {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: white;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px -2px rgba(139, 92, 246, 0.4);
+}
+
+.btn-gradient:hover {
+  box-shadow: 0 6px 20px -2px rgba(139, 92, 246, 0.5);
+  transform: translateY(-1px);
+}
+
+/* ==================== FOCUS STYLES ==================== */
+
 *:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
-/* Better select styling */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 0;
+  border-color: var(--color-primary);
+}
+
+/* ==================== FORM ELEMENTS ==================== */
+
 select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -71,7 +240,81 @@ select {
   appearance: none;
 }
 
-/* Print styles */
+/* ==================== METRICS SPECIFIC ==================== */
+
+/* Number animation */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-countUp {
+  animation: countUp 0.4s ease-out;
+}
+
+/* Progress bar */
+@keyframes progressFill {
+  from { width: 0; }
+}
+
+.animate-progress {
+  animation: progressFill 0.8s ease-out;
+}
+
+/* Trend indicator */
+.trend-up {
+  color: #10b981;
+}
+
+.trend-down {
+  color: #ef4444;
+}
+
+/* Glow effect */
+.glow-violet {
+  box-shadow: 0 0 20px -5px rgba(139, 92, 246, 0.5);
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+
+  button, a, select, input {
+    min-height: 44px;
+  }
+}
+
+@media (min-width: 769px) {
+  .show-mobile-only {
+    display: none !important;
+  }
+}
+
+/* Touch devices */
+@media (pointer: coarse) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ==================== PRINT ==================== */
+
 @media print {
   .no-print {
     display: none !important;

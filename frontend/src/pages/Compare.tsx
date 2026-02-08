@@ -1,15 +1,25 @@
 import { useState } from 'react'
-import { GitCompare, TrendingUp, TrendingDown, Trophy, AlertTriangle, Lightbulb, Check } from 'lucide-react'
+import { GitCompare, TrendingUp, TrendingDown, Trophy, AlertTriangle, Lightbulb, Check, Calendar, Download, RefreshCw, Filter, ArrowRight, BarChart3 } from 'lucide-react'
 import { useTheme } from '../lib/theme'
+import { useSelectedClient } from '../components/Layout'
 import { mockClients, compareClients, type ClientSummary } from '../lib/mockData'
 import { formatMoney, formatPercent, formatNumber, cn } from '../lib/utils'
+
+// Date period options
+type DatePeriod = '7d' | '14d' | '30d' | 'month' | 'last_month' | 'custom'
+const dateOptions: { value: DatePeriod; label: string }[] = [
+  { value: '7d', label: 'Últimos 7 días' },
+  { value: '14d', label: 'Últimos 14 días' },
+  { value: '30d', label: 'Últimos 30 días' },
+  { value: 'month', label: 'Este mes' },
+  { value: 'last_month', label: 'Mes anterior' },
+]
 
 // ==================== CLIENT SELECTOR ====================
 
 interface ClientSelectorProps {
   selected: string[]
   onChange: (ids: string[]) => void
-  palette: ReturnType<typeof useTheme>['palette']
 }
 
 function ClientSelector({ selected, onChange }: ClientSelectorProps) {
@@ -24,9 +34,14 @@ function ClientSelector({ selected, onChange }: ClientSelectorProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-      <h3 className="font-medium text-gray-900 dark:text-white mb-3">Seleccionar Clientes (máx. 4)</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+    <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg shadow-violet-500/5">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold text-slate-900 dark:text-white">Seleccionar Clientes</h3>
+        <span className="text-xs text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-lg">
+          {selected.length}/4 seleccionados
+        </span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
         {clients.map(client => {
           const isSelected = selected.includes(client.id)
           return (
@@ -34,13 +49,15 @@ function ClientSelector({ selected, onChange }: ClientSelectorProps) {
               key={client.id}
               onClick={() => toggle(client.id)}
               className={cn(
-                'flex items-center gap-2 p-2 rounded-lg border-2 transition-all text-left',
-                isSelected ? 'border-current' : 'border-gray-200 dark:border-gray-700'
+                'flex items-center gap-2 p-3 rounded-xl border-2 transition-all text-left',
+                isSelected
+                  ? 'border-violet-500 bg-violet-50 dark:bg-violet-500/10 shadow-md'
+                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
               )}
               style={isSelected ? { borderColor: client.color, backgroundColor: `${client.color}10` } : undefined}
             >
               <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-md"
                 style={{ backgroundColor: client.color }}
               >
                 {client.name.slice(0, 2).toUpperCase()}
@@ -48,14 +65,16 @@ function ClientSelector({ selected, onChange }: ClientSelectorProps) {
               <div className="flex-1 min-w-0">
                 <p className={cn(
                   'text-sm font-medium truncate',
-                  isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'
+                  isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'
                 )}>
                   {client.name}
                 </p>
-                <p className="text-[10px] text-gray-500">{client.industry}</p>
+                <p className="text-[10px] text-slate-500">{client.industry}</p>
               </div>
               {isSelected && (
-                <Check size={16} style={{ color: client.color }} />
+                <div className="w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center">
+                  <Check size={12} className="text-white" />
+                </div>
               )}
             </button>
           )
@@ -76,31 +95,34 @@ function ComparisonTable({ comparison, showAmounts }: ComparisonTableProps) {
   const { clients, metrics } = comparison
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+    <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg shadow-violet-500/5 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="bg-gray-50 dark:bg-gray-700/50">
-              <th className="text-left py-3 px-4 text-xs font-medium text-gray-500">Métrica</th>
+            <tr className="bg-slate-50/80 dark:bg-slate-900/50">
+              <th className="text-left py-4 px-5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Métrica</th>
               {clients.map(s => (
-                <th key={s.client.id} className="text-center py-3 px-4">
+                <th key={s.client.id} className="text-center py-4 px-5">
                   <div className="flex items-center justify-center gap-2">
                     <div
-                      className="w-6 h-6 rounded-md flex items-center justify-center text-white text-[10px] font-bold"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shadow-md"
                       style={{ backgroundColor: s.client.color }}
                     >
                       {s.client.name.slice(0, 2).toUpperCase()}
                     </div>
-                    <span className="text-xs font-medium text-gray-900 dark:text-white">{s.client.name}</span>
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">{s.client.name}</span>
                   </div>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {metrics.map(({ metric, values, unit }) => (
-              <tr key={metric} className="border-t border-gray-100 dark:border-gray-700">
-                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{metric}</td>
+            {metrics.map(({ metric, values, unit }, idx) => (
+              <tr key={metric} className={cn(
+                "border-t border-slate-100 dark:border-slate-700/50",
+                idx % 2 === 0 ? "bg-white/50 dark:bg-slate-800/30" : "bg-slate-50/50 dark:bg-slate-900/20"
+              )}>
+                <td className="py-4 px-5 text-sm font-medium text-slate-600 dark:text-slate-400">{metric}</td>
                 {values.map(v => {
                   const displayValue = metric === 'CPR' && !showAmounts
                     ? '•••'
@@ -111,15 +133,15 @@ function ComparisonTable({ comparison, showAmounts }: ComparisonTableProps) {
                         : formatNumber(v.value)
 
                   return (
-                    <td key={v.clientId} className="py-3 px-4 text-center">
+                    <td key={v.clientId} className="py-4 px-5 text-center">
                       <span className={cn(
-                        'text-sm font-semibold',
-                        v.isTop ? 'text-green-600' : 'text-gray-900 dark:text-white'
+                        'text-sm font-bold',
+                        v.isTop ? 'text-emerald-600' : 'text-slate-900 dark:text-white'
                       )}>
                         {displayValue}
                       </span>
                       {v.isTop && (
-                        <Trophy size={12} className="inline ml-1 text-amber-500" />
+                        <Trophy size={14} className="inline ml-1.5 text-amber-500" />
                       )}
                     </td>
                   )
@@ -135,27 +157,36 @@ function ComparisonTable({ comparison, showAmounts }: ComparisonTableProps) {
 
 // ==================== CLIENT CARD ====================
 
-function ClientCompareCard({ summary, palette }: { summary: ClientSummary; palette: ReturnType<typeof useTheme>['palette'] }) {
+function ClientCompareCard({ summary }: { summary: ClientSummary }) {
+  const [expanded, setExpanded] = useState(false)
+
   return (
     <div
-      className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border-l-4"
+      className={cn(
+        "bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4 border-l-4 cursor-pointer transition-all duration-300",
+        "border border-slate-200/50 dark:border-slate-700/50 shadow-lg shadow-violet-500/5",
+        expanded && "ring-2 ring-violet-500/20"
+      )}
       style={{ borderLeftColor: summary.client.color }}
+      onClick={() => setExpanded(!expanded)}
     >
       <div className="flex items-center gap-3 mb-4">
         <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
+          className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold shadow-md"
           style={{ backgroundColor: summary.client.color }}
         >
           {summary.client.name.slice(0, 2).toUpperCase()}
         </div>
-        <div>
-          <h3 className="font-medium text-gray-900 dark:text-white">{summary.client.name}</h3>
-          <p className="text-xs text-gray-500">{summary.client.industry}</p>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-slate-900 dark:text-white truncate">{summary.client.name}</h3>
+          <p className="text-xs text-slate-500">{summary.client.industry}</p>
         </div>
         {summary.trend !== 'stable' && (
           <div className={cn(
-            'ml-auto flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium',
-            summary.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            'flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold',
+            summary.trend === 'up'
+              ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
+              : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
           )}>
             {summary.trend === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
             {Math.abs(summary.trendPercent).toFixed(0)}%
@@ -164,34 +195,54 @@ function ClientCompareCard({ summary, palette }: { summary: ClientSummary; palet
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <p className="text-[10px] text-gray-500">Resultados</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatNumber(summary.totalResults)}</p>
+        <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50">
+          <p className="text-[10px] text-slate-500 uppercase tracking-wide">Resultados</p>
+          <p className="text-lg font-bold text-slate-900 dark:text-white">{formatNumber(summary.totalResults)}</p>
         </div>
-        <div>
-          <p className="text-[10px] text-gray-500">CPR</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatMoney(summary.avgCpr)}</p>
+        <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50">
+          <p className="text-[10px] text-slate-500 uppercase tracking-wide">CPR</p>
+          <p className="text-lg font-bold text-slate-900 dark:text-white">{formatMoney(summary.avgCpr)}</p>
         </div>
-        <div>
-          <p className="text-[10px] text-gray-500">CTR</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatPercent(summary.avgCtr)}</p>
+        <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50">
+          <p className="text-[10px] text-slate-500 uppercase tracking-wide">CTR</p>
+          <p className="text-lg font-bold text-slate-900 dark:text-white">{formatPercent(summary.avgCtr)}</p>
         </div>
-        <div>
-          <p className="text-[10px] text-gray-500">Ganadores</p>
-          <p className="text-lg font-semibold" style={{ color: palette.success }}>{summary.winners}</p>
+        <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50">
+          <p className="text-[10px] text-slate-500 uppercase tracking-wide">Ganadores</p>
+          <p className="text-lg font-bold text-emerald-600">{summary.winners}</p>
         </div>
       </div>
 
-      {(summary.alerts > 0 || summary.fatigued > 0) && (
-        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex gap-3">
+      {/* Expanded details */}
+      {expanded && (
+        <div className="mt-4 pt-4 border-t border-slate-200/50 dark:border-slate-700/50 animate-fadeIn">
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <p className="text-[10px] text-slate-500">Escalables</p>
+              <p className="text-sm font-semibold text-blue-600">{summary.winners}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-slate-500">Testing</p>
+              <p className="text-sm font-semibold text-amber-600">{summary.fatigued}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-slate-500">Pausar</p>
+              <p className="text-sm font-semibold text-red-600">{summary.alerts}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {(summary.alerts > 0 || summary.fatigued > 0) && !expanded && (
+        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/50 flex gap-3">
           {summary.fatigued > 0 && (
-            <span className="text-xs text-amber-600 flex items-center gap-1">
+            <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
               <AlertTriangle size={12} />
               {summary.fatigued} fatigados
             </span>
           )}
           {summary.alerts > 0 && (
-            <span className="text-xs text-red-600 flex items-center gap-1">
+            <span className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
               <AlertTriangle size={12} />
               {summary.alerts} alertas
             </span>
@@ -205,31 +256,119 @@ function ClientCompareCard({ summary, palette }: { summary: ClientSummary; palet
 // ==================== COMPARE PAGE ====================
 
 export default function Compare() {
-  const { palette } = useTheme()
+  useTheme() // For future use with dynamic palette
+  useSelectedClient() // For future use with date filtering
   const [selectedClients, setSelectedClients] = useState<string[]>(['rc', 'tm'])
   const [showAmounts] = useState(true)
+  const [periodA, setPeriodA] = useState<DatePeriod>('7d')
+  const [periodB, setPeriodB] = useState<DatePeriod>('last_month')
+  const [compareMode, setCompareMode] = useState<'clients' | 'periods'>('clients')
 
   const comparison = compareClients(selectedClients)
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Comparar Clientes</h1>
-          <p className="text-sm text-gray-500">Analiza el rendimiento entre clientes y detecta oportunidades</p>
+    <div className="space-y-4 animate-fadeIn">
+      {/* Header - ENHANCED */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500/10 to-indigo-500/10">
+            <GitCompare className="w-6 h-6 text-violet-500" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Comparar</h1>
+            <p className="text-sm text-slate-500">Analiza rendimiento y detecta oportunidades</p>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Mode Toggle */}
+          <div className="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
+            <button
+              onClick={() => setCompareMode('clients')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
+                compareMode === 'clients'
+                  ? "bg-white dark:bg-slate-700 text-violet-600 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              Por Cliente
+            </button>
+            <button
+              onClick={() => setCompareMode('periods')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
+                compareMode === 'periods'
+                  ? "bg-white dark:bg-slate-700 text-violet-600 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              Por Período
+            </button>
+          </div>
+
+          <button className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+            <Filter className="w-4 h-4" />
+          </button>
+          <button className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 text-white font-medium shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all">
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Exportar</span>
+          </button>
         </div>
       </div>
 
+      {/* Period Comparison Selector (when in period mode) */}
+      {compareMode === 'periods' && (
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg shadow-violet-500/5">
+          <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-violet-500" />
+            Comparar Períodos
+          </h3>
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={periodA}
+              onChange={(e) => setPeriodA(e.target.value as DatePeriod)}
+              className="px-4 py-2.5 rounded-xl bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 text-slate-800 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+            >
+              {dateOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <div className="flex items-center gap-2 text-slate-400">
+              <ArrowRight className="w-4 h-4" />
+              <span className="text-sm">vs</span>
+              <ArrowRight className="w-4 h-4 rotate-180" />
+            </div>
+            <select
+              value={periodB}
+              onChange={(e) => setPeriodB(e.target.value as DatePeriod)}
+              className="px-4 py-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-slate-800 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+            >
+              {dateOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <button className="ml-auto px-4 py-2 rounded-xl bg-violet-500 text-white text-sm font-medium hover:bg-violet-600 transition-colors flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Comparar
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Client Selector */}
-      <ClientSelector selected={selectedClients} onChange={setSelectedClients} palette={palette} />
+      <ClientSelector selected={selectedClients} onChange={setSelectedClients} />
 
       {selectedClients.length >= 2 ? (
         <>
           {/* Client Cards */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {comparison.clients.map(summary => (
-              <ClientCompareCard key={summary.client.id} summary={summary} palette={palette} />
+              <ClientCompareCard key={summary.client.id} summary={summary} />
             ))}
           </div>
 
@@ -238,18 +377,19 @@ export default function Compare() {
 
           {/* Insights */}
           {comparison.insights.length > 0 && (
-            <div
-              className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm"
-              style={{ borderLeft: `4px solid ${palette.primary}` }}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <Lightbulb size={18} style={{ color: palette.primary }} />
-                <h3 className="font-medium text-gray-900 dark:text-white">Insights</h3>
+            <div className="bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-500/10 dark:to-indigo-500/10 rounded-2xl p-5 border border-violet-200/50 dark:border-violet-500/20">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 rounded-lg bg-violet-500/10">
+                  <Lightbulb size={18} className="text-violet-500" />
+                </div>
+                <h3 className="font-semibold text-slate-900 dark:text-white">Insights</h3>
               </div>
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {comparison.insights.map((insight, i) => (
-                  <li key={i} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
-                    <span style={{ color: palette.primary }}>•</span>
+                  <li key={i} className="text-sm text-slate-700 dark:text-slate-300 flex items-start gap-3">
+                    <span className="w-5 h-5 rounded-full bg-violet-500 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+                      {i + 1}
+                    </span>
                     {insight}
                   </li>
                 ))}
@@ -271,20 +411,25 @@ export default function Compare() {
               const avgCpr = industryClients.reduce((sum, c) => sum + c.avgCpr, 0) / industryClients.length
 
               return (
-                <div key={industry} className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4">
-                  <h4 className="font-medium text-amber-800 dark:text-amber-200 mb-2">
-                    Comparativa {industry}
-                  </h4>
-                  <p className="text-sm text-amber-700 dark:text-amber-300">
-                    CPR promedio de tus clientes de {industry}: <strong>${avgCpr.toFixed(0)}</strong>
+                <div key={industry} className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/10 dark:to-orange-500/10 rounded-2xl p-5 border border-amber-200/50 dark:border-amber-500/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <BarChart3 className="w-5 h-5 text-amber-600" />
+                    <h4 className="font-semibold text-amber-800 dark:text-amber-200">
+                      Comparativa {industry}
+                    </h4>
+                  </div>
+                  <p className="text-sm text-amber-700 dark:text-amber-300 mb-3">
+                    CPR promedio de tus clientes de {industry}: <strong className="text-lg">${avgCpr.toFixed(0)}</strong>
                   </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {industryClients.map(c => (
                       <span
                         key={c.client.id}
                         className={cn(
-                          'px-2 py-0.5 rounded text-xs font-medium',
-                          c.avgCpr < avgCpr ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                          'px-3 py-1.5 rounded-lg text-xs font-semibold',
+                          c.avgCpr < avgCpr
+                            ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
+                            : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
                         )}
                       >
                         {c.client.name}: ${c.avgCpr.toFixed(0)}
@@ -298,9 +443,12 @@ export default function Compare() {
           })()}
         </>
       ) : (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
-          <GitCompare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">Seleccioná al menos 2 clientes para comparar</p>
+        <div className="text-center py-16 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/10 to-indigo-500/10 flex items-center justify-center mx-auto mb-4">
+            <GitCompare className="w-8 h-8 text-violet-400" />
+          </div>
+          <p className="text-slate-600 dark:text-slate-400 font-medium">Seleccioná al menos 2 clientes para comparar</p>
+          <p className="text-sm text-slate-400 mt-1">Podés comparar hasta 4 clientes simultáneamente</p>
         </div>
       )}
     </div>

@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from .routers import campaigns, analysis, upload, alerts, advanced, clients
+from .routers import campaigns, analysis, upload, alerts, advanced, clients, ai
 from .database import init_db, seed_demo_data
 
 
@@ -25,10 +25,18 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS para desarrollo local
+# CORS para desarrollo local y producción
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:5176",
+        "http://76.13.166.17",
+        "http://76.13.166.17:8080",
+        "https://metrics.emiti.cloud"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,6 +49,7 @@ app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
 app.include_router(upload.router, prefix="/api/upload", tags=["upload"])
 app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])
 app.include_router(advanced.router, prefix="/api/advanced", tags=["advanced"])
+app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
 
 
 @app.get("/")

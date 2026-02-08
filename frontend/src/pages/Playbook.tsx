@@ -1,4 +1,5 @@
 import { useSelectedClient } from '../components/Layout'
+import { useTheme } from '../lib/theme'
 import { generatePlaybook, getAgencyROI, mockClients } from '../lib/mockData'
 import {
   BookOpen,
@@ -17,6 +18,7 @@ import { useState } from 'react'
 
 export default function Playbook() {
   const { selectedClientId } = useSelectedClient()
+  const { palette } = useTheme()
   const client = selectedClientId ? mockClients.find(c => c.id === selectedClientId) : null
   const [copied, setCopied] = useState(false)
 
@@ -79,7 +81,8 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
         </div>
         <button
           onClick={copyPlaybook}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors hover:opacity-90"
+          style={{ backgroundColor: palette.primary }}
         >
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           {copied ? 'Copiado!' : 'Copiar Playbook'}
@@ -184,7 +187,7 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
       {/* Learnings */}
       <div className="bg-white rounded-lg border p-6">
         <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
-          <Lightbulb className="w-5 h-5 text-primary-600" />
+          <Lightbulb className="w-5 h-5" style={{ color: palette.primary }} />
           Aprendizajes Detectados
         </h3>
 
@@ -229,19 +232,19 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
         <h3 className="font-semibold text-gray-900 mb-4">Estructura Recomendada</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-gray-50 rounded-lg text-center">
-            <div className="text-2xl font-bold text-primary-600">
+            <div className="text-2xl font-bold" style={{ color: palette.primary }}>
               {playbook.recommendedStructure.adsPerAdset}
             </div>
             <div className="text-sm text-gray-600">Ads por Ad Set</div>
           </div>
           <div className="p-4 bg-gray-50 rounded-lg text-center">
-            <div className="text-2xl font-bold text-primary-600">
+            <div className="text-2xl font-bold" style={{ color: palette.primary }}>
               {playbook.recommendedStructure.adsetsPerCampaign}
             </div>
             <div className="text-sm text-gray-600">Ad Sets por Campaign</div>
           </div>
           <div className="p-4 bg-gray-50 rounded-lg text-center">
-            <div className="text-2xl font-bold text-primary-600">
+            <div className="text-2xl font-bold" style={{ color: palette.primary }}>
               {playbook.recommendedStructure.creativeRotation}
             </div>
             <div className="text-sm text-gray-600">Rotación de Creativos</div>
@@ -250,7 +253,10 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
       </div>
 
       {/* Agency ROI */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg p-6 text-white">
+      <div
+        className="rounded-lg p-6 text-white"
+        style={{ background: `linear-gradient(135deg, ${palette.primary}, ${palette.secondary})` }}
+      >
         <h3 className="font-semibold flex items-center gap-2 mb-4">
           <DollarSign className="w-5 h-5" />
           ROI de la Agencia
@@ -260,21 +266,21 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
             <div className="text-2xl font-bold">
               ${roi.totalSpendManaged.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
             </div>
-            <div className="text-sm text-primary-100">Spend Manejado</div>
+            <div className="text-sm text-white/70">Spend Manejado</div>
           </div>
           <div>
             <div className="text-2xl font-bold">{roi.totalResults.toLocaleString()}</div>
-            <div className="text-sm text-primary-100">Resultados</div>
+            <div className="text-sm text-white/70">Resultados</div>
           </div>
           <div>
             <div className="text-2xl font-bold">+{roi.extraResultsGenerated.toFixed(0)}</div>
-            <div className="text-sm text-primary-100">Resultados Extra</div>
+            <div className="text-sm text-white/70">Resultados Extra</div>
           </div>
           <div>
             <div className="text-2xl font-bold">
               ${roi.estimatedValueGenerated.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
             </div>
-            <div className="text-sm text-primary-100">Valor Generado</div>
+            <div className="text-sm text-white/70">Valor Generado</div>
           </div>
         </div>
         <div className="mt-4 p-3 bg-white/10 rounded-lg">

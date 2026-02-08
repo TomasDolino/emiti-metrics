@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useSelectedClient } from '../components/Layout'
+import { useTheme } from '../lib/theme'
 import { simulateBudgetChange, simulatePauseAd, getAdsAnalysis, mockClients } from '../lib/mockData'
 import { Calculator, TrendingUp, Pause, DollarSign, Target, AlertCircle } from 'lucide-react'
 
 export default function Simulator() {
   const { selectedClientId } = useSelectedClient()
+  const { palette } = useTheme()
   const client = selectedClientId ? mockClients.find(c => c.id === selectedClientId) : null
   const [budgetChange, setBudgetChange] = useState(20)
   const [selectedAd, setSelectedAd] = useState('')
@@ -48,9 +50,10 @@ export default function Simulator() {
           onClick={() => setActiveTab('budget')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             activeTab === 'budget'
-              ? 'bg-primary-600 text-white'
+              ? 'text-white'
               : 'bg-white border text-gray-700 hover:bg-gray-50'
           }`}
+          style={activeTab === 'budget' ? { backgroundColor: palette.primary } : undefined}
         >
           <DollarSign className="w-4 h-4 inline mr-2" />
           Cambio de Budget
@@ -59,9 +62,10 @@ export default function Simulator() {
           onClick={() => setActiveTab('pause')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             activeTab === 'pause'
-              ? 'bg-primary-600 text-white'
+              ? 'text-white'
               : 'bg-white border text-gray-700 hover:bg-gray-50'
           }`}
+          style={activeTab === 'pause' ? { backgroundColor: palette.primary } : undefined}
         >
           <Pause className="w-4 h-4 inline mr-2" />
           Pausar Anuncio
@@ -100,11 +104,16 @@ export default function Simulator() {
                   <button
                     key={val}
                     onClick={() => setBudgetChange(val)}
-                    className={`px-3 py-1 text-sm rounded-lg border ${
+                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
                       budgetChange === val
-                        ? 'bg-primary-100 border-primary-300 text-primary-700'
+                        ? 'border-current'
                         : 'bg-gray-50 hover:bg-gray-100'
                     }`}
+                    style={budgetChange === val ? {
+                      backgroundColor: `${palette.primary}15`,
+                      borderColor: palette.primary,
+                      color: palette.primary
+                    } : undefined}
                   >
                     {val > 0 ? '+' : ''}{val}%
                   </button>
@@ -212,7 +221,7 @@ export default function Simulator() {
                 <select
                   value={selectedAd}
                   onChange={(e) => setSelectedAd(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">-- Elegir anuncio --</option>
                   {ads.map(ad => (

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Target, Play, Pause, Eye, EyeOff, ChevronRight } from 'lucide-react'
+import { Target, Play, Pause, Eye, EyeOff, ChevronRight, ChevronDown, DollarSign, TrendingUp, Users } from 'lucide-react'
 import { useTheme } from '../lib/theme'
 import { mockCampaigns, mockMetrics } from '../lib/mockData'
 import { formatMoney, formatNumber, formatPercent, cn } from '../lib/utils'
@@ -13,76 +13,149 @@ interface CampaignRowProps {
 }
 
 function CampaignRow({ campaign, showAmounts, palette }: CampaignRowProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
   const borderColor = campaign.status === 'ACTIVE' ? palette.success : '#9ca3af'
   const budgetPercent = Math.min(campaign.budgetUsed, 100)
 
   return (
     <div
-      className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border-l-4 hover:shadow-sm transition-shadow cursor-pointer"
+      className="bg-white dark:bg-gray-800 rounded-lg border-l-4 overflow-hidden hover:shadow-sm transition-shadow"
       style={{ borderLeftColor: borderColor }}
     >
-      {/* Status Icon */}
+      {/* Main Row */}
       <div
-        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: `${borderColor}20` }}
+        className="flex items-center gap-3 p-3 cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
       >
-        <Target className="w-4 h-4" style={{ color: borderColor }} />
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{campaign.name}</p>
-          <span
-            className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white flex-shrink-0"
-            style={{ backgroundColor: borderColor }}
-          >
-            {campaign.status === 'ACTIVE' ? 'Activa' : 'Pausada'}
-          </span>
+        {/* Status Icon */}
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: `${borderColor}20` }}
+        >
+          <Target className="w-4 h-4" style={{ color: borderColor }} />
         </div>
-        <p className="text-xs text-gray-500">{campaign.objective}</p>
-      </div>
 
-      {/* Budget Progress */}
-      <div className="hidden sm:block w-24">
-        <div className="flex items-center justify-between text-xs mb-0.5">
-          <span className="text-gray-500">{budgetPercent.toFixed(0)}%</span>
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={campaign.name}>{campaign.name}</p>
+            <span
+              className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white flex-shrink-0"
+              style={{ backgroundColor: borderColor }}
+            >
+              {campaign.status === 'ACTIVE' ? 'Activa' : 'Pausada'}
+            </span>
+          </div>
+          <p className="text-xs text-gray-500">{campaign.objective}</p>
         </div>
-        <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all"
-            style={{
-              width: `${budgetPercent}%`,
-              backgroundColor: budgetPercent > 90 ? palette.danger : budgetPercent > 70 ? palette.warning : palette.success
-            }}
-          />
+
+        {/* Budget Progress */}
+        <div className="hidden sm:block w-24">
+          <div className="flex items-center justify-between text-xs mb-0.5">
+            <span className="text-gray-500">{budgetPercent.toFixed(0)}%</span>
+          </div>
+          <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${budgetPercent}%`,
+                backgroundColor: budgetPercent > 90 ? palette.danger : budgetPercent > 70 ? palette.warning : palette.success
+              }}
+            />
+          </div>
         </div>
+
+        {/* Metrics */}
+        <div className="text-right hidden md:block">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">{formatNumber(campaign.totalResults)}</p>
+          <p className="text-xs text-gray-500">resultados</p>
+        </div>
+        <div className="text-right hidden md:block">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">
+            {showAmounts ? formatMoney(campaign.cpr) : '•••'}
+          </p>
+          <p className="text-xs text-gray-500">CPR</p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">{formatPercent(campaign.ctr)}</p>
+          <p className="text-xs text-gray-500">CTR</p>
+        </div>
+
+        {/* Actions */}
+        <button
+          className="p-1.5 rounded-lg transition-colors"
+          style={{ color: campaign.status === 'ACTIVE' ? palette.warning : palette.success }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {campaign.status === 'ACTIVE' ? <Pause size={16} /> : <Play size={16} />}
+        </button>
+        {isExpanded ? (
+          <ChevronDown size={16} className="text-gray-400 transition-transform" />
+        ) : (
+          <ChevronRight size={16} className="text-gray-400 transition-transform" />
+        )}
       </div>
 
-      {/* Metrics */}
-      <div className="text-right hidden md:block">
-        <p className="text-sm font-medium text-gray-900 dark:text-white">{formatNumber(campaign.totalResults)}</p>
-        <p className="text-xs text-gray-500">resultados</p>
-      </div>
-      <div className="text-right hidden md:block">
-        <p className="text-sm font-medium text-gray-900 dark:text-white">
-          {showAmounts ? formatMoney(campaign.cpr) : '•••'}
-        </p>
-        <p className="text-xs text-gray-500">CPR</p>
-      </div>
-      <div className="text-right">
-        <p className="text-sm font-medium text-gray-900 dark:text-white">{formatPercent(campaign.ctr)}</p>
-        <p className="text-xs text-gray-500">CTR</p>
-      </div>
-
-      {/* Actions */}
-      <button
-        className="p-1.5 rounded-lg transition-colors"
-        style={{ color: campaign.status === 'ACTIVE' ? palette.warning : palette.success }}
-      >
-        {campaign.status === 'ACTIVE' ? <Pause size={16} /> : <Play size={16} />}
-      </button>
-      <ChevronRight size={16} className="text-gray-400" />
+      {/* Expanded Details */}
+      {isExpanded && (
+        <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
+              <DollarSign size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">Presupuesto</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {showAmounts ? formatMoney(campaign.budget) : '•••'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
+              <TrendingUp size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">Gastado</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {showAmounts ? formatMoney(campaign.totalSpend) : '•••'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
+              <Target size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">Resultados</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{formatNumber(campaign.totalResults)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
+              <Users size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">Objetivo</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{campaign.objective}</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">Uso budget:</span>
+              <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${budgetPercent}%`,
+                    backgroundColor: budgetPercent > 90 ? palette.danger : budgetPercent > 70 ? palette.warning : palette.success
+                  }}
+                />
+              </div>
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{budgetPercent.toFixed(0)}%</span>
+            </div>
+            <span className={cn(
+              'text-xs px-2 py-1 rounded',
+              campaign.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+            )}>
+              {campaign.status === 'ACTIVE' ? 'Campaña activa' : 'Campaña pausada'}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
