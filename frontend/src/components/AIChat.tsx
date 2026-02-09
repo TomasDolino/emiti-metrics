@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Send, X, Sparkles, Bot, User, Maximize2, Minimize2,
   Trash2, MessageCircle, BarChart3, PieChart, LineChart as LineChartIcon,
-  TrendingUp, TrendingDown, ExternalLink, ArrowRight, DollarSign, Target,
+  TrendingUp, ExternalLink, ArrowRight, DollarSign, Target,
   RefreshCw, Copy, Check, Mic, MicOff, Zap, Clock, Star, StarOff, Bell, Download
 } from 'lucide-react'
 import { useTheme } from '../lib/theme'

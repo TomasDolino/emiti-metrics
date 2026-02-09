@@ -1,8 +1,5 @@
 import { useState, useEffect } from 'react'
 import {
-  TrendingUp,
-  TrendingDown,
-  Minus,
   ChevronDown,
   ChevronUp,
   Lightbulb,

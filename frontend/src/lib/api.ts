@@ -67,6 +67,8 @@ export interface DashboardData {
   classification_counts: Record<string, number>
   daily_metrics: Array<{ date: string; spend: number; results: number; impressions: number }>
   top_ads: AdAnalysis[]
+  top_campaigns?: Array<{ name: string; spend: number; results: number; cpr: number }>
+  patterns?: Array<{ pattern: string; impact: string }>
   period_days: number
 }
 
