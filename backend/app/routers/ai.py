@@ -2,21 +2,29 @@
 AI Router for Emiti Metrics
 Endpoints for AI-powered features with memory and learning
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 import json
 
+from ..auth import get_current_user
+from ..database import UserDB
+
 from ..services.ai_service import (
     chat_with_data,
+    chat_crm,
     analyze_creative,
     compare_creatives,
     generate_executive_report,
     generate_recommendations,
     generate_daily_insights,
     explain_anomaly,
-    check_ai_status
+    check_ai_status,
+    detect_anomalies,
+    analyze_anomalies_with_ai,
+    generate_weekly_digest,
+    get_contextual_suggestions
 )
 from ..services.ai_memory import (
     save_message,
@@ -80,7 +88,7 @@ class AnomalyExplanationRequest(BaseModel):
 # ==================== ENDPOINTS ====================
 
 @router.get("/status")
-async def get_ai_status():
+async def get_ai_status(current_user: UserDB = Depends(get_current_user)):
     """
     Check AI service status and configuration.
     """
@@ -88,7 +96,7 @@ async def get_ai_status():
 
 
 @router.post("/chat")
-async def chat_endpoint(request: ChatRequest):
+async def chat_endpoint(request: ChatRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Chat with your ad data using AI.
     Returns a streaming response.
@@ -114,7 +122,7 @@ async def chat_endpoint(request: ChatRequest):
 
 
 @router.post("/chat/sync")
-async def chat_sync_endpoint(request: ChatRequest):
+async def chat_sync_endpoint(request: ChatRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Chat with your ad data using AI (non-streaming version).
     """
@@ -130,8 +138,29 @@ async def chat_sync_endpoint(request: ChatRequest):
     return {"response": result}
 
 
+class CRMChatRequest(BaseModel):
+    message: str
+    data_context: Optional[Dict] = {}
+    chat_history: Optional[List[ChatMessage]] = []
+
+
+@router.post("/chat/crm")
+async def chat_crm_endpoint(request: CRMChatRequest):
+    """
+    Chat for CRM Grupo Albisu.
+    No auth required - uses separate API key validation.
+    """
+    response = await chat_crm(
+        user_message=request.message,
+        data_context=request.data_context or {},
+        chat_history=[m.model_dump() for m in request.chat_history] if request.chat_history else []
+    )
+
+    return {"response": response}
+
+
 @router.post("/analyze-creative")
-async def analyze_creative_endpoint(request: CreativeAnalysisRequest):
+async def analyze_creative_endpoint(request: CreativeAnalysisRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Analyze an ad creative image using Claude Vision.
     """
@@ -175,7 +204,7 @@ async def analyze_creative_upload(
 
 
 @router.post("/compare-creatives")
-async def compare_creatives_endpoint(request: CompareCreativesRequest):
+async def compare_creatives_endpoint(request: CompareCreativesRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Compare multiple ad creatives and get recommendations.
     """
@@ -194,7 +223,7 @@ async def compare_creatives_endpoint(request: CompareCreativesRequest):
 
 
 @router.post("/generate-report")
-async def generate_report_endpoint(request: ReportRequest):
+async def generate_report_endpoint(request: ReportRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Generate a natural language executive report.
     """
@@ -353,7 +382,7 @@ async def get_memory_history(
 
 
 @router.get("/memory/preferences/{user_id}")
-async def get_user_preferences(user_id: str):
+async def get_user_preferences(user_id: str, current_user: UserDB = Depends(get_current_user)):
     """Get learned preferences for a user."""
     return get_preferences(user_id)
 
@@ -434,6 +463,123 @@ async def export_training(min_quality: float = 0.7):
 
 
 @router.get("/training/stats")
-async def training_statistics():
+async def training_statistics(current_user: UserDB = Depends(get_current_user)):
     """Get training data statistics."""
     return get_training_stats()
+
+
+# ==================== ADVANCED AI FEATURES ====================
+
+class AnomalyDetectionRequest(BaseModel):
+    metrics_history: List[Dict]
+    threshold: float = 2.0
+
+
+class WeeklyDigestRequest(BaseModel):
+    client_id: str
+    client_name: str
+    weekly_data: Dict
+    previous_week_data: Optional[Dict] = None
+
+
+class ContextualSuggestionsRequest(BaseModel):
+    page: str
+    data: Optional[Dict] = None
+
+
+@router.post("/detect-anomalies")
+async def detect_anomalies_endpoint(
+    request: AnomalyDetectionRequest,
+    current_user: UserDB = Depends(get_current_user)
+):
+    """
+    Detect statistical anomalies in metrics data.
+    Uses Z-score method to identify unusual values.
+    """
+    anomalies = detect_anomalies(
+        metrics_history=request.metrics_history,
+        threshold=request.threshold
+    )
+
+    return {
+        "anomalies": anomalies,
+        "count": len(anomalies),
+        "threshold_used": request.threshold
+    }
+
+
+@router.post("/detect-anomalies/explain")
+async def explain_anomalies_endpoint(
+    request: AnomalyDetectionRequest,
+    current_user: UserDB = Depends(get_current_user)
+):
+    """
+    Detect anomalies and get AI explanation for them.
+    """
+    anomalies = detect_anomalies(
+        metrics_history=request.metrics_history,
+        threshold=request.threshold
+    )
+
+    if not anomalies:
+        return {
+            "anomalies": [],
+            "explanation": "No se detectaron anomalías significativas en los datos.",
+            "count": 0
+        }
+
+    # Get context from the latest metrics
+    context = request.metrics_history[-1] if request.metrics_history else {}
+
+    explanation = await analyze_anomalies_with_ai(anomalies, context)
+
+    return {
+        "anomalies": anomalies,
+        "explanation": explanation,
+        "count": len(anomalies)
+    }
+
+
+@router.post("/weekly-digest")
+async def weekly_digest_endpoint(
+    request: WeeklyDigestRequest,
+    current_user: UserDB = Depends(get_current_user)
+):
+    """
+    Generate a comprehensive weekly digest with AI insights.
+    Perfect for client reports and emails.
+    """
+    digest = await generate_weekly_digest(
+        client_id=request.client_id,
+        client_name=request.client_name,
+        weekly_data=request.weekly_data,
+        previous_week_data=request.previous_week_data
+    )
+
+    return digest
+
+
+@router.post("/suggestions")
+async def get_suggestions_endpoint(request: ContextualSuggestionsRequest):
+    """
+    Get smart contextual suggestions based on current page and data.
+    Returns relevant questions/prompts for the AI chat.
+    """
+    suggestions = get_contextual_suggestions(
+        page=request.page,
+        data=request.data
+    )
+
+    return {
+        "suggestions": suggestions,
+        "page": request.page
+    }
+
+
+@router.get("/suggestions/{page}")
+async def get_page_suggestions(page: str):
+    """
+    Quick endpoint to get suggestions for a specific page.
+    """
+    suggestions = get_contextual_suggestions(page=page)
+    return {"suggestions": suggestions, "page": page}

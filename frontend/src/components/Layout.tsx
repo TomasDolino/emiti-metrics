@@ -1,5 +1,5 @@
 import { useState, createContext, useContext, useEffect, useRef, useCallback } from 'react'
-import { Link, useLocation, Outlet } from 'react-router-dom'
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   BarChart3,
@@ -21,36 +21,30 @@ import {
   BookOpen,
   Upload,
   Brain,
-  Calendar,
   Sparkles,
   Sun,
   Moon,
   RefreshCw,
   Download,
-  Bell
+  Bell,
+  LogOut
 } from 'lucide-react'
 import { useTheme } from '../lib/theme'
+import { useAuth } from '../lib/AuthContext'
 import Settings from './Settings'
 import CommandPalette, { useCommandPalette } from './CommandPalette'
 import AIChat from './AIChat'
 import { mockClients } from '../lib/mockData'
 
-// Date period type
-type DatePeriod = '7d' | '14d' | '30d' | 'month' | 'last_month'
-
-// Client context for global client selection and date period
+// Client context for global client selection
 interface ClientContextType {
   selectedClientId: string | null
   setSelectedClientId: (id: string | null) => void
-  datePeriod: DatePeriod
-  setDatePeriod: (period: DatePeriod) => void
 }
 
 const ClientContext = createContext<ClientContextType>({
   selectedClientId: null,
-  setSelectedClientId: () => {},
-  datePeriod: '7d',
-  setDatePeriod: () => {}
+  setSelectedClientId: () => {}
 })
 
 export function useSelectedClient() {
@@ -77,24 +71,22 @@ const navItems = [
   { name: 'Subir Datos', href: '/upload', icon: Upload },
 ]
 
-const dateOptions: { value: DatePeriod; label: string }[] = [
-  { value: '7d', label: '7 días' },
-  { value: '14d', label: '14 días' },
-  { value: '30d', label: '30 días' },
-  { value: 'month', label: 'Este mes' },
-  { value: 'last_month', label: 'Mes anterior' },
-]
-
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false)
-  const [datePeriod, setDatePeriod] = useState<DatePeriod>('7d')
   const location = useLocation()
+  const navigate = useNavigate()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const commandPalette = useCommandPalette()
   const { theme, toggleTheme, palette } = useTheme()
+  const { user, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
 
   const activeClients = mockClients.filter(c => c.isActive)
   const selectedClient = selectedClientId ? mockClients.find(c => c.id === selectedClientId) : null
@@ -114,7 +106,7 @@ export default function Layout() {
   }, [clientDropdownOpen, handleKeyDown])
 
   return (
-    <ClientContext.Provider value={{ selectedClientId, setSelectedClientId, datePeriod, setDatePeriod }}>
+    <ClientContext.Provider value={{ selectedClientId, setSelectedClientId }}>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/20">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
@@ -293,21 +285,6 @@ export default function Layout() {
 
           <div className="flex-1" />
 
-          {/* Date selector - pill style */}
-          <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-full p-1">
-            <Calendar className="w-4 h-4 text-slate-400 ml-2" />
-            <select
-              value={datePeriod}
-              onChange={(e) => setDatePeriod(e.target.value as DatePeriod)}
-              className="text-sm bg-transparent border-none text-slate-700 dark:text-slate-200
-                focus:outline-none focus:ring-0 cursor-pointer pr-6 py-1"
-            >
-              {dateOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-
           {/* Action buttons */}
           <button
             className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
@@ -356,6 +333,21 @@ export default function Layout() {
             />
             <SettingsIcon className="w-5 h-5 text-slate-500" />
           </button>
+
+          {/* User menu */}
+          <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-700">
+            <div className="hidden sm:block text-right">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{user?.name}</p>
+              <p className="text-xs text-slate-400">{user?.email}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-2.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors group"
+              title="Cerrar sesión"
+            >
+              <LogOut className="w-5 h-5 text-slate-400 group-hover:text-red-500 transition-colors" />
+            </button>
+          </div>
         </header>
 
         {/* Page content */}

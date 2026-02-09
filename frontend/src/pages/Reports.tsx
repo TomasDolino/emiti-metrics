@@ -67,8 +67,8 @@ function ReportRow({ report, palette }: ReportRowProps) {
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{report.title}</p>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <p className="text-sm font-medium text-slate-900 dark:text-white dark:text-white truncate">{report.title}</p>
+        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <Calendar className="w-3 h-3" />
           <span>{formatDateFull(report.dateRange.start)} - {formatDateFull(report.dateRange.end)}</span>
         </div>
@@ -84,7 +84,7 @@ function ReportRow({ report, palette }: ReportRowProps) {
 
       {/* Created */}
       <div className="text-right hidden md:block">
-        <div className="flex items-center gap-1 text-xs text-gray-400">
+        <div className="flex items-center gap-1 text-xs text-slate-400">
           <Clock className="w-3 h-3" />
           {formatDateFull(report.createdAt)}
         </div>
@@ -111,8 +111,8 @@ export default function Reports() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Reportes</h1>
-          <p className="text-sm text-gray-500">Genera y descarga reportes de tus campañas</p>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white dark:text-white">Reportes</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Genera y descarga reportes de tus campañas</p>
         </div>
 
         <button
@@ -143,17 +143,17 @@ export default function Reports() {
               >
                 <FileText className="w-5 h-5" style={{ color: template.color }} />
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-500 transition-colors" />
+              <ChevronRight className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:text-slate-400 transition-colors" />
             </div>
-            <h3 className="font-medium text-gray-900 dark:text-white mt-3">{template.title}</h3>
-            <p className="text-sm text-gray-500 mt-1">{template.desc}</p>
+            <h3 className="font-medium text-slate-900 dark:text-white dark:text-white mt-3">{template.title}</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{template.desc}</p>
           </button>
         ))}
       </div>
 
       {/* Report History */}
       <div>
-        <h2 className="font-medium text-gray-900 dark:text-white mb-3">Historial de Reportes</h2>
+        <h2 className="font-medium text-slate-900 dark:text-white dark:text-white mb-3">Historial de Reportes</h2>
         <div className="space-y-2">
           {mockReports.map((report) => (
             <ReportRow key={report.id} report={report} palette={palette} />
@@ -163,8 +163,8 @@ export default function Reports() {
 
       {mockReports.length === 0 && (
         <div className="text-center py-12">
-          <File className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">No hay reportes generados</p>
+          <File className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-500 dark:text-slate-400">No hay reportes generados</p>
         </div>
       )}
     </div>

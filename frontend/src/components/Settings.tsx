@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { X, Sun, Moon, Palette, Check, ChevronDown, ChevronUp, RotateCcw, Sparkles } from 'lucide-react'
+import { X, Sun, Moon, Palette, Check, ChevronDown, ChevronUp, RotateCcw, Sparkles, Info } from 'lucide-react'
 import { useTheme, COLOR_PALETTES } from '../lib/theme'
 import type { ColorPalette } from '../lib/theme'
+import AboutModal from './AboutModal'
 
 interface SettingsProps {
   isOpen: boolean
@@ -83,6 +84,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   } = useTheme()
 
   const [showCustomEditor, setShowCustomEditor] = useState(isCustomPalette)
+  const [showAbout, setShowAbout] = useState(false)
 
   if (!isOpen) return null
 
@@ -246,6 +248,13 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         {/* Footer */}
         <div className="p-5 border-t border-slate-200/50 dark:border-slate-700/50 space-y-3 flex-shrink-0">
           <button
+            onClick={() => setShowAbout(true)}
+            className="w-full py-2.5 rounded-xl text-xs font-medium flex items-center justify-center gap-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+          >
+            <Info size={14} />
+            Acerca de Emiti Metrics
+          </button>
+          <button
             onClick={() => { resetToDefaults(); setShowCustomEditor(false) }}
             className="w-full py-2.5 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
           >
@@ -260,6 +269,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
           </button>
         </div>
       </div>
+
+      {/* About Modal */}
+      <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)} />
     </div>
   )
 }

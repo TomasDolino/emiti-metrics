@@ -44,10 +44,10 @@ export default function AILab() {
           <Brain className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white dark:text-white">
             AI Lab
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Herramientas potenciadas por Claude AI
           </p>
         </div>
@@ -74,8 +74,8 @@ export default function AILab() {
             {selectedClient.name.slice(0, 2).toUpperCase()}
           </div>
           <div>
-            <p className="font-medium text-gray-900 dark:text-white">{selectedClient.name}</p>
-            <p className="text-sm text-gray-500">El análisis se enfocará en este cliente</p>
+            <p className="font-medium text-slate-900 dark:text-white dark:text-white">{selectedClient.name}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">El análisis se enfocará en este cliente</p>
           </div>
         </div>
       )}
@@ -89,7 +89,7 @@ export default function AILab() {
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${
               activeTab === tab.id
                 ? 'text-white shadow-lg'
-                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                : 'bg-white dark:bg-gray-800 text-slate-600 dark:text-slate-400 dark:text-slate-300 dark:text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-gray-700'
             }`}
             style={activeTab === tab.id ? { backgroundColor: palette.primary } : undefined}
           >
@@ -131,9 +131,9 @@ export default function AILab() {
             <div className="p-2 rounded-lg" style={{ backgroundColor: `${palette.primary}20` }}>
               <ImageIcon className="w-5 h-5" style={{ color: palette.primary }} />
             </div>
-            <h3 className="font-medium text-gray-900 dark:text-white">Vision AI</h3>
+            <h3 className="font-medium text-slate-900 dark:text-white dark:text-white">Vision AI</h3>
           </div>
-          <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+          <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-400">
             <li className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
               Análisis de composición visual
@@ -154,9 +154,9 @@ export default function AILab() {
             <div className="p-2 rounded-lg" style={{ backgroundColor: `${palette.primary}20` }}>
               <Lightbulb className="w-5 h-5" style={{ color: palette.primary }} />
             </div>
-            <h3 className="font-medium text-gray-900 dark:text-white">Smart Recommendations</h3>
+            <h3 className="font-medium text-slate-900 dark:text-white dark:text-white">Smart Recommendations</h3>
           </div>
-          <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+          <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-400">
             <li className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
               Optimización de presupuesto
@@ -177,9 +177,9 @@ export default function AILab() {
             <div className="p-2 rounded-lg" style={{ backgroundColor: `${palette.primary}20` }}>
               <FileText className="w-5 h-5" style={{ color: palette.primary }} />
             </div>
-            <h3 className="font-medium text-gray-900 dark:text-white">Natural Language Reports</h3>
+            <h3 className="font-medium text-slate-900 dark:text-white dark:text-white">Natural Language Reports</h3>
           </div>
-          <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+          <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-400">
             <li className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
               Reportes ejecutivos automáticos

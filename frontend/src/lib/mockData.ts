@@ -11,12 +11,13 @@ export interface Client {
 }
 
 export const mockClients: Client[] = [
-  { id: 'rc', name: 'Restauración Central', industry: 'Restaurantes', metaAccountId: 'act_123456', isActive: true, createdAt: '2024-01-15', color: '#ef4444' },
-  { id: 'tm', name: 'TechMobile', industry: 'E-commerce', metaAccountId: 'act_234567', isActive: true, createdAt: '2024-02-01', color: '#3b82f6' },
-  { id: 'bf', name: 'Bella Fitness', industry: 'Fitness', metaAccountId: 'act_345678', isActive: true, createdAt: '2024-01-20', color: '#22c55e' },
-  { id: 'cd', name: 'Casa Deco', industry: 'E-commerce', metaAccountId: 'act_456789', isActive: true, createdAt: '2024-03-01', color: '#f59e0b' },
-  { id: 'dr', name: 'Dr. Smile', industry: 'Salud', metaAccountId: 'act_567890', isActive: false, createdAt: '2023-11-01', color: '#8b5cf6' },
-  { id: 'pm', name: 'Pizza Maestro', industry: 'Restaurantes', metaAccountId: 'act_678901', isActive: true, createdAt: '2024-02-15', color: '#ec4899' },
+  { id: 'affronti-marcos', name: 'Affronti Marcos', industry: 'Muebles', metaAccountId: 'act_affronti', isActive: true, createdAt: '2024-01-15', color: '#ef4444' },
+  { id: 'estela-dezi', name: 'Estela Dezi', industry: 'Decoración', metaAccountId: 'act_estela', isActive: true, createdAt: '2024-02-01', color: '#8b5cf6' },
+  { id: 'mora-interiores', name: 'Mora Interiores', industry: 'Decoración', metaAccountId: 'act_mora', isActive: true, createdAt: '2024-01-20', color: '#22c55e' },
+  { id: 'homestock', name: 'HomeStock', industry: 'Muebles', metaAccountId: 'act_homestock', isActive: true, createdAt: '2024-03-01', color: '#f59e0b' },
+  { id: 'homestock-2', name: 'Home Stock 2', industry: 'Muebles', metaAccountId: 'act_homestock2', isActive: true, createdAt: '2024-02-15', color: '#3b82f6' },
+  { id: 'wood-store', name: 'Wood Store', industry: 'Muebles', metaAccountId: 'act_woodstore', isActive: true, createdAt: '2024-03-01', color: '#ec4899' },
+  { id: 'restauracion-central', name: 'Restauracion Central', industry: 'Muebles', metaAccountId: 'act_restauracion', isActive: true, createdAt: '2024-01-10', color: '#14b8a6' },
 ]
 
 // ==================== CAMPAIGNS ====================

@@ -2,6 +2,8 @@
 Router para endpoints de alertas
 """
 from fastapi import APIRouter, HTTPException, Depends
+from ..auth import get_current_user
+from ..database import UserDB
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
@@ -98,7 +100,7 @@ async def get_alerts_count(
 
 
 @router.post("/{alert_id}/acknowledge")
-async def acknowledge_alert(alert_id: str, db: Session = Depends(get_db)):
+async def acknowledge_alert(alert_id: str, db: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
     """Marca una alerta como reconocida."""
     alert = db.query(AlertDB).filter(AlertDB.id == alert_id).first()
 
@@ -129,7 +131,7 @@ async def acknowledge_all_alerts(
 
 
 @router.get("/{alert_id}")
-async def get_alert(alert_id: str, db: Session = Depends(get_db)):
+async def get_alert(alert_id: str, db: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
     """Obtiene una alerta por ID."""
     alert = db.query(AlertDB).filter(AlertDB.id == alert_id).first()
 
@@ -140,7 +142,7 @@ async def get_alert(alert_id: str, db: Session = Depends(get_db)):
 
 
 @router.delete("/{alert_id}")
-async def delete_alert(alert_id: str, db: Session = Depends(get_db)):
+async def delete_alert(alert_id: str, db: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
     """Elimina una alerta."""
     alert = db.query(AlertDB).filter(AlertDB.id == alert_id).first()
 

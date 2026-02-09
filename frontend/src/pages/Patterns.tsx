@@ -49,28 +49,28 @@ export default function Patterns() {
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
             {patterns.filter(p => p.confidence === 'high').length}
           </div>
-          <div className="text-sm text-gray-500">Alta confianza</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">Alta confianza</div>
         </div>
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border p-4">
           <div className="text-2xl font-bold text-blue-600">
             {[...new Set(patterns.map(p => p.category))].length}
           </div>
-          <div className="text-sm text-gray-500">Categorías</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">Categorías</div>
         </div>
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border p-4">
           <div className="text-2xl font-bold text-purple-600">
             {patterns.filter(p => p.category === 'format').length}
           </div>
-          <div className="text-sm text-gray-500">Patrones de formato</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">Patrones de formato</div>
         </div>
       </div>
 
       {/* Patterns Grid */}
       {patterns.length === 0 ? (
-        <div className="bg-white rounded-lg border p-8 text-center">
-          <Lightbulb className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">No hay patrones detectados</h3>
-          <p className="text-gray-500 mt-2">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border p-8 text-center">
+          <Lightbulb className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white">No hay patrones detectados</h3>
+          <p className="text-slate-500 dark:text-slate-400 mt-2">
             Se necesitan más datos para detectar patrones significativos.
             <br />
             Mínimo: 10 registros de métricas.
@@ -81,20 +81,20 @@ export default function Patterns() {
           {patterns.map((pattern, idx) => (
             <div
               key={idx}
-              className="bg-white rounded-lg border p-5 hover:shadow-md transition-shadow"
+              className="bg-white dark:bg-slate-900 rounded-lg border p-5 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between mb-3">
-                <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${categoryColors[pattern.category] || 'bg-gray-100 text-gray-700'}`}>
+                <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${categoryColors[pattern.category] || 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}`}>
                   {categoryIcons[pattern.category]}
                   <span className="text-sm font-medium capitalize">{pattern.category}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${confidenceColors[pattern.confidence]}`} />
-                  <span className="text-xs text-gray-500 capitalize">{pattern.confidence}</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">{pattern.confidence}</span>
                 </div>
               </div>
 
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                 {pattern.pattern}
               </h3>
 
@@ -103,9 +103,9 @@ export default function Patterns() {
                 <span className="font-medium">{pattern.impact}</span>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Recomendación</div>
-                <div className="text-sm text-gray-700">{pattern.recommendation}</div>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+                <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Recomendación</div>
+                <div className="text-sm text-slate-700 dark:text-slate-300">{pattern.recommendation}</div>
               </div>
             </div>
           ))}
@@ -113,8 +113,8 @@ export default function Patterns() {
       )}
 
       {/* Legend */}
-      <div className="bg-white rounded-lg border p-4">
-        <h3 className="font-medium text-gray-900 mb-3">Categorías de Patrones</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-lg border p-4">
+        <h3 className="font-medium text-slate-900 dark:text-white mb-3">Categorías de Patrones</h3>
         <div className="flex flex-wrap gap-4">
           {Object.entries(categoryColors).map(([cat, color]) => (
             <div key={cat} className={`flex items-center gap-2 px-3 py-1 rounded-full border ${color}`}>

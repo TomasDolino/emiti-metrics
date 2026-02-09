@@ -1,22 +1,33 @@
 """
-Database setup with SQLAlchemy + SQLite
+Database setup with SQLAlchemy
+Supports SQLite (dev) and PostgreSQL (production)
 """
 from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, DateTime, Text, ForeignKey, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 import os
+import logging
 
-# Database file location
-DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'emiti_metrics.db')
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+logger = logging.getLogger(__name__)
 
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH}"
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False}  # Needed for SQLite
+# Database configuration - supports SQLite and PostgreSQL
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "sqlite:///./data/emiti_metrics.db"
 )
+
+# Create data directory for SQLite
+if DATABASE_URL.startswith("sqlite"):
+    DB_PATH = DATABASE_URL.replace("sqlite:///", "")
+    os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False}
+    )
+else:
+    # PostgreSQL - no special connect_args needed
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_size=10)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -169,6 +180,18 @@ class ActionLogDB(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class UserDB(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String, unique=True, nullable=False, index=True)
+    hashed_password = Column(String, nullable=False)
+    name = Column(String, nullable=False)
+    role = Column(String, default="user")  # admin, user
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class SnapshotDB(Base):
     __tablename__ = "snapshots"
 
@@ -192,9 +215,21 @@ def get_db():
         db.close()
 
 
+def get_db_connection():
+    """Get raw database connection for direct SQL queries."""
+    if DATABASE_URL.startswith("sqlite"):
+        import sqlite3
+        return sqlite3.connect(DATABASE_URL.replace("sqlite:///", ""))
+    else:
+        import psycopg2
+        return psycopg2.connect(DATABASE_URL)
+
+
 def init_db():
     """Initialize database tables."""
+    logger.info(f"Initializing database: {DATABASE_URL.split('@')[-1] if '@' in DATABASE_URL else DATABASE_URL}")
     Base.metadata.create_all(bind=engine)
+    logger.info("Database tables created successfully")
 
 
 def seed_demo_data():
@@ -204,14 +239,15 @@ def seed_demo_data():
         # Check if clients exist
         existing_clients = db.query(ClientDB).count()
         if existing_clients > 0:
-            return  # Already has data
+            logger.info(f"Database already has {existing_clients} clients, skipping seed")
+            return
 
         # Demo clients
         demo_clients = [
             ClientDB(
                 id="client-1",
                 name="Restaurante La Parrilla",
-                industry="Gastronomía",
+                industry="Gastronomia",
                 meta_account_id="act_123456789",
                 color="#10b981",
                 is_active=True
@@ -242,7 +278,7 @@ def seed_demo_data():
             ),
             ClientDB(
                 id="client-5",
-                name="Clínica Dental Sonrisas",
+                name="Clinica Dental Sonrisas",
                 industry="Salud",
                 meta_account_id="act_789123456",
                 color="#8b5cf6",
@@ -251,7 +287,7 @@ def seed_demo_data():
             ClientDB(
                 id="client-6",
                 name="Academia de Idiomas",
-                industry="Educación",
+                industry="Educacion",
                 meta_account_id="act_654321789",
                 color="#06b6d4",
                 is_active=False
@@ -283,8 +319,8 @@ def seed_demo_data():
                 type="CPA_INCREASE",
                 severity="CRITICAL",
                 title="Aumento de CPR",
-                message='El costo por resultado de "Imagen Genérica" aumentó 60%',
-                ad_name="Imagen Genérica",
+                message='El costo por resultado de "Imagen Generica" aumento 60%',
+                ad_name="Imagen Generica",
                 campaign_name="Mensajes - Febrero 2024",
                 metric="cpr",
                 previous_value=437.5,
@@ -298,8 +334,8 @@ def seed_demo_data():
                 type="NEW_WINNER",
                 severity="INFO",
                 title="Nuevo anuncio destacado",
-                message='"Video Restauración" supera el benchmark de la cuenta',
-                ad_name="Video Restauración",
+                message='"Video Restauracion" supera el benchmark de la cuenta',
+                ad_name="Video Restauracion",
                 campaign_name="Ventas - Marzo 2024",
                 acknowledged=True
             ),
@@ -309,10 +345,10 @@ def seed_demo_data():
             db.add(alert)
 
         db.commit()
-        print("Demo data seeded successfully!")
+        logger.info("Demo data seeded successfully!")
 
     except Exception as e:
         db.rollback()
-        print(f"Error seeding demo data: {e}")
+        logger.error(f"Error seeding demo data: {e}")
     finally:
         db.close()

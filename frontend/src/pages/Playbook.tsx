@@ -26,13 +26,13 @@ export default function Playbook() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Playbook</h1>
-          <p className="text-gray-500 mt-1">Guía de mejores prácticas por cliente</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Playbook</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Guía de mejores prácticas por cliente</p>
         </div>
-        <div className="bg-white rounded-lg border p-8 text-center">
-          <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">Seleccioná un cliente</h3>
-          <p className="text-gray-500 mt-2">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border p-8 text-center">
+          <BookOpen className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white">Seleccioná un cliente</h3>
+          <p className="text-slate-500 dark:text-slate-400 mt-2">
             Elegí un cliente del selector para ver su playbook personalizado.
           </p>
         </div>
@@ -74,8 +74,8 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Playbook</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Playbook</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
             Guía personalizada para {client?.name}
           </p>
         </div>
@@ -91,31 +91,31 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
 
       {/* Header Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border p-4">
-          <div className="flex items-center gap-2 text-gray-500 mb-1">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border p-4">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1">
             <Award className="w-4 h-4" />
             <span className="text-sm">Quality Score</span>
           </div>
-          <div className="text-2xl font-bold text-gray-900">{playbook.qualityScore}/100</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">{playbook.qualityScore}/100</div>
         </div>
-        <div className="bg-white rounded-lg border p-4">
-          <div className="flex items-center gap-2 text-gray-500 mb-1">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border p-4">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1">
             <Lightbulb className="w-4 h-4" />
             <span className="text-sm">Aprendizajes</span>
           </div>
-          <div className="text-2xl font-bold text-gray-900">{playbook.learnings.length}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">{playbook.learnings.length}</div>
         </div>
-        <div className="bg-white rounded-lg border p-4">
-          <div className="flex items-center gap-2 text-gray-500 mb-1">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border p-4">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1">
             <Calendar className="w-4 h-4" />
             <span className="text-sm">Generado</span>
           </div>
-          <div className="text-lg font-bold text-gray-900">
+          <div className="text-lg font-bold text-slate-900 dark:text-white">
             {new Date(playbook.generatedAt).toLocaleDateString('es-AR')}
           </div>
         </div>
-        <div className="bg-white rounded-lg border p-4">
-          <div className="flex items-center gap-2 text-gray-500 mb-1">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border p-4">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1">
             <TrendingUp className="w-4 h-4" />
             <span className="text-sm">ROI Agencia</span>
           </div>
@@ -126,7 +126,7 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* DO */}
-        <div className="bg-white rounded-lg border overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border overflow-hidden">
           <div className="px-4 py-3 bg-green-50 border-b border-green-100">
             <h3 className="font-semibold text-green-800 flex items-center gap-2">
               <CheckCircle className="w-5 h-5" />
@@ -135,12 +135,12 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
           </div>
           <div className="p-4 space-y-3">
             {playbook.do.length === 0 ? (
-              <p className="text-gray-500 text-sm">Sin recomendaciones específicas aún.</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm">Sin recomendaciones específicas aún.</p>
             ) : (
               playbook.do.map((item, idx) => (
                 <div key={idx} className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">{item}</span>
+                  <span className="text-slate-700 dark:text-slate-300">{item}</span>
                 </div>
               ))
             )}
@@ -148,7 +148,7 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
         </div>
 
         {/* DON'T */}
-        <div className="bg-white rounded-lg border overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border overflow-hidden">
           <div className="px-4 py-3 bg-red-50 border-b border-red-100">
             <h3 className="font-semibold text-red-800 flex items-center gap-2">
               <XCircle className="w-5 h-5" />
@@ -159,14 +159,14 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
             {playbook.dont.map((item, idx) => (
               <div key={idx} className="flex items-start gap-2">
                 <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">{item}</span>
+                <span className="text-slate-700 dark:text-slate-300">{item}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* MONITOR */}
-        <div className="bg-white rounded-lg border overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border overflow-hidden">
           <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
             <h3 className="font-semibold text-blue-800 flex items-center gap-2">
               <Eye className="w-5 h-5" />
@@ -177,7 +177,7 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
             {playbook.monitor.map((item, idx) => (
               <div key={idx} className="flex items-start gap-2">
                 <Eye className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">{item}</span>
+                <span className="text-slate-700 dark:text-slate-300">{item}</span>
               </div>
             ))}
           </div>
@@ -185,14 +185,14 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
       </div>
 
       {/* Learnings */}
-      <div className="bg-white rounded-lg border p-6">
-        <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
+      <div className="bg-white dark:bg-slate-900 rounded-lg border p-6">
+        <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
           <Lightbulb className="w-5 h-5" style={{ color: palette.primary }} />
           Aprendizajes Detectados
         </h3>
 
         {playbook.learnings.length === 0 ? (
-          <p className="text-gray-500">No hay suficientes datos para generar aprendizajes.</p>
+          <p className="text-slate-500 dark:text-slate-400">No hay suficientes datos para generar aprendizajes.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {playbook.learnings.map((learning, idx) => (
@@ -215,12 +215,12 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
                   }`}>
                     {learning.type === 'works' ? 'Funciona' : 'Insight'}
                   </span>
-                  <span className="text-xs px-2 py-0.5 bg-gray-100 rounded text-gray-600 capitalize">
+                  <span className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-600 dark:text-slate-400 capitalize">
                     {learning.category}
                   </span>
                 </div>
-                <p className="text-gray-800 font-medium">{learning.text}</p>
-                <p className="text-sm text-gray-500 mt-1">{learning.evidence}</p>
+                <p className="text-slate-800 dark:text-slate-100 font-medium">{learning.text}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{learning.evidence}</p>
               </div>
             ))}
           </div>
@@ -228,26 +228,26 @@ ${playbook.monitor.map(m => `• ${m}`).join('\n')}
       </div>
 
       {/* Recommended Structure */}
-      <div className="bg-white rounded-lg border p-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Estructura Recomendada</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-lg border p-6">
+        <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Estructura Recomendada</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-gray-50 rounded-lg text-center">
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
             <div className="text-2xl font-bold" style={{ color: palette.primary }}>
               {playbook.recommendedStructure.adsPerAdset}
             </div>
-            <div className="text-sm text-gray-600">Ads por Ad Set</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">Ads por Ad Set</div>
           </div>
-          <div className="p-4 bg-gray-50 rounded-lg text-center">
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
             <div className="text-2xl font-bold" style={{ color: palette.primary }}>
               {playbook.recommendedStructure.adsetsPerCampaign}
             </div>
-            <div className="text-sm text-gray-600">Ad Sets por Campaign</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">Ad Sets por Campaign</div>
           </div>
-          <div className="p-4 bg-gray-50 rounded-lg text-center">
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
             <div className="text-2xl font-bold" style={{ color: palette.primary }}>
               {playbook.recommendedStructure.creativeRotation}
             </div>
-            <div className="text-sm text-gray-600">Rotación de Creativos</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">Rotación de Creativos</div>
           </div>
         </div>
       </div>

@@ -7,8 +7,9 @@ from typing import List, Optional
 from datetime import datetime
 from uuid import uuid4
 
-from ..database import get_db, ClientDB, ClientConfigDB
+from ..database import get_db, ClientDB, ClientConfigDB, UserDB
 from ..models.schemas import Client
+from ..auth import get_current_user
 
 router = APIRouter()
 
@@ -16,7 +17,8 @@ router = APIRouter()
 @router.get("/", response_model=List[Client])
 async def list_clients(
     is_active: Optional[bool] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserDB = Depends(get_current_user)
 ):
     """Lista todos los clientes."""
     query = db.query(ClientDB)
@@ -39,8 +41,35 @@ async def list_clients(
     ]
 
 
+@router.get("/brands")
+async def get_brands(
+    client_id: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: UserDB = Depends(get_current_user)
+):
+    """
+    Obtiene la lista de marcas (clientes) disponibles para filtrar.
+    Las marcas son los clientes activos de la agencia.
+    """
+    query = db.query(ClientDB).filter(ClientDB.is_active == True)
+
+    if client_id:
+        query = query.filter(ClientDB.id == client_id)
+
+    clients = query.order_by(ClientDB.name).all()
+
+    return [
+        {
+            "id": c.id,
+            "name": c.name,
+            "color": getattr(c, 'color', None) or "#6366f1"
+        }
+        for c in clients
+    ]
+
+
 @router.get("/{client_id}", response_model=Client)
-async def get_client(client_id: str, db: Session = Depends(get_db)):
+async def get_client(client_id: str, db: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
     """Obtiene un cliente por ID."""
     client = db.query(ClientDB).filter(ClientDB.id == client_id).first()
 
@@ -62,7 +91,8 @@ async def create_client(
     name: str,
     industry: Optional[str] = None,
     meta_account_id: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserDB = Depends(get_current_user)
 ):
     """Crea un nuevo cliente."""
     client_id = f"client-{uuid4().hex[:8]}"
@@ -113,7 +143,8 @@ async def update_client(
     industry: Optional[str] = None,
     meta_account_id: Optional[str] = None,
     is_active: Optional[bool] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserDB = Depends(get_current_user)
 ):
     """Actualiza un cliente existente."""
     client = db.query(ClientDB).filter(ClientDB.id == client_id).first()
@@ -146,7 +177,7 @@ async def update_client(
 
 
 @router.delete("/{client_id}")
-async def delete_client(client_id: str, db: Session = Depends(get_db)):
+async def delete_client(client_id: str, db: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
     """Elimina un cliente (soft delete - marca como inactivo)."""
     client = db.query(ClientDB).filter(ClientDB.id == client_id).first()
 
@@ -163,7 +194,7 @@ async def delete_client(client_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/{client_id}/restore")
-async def restore_client(client_id: str, db: Session = Depends(get_db)):
+async def restore_client(client_id: str, db: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
     """Restaura un cliente eliminado."""
     client = db.query(ClientDB).filter(ClientDB.id == client_id).first()
 
@@ -179,7 +210,7 @@ async def restore_client(client_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{client_id}/summary")
-async def get_client_summary(client_id: str, db: Session = Depends(get_db)):
+async def get_client_summary(client_id: str, db: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
     """Obtiene un resumen del cliente con métricas y alertas."""
     from ..database import MetricDB, AlertDB, CampaignDB
 

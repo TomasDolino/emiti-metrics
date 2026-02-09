@@ -32,7 +32,7 @@ export default function Diagnostics() {
       case 'ready': return 'text-green-600 bg-green-100 border-green-200'
       case 'limited': return 'text-yellow-600 bg-yellow-100 border-yellow-200'
       case 'insufficient': return 'text-red-600 bg-red-100 border-red-200'
-      default: return 'text-gray-600 bg-gray-100 border-gray-200'
+      default: return 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200'
     }
   }
 
@@ -41,7 +41,7 @@ export default function Diagnostics() {
       case 'healthy': return 'text-green-600 bg-green-100 border-green-200'
       case 'warning': return 'text-yellow-600 bg-yellow-100 border-yellow-200'
       case 'critical': return 'text-red-600 bg-red-100 border-red-200'
-      default: return 'text-gray-600 bg-gray-100 border-gray-200'
+      default: return 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200'
     }
   }
 
@@ -50,7 +50,7 @@ export default function Diagnostics() {
       case 'critical': return 'border-l-red-500 bg-red-50'
       case 'warning': return 'border-l-yellow-500 bg-yellow-50'
       case 'info': return 'border-l-blue-500 bg-blue-50'
-      default: return 'border-l-gray-500 bg-gray-50'
+      default: return 'border-l-gray-500 bg-slate-50 dark:bg-slate-800'
     }
   }
 
@@ -58,8 +58,8 @@ export default function Diagnostics() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Diagnósticos Avanzados</h1>
-        <p className="text-gray-500 mt-1">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Diagnósticos Avanzados</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">
           {client ? `Diagnósticos para ${client.name}` : 'Diagnósticos de todos los clientes'}
         </p>
       </div>
@@ -67,9 +67,9 @@ export default function Diagnostics() {
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Account Quality Score */}
-        <div className="bg-white rounded-lg border p-6">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
               <Activity className="w-5 h-5" style={{ color: palette.primary }} />
               Account Quality Score
             </h3>
@@ -108,44 +108,44 @@ export default function Diagnostics() {
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-3xl font-bold text-gray-900">{quality.score}</span>
+                <span className="text-3xl font-bold text-slate-900 dark:text-white">{quality.score}</span>
               </div>
             </div>
           </div>
 
-          <p className="text-center text-gray-600 mb-4">{quality.message}</p>
+          <p className="text-center text-slate-600 dark:text-slate-400 mb-4">{quality.message}</p>
 
           {/* Summary */}
           <div className="grid grid-cols-4 gap-2 text-center mb-4">
-            <div className="bg-gray-50 rounded p-2">
-              <div className="text-lg font-bold text-gray-900">{quality.summary.days}</div>
-              <div className="text-xs text-gray-500">Días</div>
+            <div className="bg-slate-50 dark:bg-slate-800 rounded p-2">
+              <div className="text-lg font-bold text-slate-900 dark:text-white">{quality.summary.days}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Días</div>
             </div>
-            <div className="bg-gray-50 rounded p-2">
-              <div className="text-lg font-bold text-gray-900">
+            <div className="bg-slate-50 dark:bg-slate-800 rounded p-2">
+              <div className="text-lg font-bold text-slate-900 dark:text-white">
                 {(quality.summary.impressions / 1000).toFixed(0)}k
               </div>
-              <div className="text-xs text-gray-500">Impr.</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Impr.</div>
             </div>
-            <div className="bg-gray-50 rounded p-2">
-              <div className="text-lg font-bold text-gray-900">{quality.summary.results}</div>
-              <div className="text-xs text-gray-500">Results</div>
+            <div className="bg-slate-50 dark:bg-slate-800 rounded p-2">
+              <div className="text-lg font-bold text-slate-900 dark:text-white">{quality.summary.results}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Results</div>
             </div>
-            <div className="bg-gray-50 rounded p-2">
-              <div className="text-lg font-bold text-gray-900">{quality.summary.ads}</div>
-              <div className="text-xs text-gray-500">Ads</div>
+            <div className="bg-slate-50 dark:bg-slate-800 rounded p-2">
+              <div className="text-lg font-bold text-slate-900 dark:text-white">{quality.summary.ads}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Ads</div>
             </div>
           </div>
 
           {/* Issues */}
           {quality.issues.length > 0 && (
             <div className="space-y-2">
-              <div className="text-sm font-medium text-gray-700">Issues detectados:</div>
+              <div className="text-sm font-medium text-slate-700 dark:text-slate-300">Issues detectados:</div>
               {quality.issues.map((issue, idx) => (
                 <div key={idx} className="flex items-center justify-between p-2 bg-red-50 rounded border border-red-100">
                   <div className="flex items-center gap-2">
                     <XCircle className="w-4 h-4 text-red-500" />
-                    <span className="text-sm text-gray-700">{issue.issue}</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">{issue.issue}</span>
                   </div>
                   <span className="text-sm text-red-600 font-medium">{issue.impact}</span>
                 </div>
@@ -155,9 +155,9 @@ export default function Diagnostics() {
         </div>
 
         {/* Audience Saturation */}
-        <div className="bg-white rounded-lg border p-6">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
               <Users className="w-5 h-5" style={{ color: palette.primary }} />
               Saturación de Audiencia
             </h3>
@@ -196,17 +196,17 @@ export default function Diagnostics() {
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-3xl font-bold text-gray-900">{saturation.saturationScore}</span>
+                <span className="text-3xl font-bold text-slate-900 dark:text-white">{saturation.saturationScore}</span>
               </div>
             </div>
           </div>
 
-          <p className="text-center text-gray-600 mb-4">{saturation.recommendation}</p>
+          <p className="text-center text-slate-600 dark:text-slate-400 mb-4">{saturation.recommendation}</p>
 
           {/* Trends */}
           <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-500 mb-1">Frecuencia</div>
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Frecuencia</div>
               <div className="flex items-center gap-2">
                 {saturation.trends.frequency.changePercent > 0 ? (
                   <TrendingUp className="w-4 h-4 text-red-500" />
@@ -223,8 +223,8 @@ export default function Diagnostics() {
               </div>
             </div>
 
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-500 mb-1">Reach</div>
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Reach</div>
               <div className="flex items-center gap-2">
                 {saturation.trends.reach.changePercent < 0 ? (
                   <TrendingDown className="w-4 h-4 text-red-500" />
@@ -253,8 +253,8 @@ export default function Diagnostics() {
       </div>
 
       {/* Structure Diagnostics */}
-      <div className="bg-white rounded-lg border p-6">
-        <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
+      <div className="bg-white dark:bg-slate-900 rounded-lg border p-6">
+        <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
           <Layers className="w-5 h-5" style={{ color: palette.primary }} />
           Diagnóstico de Estructura
         </h3>
@@ -281,11 +281,11 @@ export default function Diagnostics() {
                         diag.severity === 'critical' ? 'text-red-500' :
                         diag.severity === 'warning' ? 'text-yellow-500' : 'text-blue-500'
                       }`} />
-                      <span className="font-medium text-gray-900">{diag.title}</span>
+                      <span className="font-medium text-slate-900 dark:text-white">{diag.title}</span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">{diag.message}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{diag.message}</p>
                     {diag.campaign && (
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         Campaña: {diag.campaign} {diag.adSet && `→ ${diag.adSet}`}
                       </p>
                     )}
@@ -297,9 +297,9 @@ export default function Diagnostics() {
                     {diag.severity}
                   </span>
                 </div>
-                <div className="mt-3 p-2 bg-white rounded border">
-                  <span className="text-xs text-gray-500">Recomendación: </span>
-                  <span className="text-sm text-gray-700">{diag.recommendation}</span>
+                <div className="mt-3 p-2 bg-white dark:bg-slate-900 rounded border">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Recomendación: </span>
+                  <span className="text-sm text-slate-700 dark:text-slate-300">{diag.recommendation}</span>
                 </div>
               </div>
             ))}

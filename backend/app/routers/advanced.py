@@ -2,9 +2,12 @@
 Router para funcionalidades avanzadas
 Pattern Mining, Simulador, Diagnósticos, Persistencia, etc.
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from typing import List, Optional
 import pandas as pd
+
+from ..auth import get_current_user
+from ..database import UserDB
 
 from ..models.schemas import (
     PatternMatch, ScenarioSimulation, StructureDiagnostic,
@@ -53,7 +56,7 @@ def _get_client_df(client_id: str) -> pd.DataFrame:
 # ==================== DATA UPLOAD ====================
 
 @router.post("/upload/{client_id}")
-async def upload_client_data(client_id: str, file: UploadFile = File(...)):
+async def upload_client_data(client_id: str, file: UploadFile = File(...), current_user: UserDB = Depends(get_current_user)):
     """
     Sube datos CSV de Meta Ads para un cliente.
     """
@@ -80,7 +83,7 @@ async def upload_client_data(client_id: str, file: UploadFile = File(...)):
 # ==================== PATTERN MINING ====================
 
 @router.get("/patterns/{client_id}", response_model=List[PatternMatch])
-async def get_patterns(client_id: str):
+async def get_patterns(client_id: str, current_user: UserDB = Depends(get_current_user)):
     """
     Detecta patrones de performance en los datos del cliente.
     """
@@ -92,7 +95,7 @@ async def get_patterns(client_id: str):
 # ==================== SIMULATIONS ====================
 
 @router.post("/simulate/budget", response_model=ScenarioSimulation)
-async def simulate_budget(request: SimulateBudgetRequest):
+async def simulate_budget(request: SimulateBudgetRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Simula el impacto de cambiar el presupuesto.
     """
@@ -102,7 +105,7 @@ async def simulate_budget(request: SimulateBudgetRequest):
 
 
 @router.post("/simulate/pause")
-async def simulate_pause(request: SimulatePauseRequest):
+async def simulate_pause(request: SimulatePauseRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Simula el impacto de pausar un anuncio específico.
     """
@@ -113,7 +116,7 @@ async def simulate_pause(request: SimulatePauseRequest):
 # ==================== DIAGNOSTICS ====================
 
 @router.get("/diagnostics/structure/{client_id}", response_model=List[StructureDiagnostic])
-async def get_structure_diagnostics(client_id: str):
+async def get_structure_diagnostics(client_id: str, current_user: UserDB = Depends(get_current_user)):
     """
     Diagnostica problemas de estructura de la cuenta.
     """
@@ -123,7 +126,7 @@ async def get_structure_diagnostics(client_id: str):
 
 
 @router.get("/diagnostics/quality/{client_id}", response_model=AccountQualityScore)
-async def get_quality_score(client_id: str):
+async def get_quality_score(client_id: str, current_user: UserDB = Depends(get_current_user)):
     """
     Calcula el score de calidad de la cuenta.
     """
@@ -133,7 +136,7 @@ async def get_quality_score(client_id: str):
 
 
 @router.get("/diagnostics/saturation/{client_id}", response_model=AudienceSaturation)
-async def get_saturation(client_id: str):
+async def get_saturation(client_id: str, current_user: UserDB = Depends(get_current_user)):
     """
     Predice saturación de audiencia.
     """
@@ -143,7 +146,7 @@ async def get_saturation(client_id: str):
 
 
 @router.get("/diagnostics/competition/{client_id}", response_model=CompetitionProxy)
-async def get_competition(client_id: str):
+async def get_competition(client_id: str, current_user: UserDB = Depends(get_current_user)):
     """
     Analiza presión competitiva proxy.
     """
@@ -155,7 +158,7 @@ async def get_competition(client_id: str):
 # ==================== AGENCY ROI ====================
 
 @router.get("/roi/{client_id}")
-async def get_agency_roi(client_id: str):
+async def get_agency_roi(client_id: str, current_user: UserDB = Depends(get_current_user)):
     """
     Calcula el ROI que la agencia genera para el cliente.
     """
@@ -180,7 +183,7 @@ async def get_playbook(client_id: str, client_name: str = "Cliente"):
 # ==================== SNAPSHOTS ====================
 
 @router.post("/snapshots")
-async def create_snapshot(request: SaveSnapshotRequest):
+async def create_snapshot(request: SaveSnapshotRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Guarda un snapshot del análisis actual.
     """
@@ -226,7 +229,7 @@ async def list_snapshots(client_id: str, limit: int = 10):
 
 
 @router.get("/snapshots/{client_id}/{snapshot_id}")
-async def get_snapshot_detail(client_id: str, snapshot_id: str):
+async def get_snapshot_detail(client_id: str, snapshot_id: str, current_user: UserDB = Depends(get_current_user)):
     """
     Obtiene un snapshot específico.
     """
@@ -237,7 +240,7 @@ async def get_snapshot_detail(client_id: str, snapshot_id: str):
 
 
 @router.post("/snapshots/compare", response_model=SnapshotComparison)
-async def compare_snapshots_endpoint(request: CompareSnapshotsRequest):
+async def compare_snapshots_endpoint(request: CompareSnapshotsRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Compara dos snapshots.
     """
@@ -265,7 +268,7 @@ async def get_trend(client_id: str, metric: str, periods: int = 8):
 # ==================== LEARNINGS ====================
 
 @router.post("/learnings", response_model=ClientLearning)
-async def create_learning(request: SaveLearningRequest):
+async def create_learning(request: SaveLearningRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Guarda un aprendizaje para el Knowledge Base.
     """
@@ -280,7 +283,7 @@ async def create_learning(request: SaveLearningRequest):
 
 
 @router.get("/learnings/{client_id}", response_model=List[ClientLearning])
-async def list_learnings(client_id: str):
+async def list_learnings(client_id: str, current_user: UserDB = Depends(get_current_user)):
     """
     Lista los aprendizajes de un cliente.
     """
@@ -291,7 +294,7 @@ async def list_learnings(client_id: str):
 # ==================== ACTIONS LOG ====================
 
 @router.post("/actions", response_model=ActionLog)
-async def create_action(request: LogActionRequest):
+async def create_action(request: LogActionRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Registra una acción tomada.
     """
@@ -306,7 +309,7 @@ async def create_action(request: LogActionRequest):
 
 
 @router.get("/actions/{client_id}")
-async def list_actions(client_id: str, days: int = 30):
+async def list_actions(client_id: str, days: int = 30, current_user: UserDB = Depends(get_current_user)):
     """
     Lista las acciones recientes de un cliente.
     """
@@ -316,7 +319,7 @@ async def list_actions(client_id: str, days: int = 30):
 # ==================== CLIENT CONFIG ====================
 
 @router.put("/config/{client_id}", response_model=ClientConfig)
-async def update_config(client_id: str, request: UpdateClientConfigRequest):
+async def update_config(client_id: str, request: UpdateClientConfigRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Actualiza la configuración de un cliente.
     """
@@ -337,7 +340,7 @@ async def update_config(client_id: str, request: UpdateClientConfigRequest):
 
 
 @router.get("/config/{client_id}", response_model=ClientConfig)
-async def get_config(client_id: str):
+async def get_config(client_id: str, current_user: UserDB = Depends(get_current_user)):
     """
     Obtiene la configuración de un cliente.
     """
@@ -348,7 +351,7 @@ async def get_config(client_id: str):
 # ==================== FULL ANALYSIS ====================
 
 @router.get("/full-analysis/{client_id}")
-async def get_full_analysis(client_id: str):
+async def get_full_analysis(client_id: str, current_user: UserDB = Depends(get_current_user)):
     """
     Ejecuta el análisis completo y retorna todos los insights.
     """
@@ -369,7 +372,7 @@ async def get_full_analysis(client_id: str):
 # ==================== ML PREDICTIONS ====================
 
 @router.get("/ml/fatigue/{client_id}")
-async def get_fatigue_predictions(client_id: str):
+async def get_fatigue_predictions(client_id: str, current_user: UserDB = Depends(get_current_user)):
     """
     Predice fatiga de anuncios usando ML.
     Retorna lista de anuncios ordenados por urgencia de acción.
@@ -428,7 +431,7 @@ async def get_anomalies(client_id: str, sensitivity: float = 2.0):
 
 
 @router.get("/ml/insights/{client_id}")
-async def get_consolidated_insights(client_id: str):
+async def get_consolidated_insights(client_id: str, current_user: UserDB = Depends(get_current_user)):
     """
     Ejecuta todos los modelos ML y devuelve un resumen consolidado.
     Incluye: predicción de fatiga, forecast de ROAS, detección de anomalías.

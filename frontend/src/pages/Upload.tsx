@@ -8,10 +8,9 @@ import { Upload as UploadIcon, FileSpreadsheet, CheckCircle, XCircle, AlertCircl
 interface UploadResult {
   success: boolean
   message: string
-  rows?: number
-  date_range?: { start: string; end: string }
-  campaigns?: number
-  ads?: number
+  summary?: any
+  database?: { rows_added: number; rows_updated: number; campaigns: number }
+  alerts_generated?: number
   error?: string
 }
 
@@ -69,10 +68,9 @@ export default function Upload() {
       setResult({
         success: true,
         message: response.message,
-        rows: response.rows,
-        date_range: response.date_range,
-        campaigns: response.campaigns,
-        ads: response.ads
+        summary: response.summary,
+        database: response.database,
+        alerts_generated: response.alerts_generated
       })
       setSelectedFile(null)
     } catch (error) {
@@ -103,13 +101,13 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Subir Datos</h1>
-          <p className="text-gray-500 mt-1">Importa datos de Meta Ads desde un archivo CSV</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Subir Datos</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Importa datos de Meta Ads desde un archivo CSV</p>
         </div>
-        <div className="bg-white rounded-lg border p-8 text-center">
-          <UploadIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">Selecciona un cliente</h3>
-          <p className="text-gray-500 mt-2">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-8 text-center">
+          <UploadIcon className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white">Selecciona un cliente</h3>
+          <p className="text-slate-500 dark:text-slate-400 mt-2">
             Elegi un cliente del selector para subir sus datos.
           </p>
         </div>
@@ -122,14 +120,14 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Subir Datos</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Subir Datos</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
             Importar datos de Meta Ads para {client?.name}
           </p>
         </div>
         <button
           onClick={downloadTemplate}
-          className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border rounded-lg hover:bg-slate-50 dark:bg-slate-800 transition-colors"
         >
           <Download className="w-4 h-4" />
           Descargar Template
@@ -158,7 +156,7 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
         className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
           dragActive
             ? 'border-current'
-            : 'border-gray-300 hover:border-gray-400'
+            : 'border-slate-300 dark:border-slate-600 hover:border-slate-400'
         }`}
         style={dragActive ? { borderColor: palette.primary, backgroundColor: `${palette.primary}10` } : undefined}
         onDragEnter={handleDrag}
@@ -180,17 +178,17 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
 
         {selectedFile ? (
           <div>
-            <p className="text-lg font-medium text-gray-900">{selectedFile.name}</p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-lg font-medium text-slate-900 dark:text-white">{selectedFile.name}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               {(selectedFile.size / 1024).toFixed(1)} KB
             </p>
           </div>
         ) : (
           <div>
-            <p className="text-lg font-medium text-gray-900">
+            <p className="text-lg font-medium text-slate-900 dark:text-white">
               Arrastra un archivo CSV o hace clic para seleccionar
             </p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Exporta desde Meta Ads Manager
             </p>
           </div>
@@ -244,25 +242,23 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
                 {result.message}
               </p>
 
-              {result.success && result.rows && (
+              {result.success && result.database && (
                 <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-white rounded-lg p-3 border border-green-200">
-                    <div className="text-2xl font-bold text-gray-900">{result.rows}</div>
-                    <div className="text-sm text-gray-500">Filas procesadas</div>
+                  <div className="bg-white dark:bg-slate-900 rounded-lg p-3 border border-green-200">
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white">{result.database.rows_added}</div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">Filas agregadas</div>
                   </div>
-                  <div className="bg-white rounded-lg p-3 border border-green-200">
-                    <div className="text-2xl font-bold text-gray-900">{result.campaigns}</div>
-                    <div className="text-sm text-gray-500">Campanas</div>
+                  <div className="bg-white dark:bg-slate-900 rounded-lg p-3 border border-green-200">
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white">{result.database.rows_updated}</div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">Filas actualizadas</div>
                   </div>
-                  <div className="bg-white rounded-lg p-3 border border-green-200">
-                    <div className="text-2xl font-bold text-gray-900">{result.ads}</div>
-                    <div className="text-sm text-gray-500">Anuncios</div>
+                  <div className="bg-white dark:bg-slate-900 rounded-lg p-3 border border-green-200">
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white">{result.database.campaigns}</div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">Campanas</div>
                   </div>
-                  <div className="bg-white rounded-lg p-3 border border-green-200">
-                    <div className="text-sm font-medium text-gray-900">
-                      {result.date_range?.start} - {result.date_range?.end}
-                    </div>
-                    <div className="text-sm text-gray-500">Periodo</div>
+                  <div className="bg-white dark:bg-slate-900 rounded-lg p-3 border border-green-200">
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white">{result.alerts_generated || 0}</div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">Alertas generadas</div>
                   </div>
                 </div>
               )}
@@ -272,8 +268,8 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
       )}
 
       {/* Column Reference */}
-      <div className="bg-white rounded-lg border p-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Columnas Requeridas</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-lg border p-6">
+        <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Columnas Requeridas</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {[
             { name: 'Nombre de la campana', desc: 'Campaign name' },
@@ -290,9 +286,9 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
             { name: 'Resultados', desc: 'Results' },
             { name: 'Coste por resultado', desc: 'Cost per result' },
           ].map(col => (
-            <div key={col.name} className="p-2 bg-gray-50 rounded-lg">
-              <div className="text-sm font-medium text-gray-900">{col.name}</div>
-              <div className="text-xs text-gray-500">{col.desc}</div>
+            <div key={col.name} className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <div className="text-sm font-medium text-slate-900 dark:text-white">{col.name}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">{col.desc}</div>
             </div>
           ))}
         </div>

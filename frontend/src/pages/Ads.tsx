@@ -1,20 +1,24 @@
-import { useState } from 'react'
-import { Image, Eye, EyeOff, ChevronRight, ChevronDown, TrendingUp, TrendingDown, Target, DollarSign } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Image, Eye, EyeOff, ChevronRight, ChevronDown, TrendingUp, TrendingDown, Target, DollarSign, Loader2, RefreshCw } from 'lucide-react'
 import { useTheme } from '../lib/theme'
-import { mockAdsAnalysis } from '../lib/mockData'
+import { api, type AdAnalysis } from '../lib/api'
 import { formatMoney, formatNumber, formatPercent, getClassificationColor, cn } from '../lib/utils'
 import type { AdClassification } from '../lib/utils'
+import { useSelectedClient } from '../components/Layout'
 
 // ==================== AD ROW (1 línea) ====================
 
 interface AdRowProps {
-  ad: typeof mockAdsAnalysis[0]
+  ad: AdAnalysis
   showAmounts: boolean
 }
 
 function AdRow({ ad, showAmounts }: AdRowProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const borderColor = getClassificationColor(ad.classification as AdClassification)
+
+  // Calculate fatigue score based on frequency and days running
+  const fatigueScore = Math.min(100, Math.round((ad.frequency / 4) * 50 + (ad.days_running / 30) * 50))
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border-l-4 overflow-hidden transition-shadow hover:shadow-sm" style={{ borderLeftColor: borderColor }}>
@@ -24,59 +28,59 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         {/* Thumbnail */}
-        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-          <Image className="w-5 h-5 text-gray-400" />
+        <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+          <Image className="w-5 h-5 text-slate-400" />
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={ad.adName}>{ad.adName}</p>
-          <p className="text-xs text-gray-500 truncate" title={ad.adSetName}>{ad.adSetName}</p>
+          <p className="text-sm font-medium text-slate-900 dark:text-white truncate" title={ad.ad_name}>{ad.ad_name}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 truncate" title={ad.ad_set_name}>{ad.ad_set_name}</p>
         </div>
 
         {/* Metrics */}
         <div className="text-right hidden sm:block">
-          <p className="text-sm font-medium text-gray-900 dark:text-white">
-            {showAmounts ? formatMoney(ad.totalSpend) : '•••'}
+          <p className="text-sm font-medium text-slate-900 dark:text-white">
+            {showAmounts ? formatMoney(ad.spend) : '•••'}
           </p>
-          <p className="text-xs text-gray-500">gasto</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">gasto</p>
         </div>
         <div className="text-right hidden md:block">
-          <p className="text-sm font-medium text-gray-900 dark:text-white">{formatNumber(ad.totalResults)}</p>
-          <p className="text-xs text-gray-500">resultados</p>
+          <p className="text-sm font-medium text-slate-900 dark:text-white">{formatNumber(ad.results)}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">resultados</p>
         </div>
         <div className="text-right hidden md:block">
-          <p className="text-sm font-medium text-gray-900 dark:text-white">
-            {showAmounts ? formatMoney(ad.avgCostPerResult) : '•••'}
+          <p className="text-sm font-medium text-slate-900 dark:text-white">
+            {showAmounts ? formatMoney(ad.cpr) : '•••'}
           </p>
-          <p className="text-xs text-gray-500">CPR</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">CPR</p>
         </div>
         <div className="text-right">
-          <p className="text-sm font-medium text-gray-900 dark:text-white">{formatPercent(ad.avgCtr)}</p>
-          <p className="text-xs text-gray-500">CTR</p>
+          <p className="text-sm font-medium text-slate-900 dark:text-white">{formatPercent(ad.ctr)}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">CTR</p>
         </div>
         <div className="text-right hidden sm:block">
           <p className={cn(
             'text-sm font-medium',
-            ad.avgFrequency > 3.5 ? 'text-red-500' : ad.avgFrequency > 2.5 ? 'text-amber-500' : 'text-gray-900 dark:text-white'
+            ad.frequency > 3.5 ? 'text-red-500' : ad.frequency > 2.5 ? 'text-amber-500' : 'text-slate-900 dark:text-white'
           )}>
-            {ad.avgFrequency.toFixed(1)}
+            {ad.frequency.toFixed(1)}
           </p>
-          <p className="text-xs text-gray-500">freq</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">freq</p>
         </div>
 
         {/* Fatigue Bar */}
         <div className="w-12 hidden lg:block">
-          <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-slate-100 dark:bg-slate-800 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
               className={cn(
                 'h-full rounded-full',
-                ad.fatigueScore > 60 ? 'bg-red-500' : ad.fatigueScore > 30 ? 'bg-amber-500' : 'bg-green-500'
+                fatigueScore > 60 ? 'bg-red-500' : fatigueScore > 30 ? 'bg-amber-500' : 'bg-green-500'
               )}
-              style={{ width: `${ad.fatigueScore}%` }}
+              style={{ width: `${fatigueScore}%` }}
             />
           </div>
-          <p className="text-[10px] text-gray-400 text-center mt-0.5">{ad.fatigueScore}%</p>
+          <p className="text-[10px] text-slate-400 text-center mt-0.5">{fatigueScore}%</p>
         </div>
 
         {/* Classification Badge */}
@@ -88,62 +92,62 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
         </span>
 
         {isExpanded ? (
-          <ChevronDown size={16} className="text-gray-400 hidden sm:block transition-transform" />
+          <ChevronDown size={16} className="text-slate-400 hidden sm:block transition-transform" />
         ) : (
-          <ChevronRight size={16} className="text-gray-400 hidden sm:block transition-transform" />
+          <ChevronRight size={16} className="text-slate-400 hidden sm:block transition-transform" />
         )}
       </div>
 
       {/* Expanded Details */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+        <div className="px-4 pb-4 pt-2 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:bg-gray-800/50">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <DollarSign size={16} className="text-gray-400" />
+              <DollarSign size={16} className="text-slate-400" />
               <div>
-                <p className="text-xs text-gray-500">Gasto Total</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {showAmounts ? formatMoney(ad.totalSpend) : '•••'}
+                <p className="text-xs text-slate-500 dark:text-slate-400">Gasto Total</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                  {showAmounts ? formatMoney(ad.spend) : '•••'}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <Target size={16} className="text-gray-400" />
+              <Target size={16} className="text-slate-400" />
               <div>
-                <p className="text-xs text-gray-500">Resultados</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{formatNumber(ad.totalResults)}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Resultados</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{formatNumber(ad.results)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <TrendingUp size={16} className="text-gray-400" />
+              <TrendingUp size={16} className="text-slate-400" />
               <div>
-                <p className="text-xs text-gray-500">Días Activo</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{ad.daysRunning}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Días Activo</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{ad.days_running}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <TrendingDown size={16} className="text-gray-400" />
+              <TrendingDown size={16} className="text-slate-400" />
               <div>
-                <p className="text-xs text-gray-500">Frecuencia</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{ad.avgFrequency.toFixed(1)}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Frecuencia</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{ad.frequency.toFixed(1)}</p>
               </div>
             </div>
           </div>
           <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">Fatiga:</span>
-              <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <span className="text-xs text-slate-500 dark:text-slate-400">Fatiga:</span>
+              <div className="w-24 h-2 bg-slate-200 dark:bg-slate-700 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
                   className={cn(
                     'h-full rounded-full',
-                    ad.fatigueScore > 60 ? 'bg-red-500' : ad.fatigueScore > 30 ? 'bg-amber-500' : 'bg-green-500'
+                    fatigueScore > 60 ? 'bg-red-500' : fatigueScore > 30 ? 'bg-amber-500' : 'bg-green-500'
                   )}
-                  style={{ width: `${ad.fatigueScore}%` }}
+                  style={{ width: `${fatigueScore}%` }}
                 />
               </div>
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{ad.fatigueScore}%</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{fatigueScore}%</span>
             </div>
-            <span className="text-xs text-gray-500">Campaña: {ad.campaignName}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Campaña: {ad.campaign_name}</span>
           </div>
         </div>
       )}
@@ -155,29 +159,73 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
 
 export default function Ads() {
   useTheme() // for consistency
+  const { selectedClientId } = useSelectedClient()
+  const [ads, setAds] = useState<AdAnalysis[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [showAmounts, setShowAmounts] = useState(true)
   const [sortBy, setSortBy] = useState<'results' | 'spend' | 'cpr' | 'ctr'>('results')
   const [filterClassification, setFilterClassification] = useState<AdClassification | 'ALL'>('ALL')
 
-  const sortedAds = [...mockAdsAnalysis]
+  const fetchAds = async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await api.getAdsAnalysis(selectedClientId || undefined)
+      setAds(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error cargando anuncios')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchAds()
+  }, [selectedClientId])
+
+  const sortedAds = [...ads]
     .filter(a => filterClassification === 'ALL' || a.classification === filterClassification)
     .sort((a, b) => {
       switch (sortBy) {
-        case 'results': return b.totalResults - a.totalResults
-        case 'spend': return b.totalSpend - a.totalSpend
-        case 'cpr': return a.avgCostPerResult - b.avgCostPerResult
-        case 'ctr': return b.avgCtr - a.avgCtr
+        case 'results': return b.results - a.results
+        case 'spend': return b.spend - a.spend
+        case 'cpr': return a.cpr - b.cpr
+        case 'ctr': return b.ctr - a.ctr
         default: return 0
       }
     })
 
   // Classification counts
   const classificationCounts = {
-    GANADOR: mockAdsAnalysis.filter(a => a.classification === 'GANADOR').length,
-    ESCALABLE: mockAdsAnalysis.filter(a => a.classification === 'ESCALABLE').length,
-    TESTING: mockAdsAnalysis.filter(a => a.classification === 'TESTING').length,
-    FATIGADO: mockAdsAnalysis.filter(a => a.classification === 'FATIGADO').length,
-    PAUSAR: mockAdsAnalysis.filter(a => a.classification === 'PAUSAR').length,
+    GANADOR: ads.filter(a => a.classification === 'GANADOR').length,
+    ESCALABLE: ads.filter(a => a.classification === 'ESCALABLE').length,
+    TESTING: ads.filter(a => a.classification === 'TESTING').length,
+    FATIGADO: ads.filter(a => a.classification === 'FATIGADO').length,
+    PAUSAR: ads.filter(a => a.classification === 'PAUSAR').length,
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <p className="text-red-500">{error}</p>
+        <button
+          onClick={fetchAds}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
+        >
+          <RefreshCw size={16} />
+          Reintentar
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -185,8 +233,8 @@ export default function Ads() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Anuncios</h1>
-          <p className="text-sm text-gray-500">{mockAdsAnalysis.length} anuncios activos</p>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Anuncios</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{ads.length} anuncios activos</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -194,7 +242,7 @@ export default function Ads() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 dark:text-white"
+            className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 dark:text-white"
           >
             <option value="results">Por Resultados</option>
             <option value="spend">Por Gasto</option>
@@ -205,7 +253,7 @@ export default function Ads() {
           {/* Toggle amounts */}
           <button
             onClick={() => setShowAmounts(!showAmounts)}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"
+            className="p-2 rounded-lg hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-gray-800 text-slate-500 dark:text-slate-400"
             title={showAmounts ? 'Ocultar montos' : 'Mostrar montos'}
           >
             {showAmounts ? <Eye size={18} /> : <EyeOff size={18} />}
@@ -220,11 +268,11 @@ export default function Ads() {
           className={cn(
             'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-shrink-0',
             filterClassification === 'ALL'
-              ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-              : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+              ? 'bg-gray-900 text-white dark:bg-white dark:text-slate-900'
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:bg-gray-800'
           )}
         >
-          Todos ({mockAdsAnalysis.length})
+          Todos ({ads.length})
         </button>
         {(Object.entries(classificationCounts) as [AdClassification, number][]).map(([classification, count]) => (
           <button
@@ -253,8 +301,10 @@ export default function Ads() {
 
       {sortedAds.length === 0 && (
         <div className="text-center py-12">
-          <Image className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">No hay anuncios con este filtro</p>
+          <Image className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-500 dark:text-slate-400">
+            {ads.length === 0 ? 'No hay anuncios. Sube un CSV para comenzar.' : 'No hay anuncios con este filtro'}
+          </p>
         </div>
       )}
     </div>

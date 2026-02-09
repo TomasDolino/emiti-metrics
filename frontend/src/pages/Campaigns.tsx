@@ -1,21 +1,25 @@
-import { useState } from 'react'
-import { Target, Play, Pause, Eye, EyeOff, ChevronRight, ChevronDown, DollarSign, TrendingUp, Users } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Target, Play, Pause, Eye, EyeOff, ChevronRight, ChevronDown, DollarSign, TrendingUp, Users, Loader2, RefreshCw } from 'lucide-react'
 import { useTheme } from '../lib/theme'
-import { mockCampaigns, mockMetrics } from '../lib/mockData'
+import { api, type Campaign } from '../lib/api'
 import { formatMoney, formatNumber, formatPercent, cn } from '../lib/utils'
+import { useSelectedClient } from '../components/Layout'
 
 // ==================== CAMPAIGN ROW (1 línea) ====================
 
 interface CampaignRowProps {
-  campaign: ReturnType<typeof useCampaignsWithMetrics>[0]
+  campaign: Campaign
   showAmounts: boolean
   palette: ReturnType<typeof useTheme>['palette']
 }
 
 function CampaignRow({ campaign, showAmounts, palette }: CampaignRowProps) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const borderColor = campaign.status === 'ACTIVE' ? palette.success : '#9ca3af'
-  const budgetPercent = Math.min(campaign.budgetUsed, 100)
+  const isActive = campaign.status === 'ACTIVE'
+  const borderColor = isActive ? palette.success : '#9ca3af'
+  const budgetUsed = campaign.daily_budget > 0 ? (campaign.spend / campaign.daily_budget) * 100 : 0
+  const budgetPercent = Math.min(budgetUsed, 100)
+  const ctr = campaign.impressions > 0 ? (campaign.results / campaign.impressions) * 100 : 0
 
   return (
     <div
@@ -38,23 +42,23 @@ function CampaignRow({ campaign, showAmounts, palette }: CampaignRowProps) {
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={campaign.name}>{campaign.name}</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white truncate" title={campaign.name}>{campaign.name}</p>
             <span
               className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white flex-shrink-0"
               style={{ backgroundColor: borderColor }}
             >
-              {campaign.status === 'ACTIVE' ? 'Activa' : 'Pausada'}
+              {isActive ? 'Activa' : 'Pausada'}
             </span>
           </div>
-          <p className="text-xs text-gray-500">{campaign.objective}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{campaign.objective}</p>
         </div>
 
         {/* Budget Progress */}
         <div className="hidden sm:block w-24">
           <div className="flex items-center justify-between text-xs mb-0.5">
-            <span className="text-gray-500">{budgetPercent.toFixed(0)}%</span>
+            <span className="text-slate-500 dark:text-slate-400">{budgetPercent.toFixed(0)}%</span>
           </div>
-          <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-slate-100 dark:bg-slate-800 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all"
               style={{
@@ -67,76 +71,76 @@ function CampaignRow({ campaign, showAmounts, palette }: CampaignRowProps) {
 
         {/* Metrics */}
         <div className="text-right hidden md:block">
-          <p className="text-sm font-medium text-gray-900 dark:text-white">{formatNumber(campaign.totalResults)}</p>
-          <p className="text-xs text-gray-500">resultados</p>
+          <p className="text-sm font-medium text-slate-900 dark:text-white">{formatNumber(campaign.results)}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">resultados</p>
         </div>
         <div className="text-right hidden md:block">
-          <p className="text-sm font-medium text-gray-900 dark:text-white">
+          <p className="text-sm font-medium text-slate-900 dark:text-white">
             {showAmounts ? formatMoney(campaign.cpr) : '•••'}
           </p>
-          <p className="text-xs text-gray-500">CPR</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">CPR</p>
         </div>
         <div className="text-right">
-          <p className="text-sm font-medium text-gray-900 dark:text-white">{formatPercent(campaign.ctr)}</p>
-          <p className="text-xs text-gray-500">CTR</p>
+          <p className="text-sm font-medium text-slate-900 dark:text-white">{formatPercent(ctr)}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">CTR</p>
         </div>
 
         {/* Actions */}
         <button
           className="p-1.5 rounded-lg transition-colors"
-          style={{ color: campaign.status === 'ACTIVE' ? palette.warning : palette.success }}
+          style={{ color: isActive ? palette.warning : palette.success }}
           onClick={(e) => e.stopPropagation()}
         >
-          {campaign.status === 'ACTIVE' ? <Pause size={16} /> : <Play size={16} />}
+          {isActive ? <Pause size={16} /> : <Play size={16} />}
         </button>
         {isExpanded ? (
-          <ChevronDown size={16} className="text-gray-400 transition-transform" />
+          <ChevronDown size={16} className="text-slate-400 transition-transform" />
         ) : (
-          <ChevronRight size={16} className="text-gray-400 transition-transform" />
+          <ChevronRight size={16} className="text-slate-400 transition-transform" />
         )}
       </div>
 
       {/* Expanded Details */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+        <div className="px-4 pb-4 pt-2 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:bg-gray-800/50">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <DollarSign size={16} className="text-gray-400" />
+              <DollarSign size={16} className="text-slate-400" />
               <div>
-                <p className="text-xs text-gray-500">Presupuesto</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {showAmounts ? formatMoney(campaign.budget) : '•••'}
+                <p className="text-xs text-slate-500 dark:text-slate-400">Presupuesto</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                  {showAmounts ? formatMoney(campaign.daily_budget) : '•••'}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <TrendingUp size={16} className="text-gray-400" />
+              <TrendingUp size={16} className="text-slate-400" />
               <div>
-                <p className="text-xs text-gray-500">Gastado</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {showAmounts ? formatMoney(campaign.totalSpend) : '•••'}
+                <p className="text-xs text-slate-500 dark:text-slate-400">Gastado</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                  {showAmounts ? formatMoney(campaign.spend) : '•••'}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <Target size={16} className="text-gray-400" />
+              <Target size={16} className="text-slate-400" />
               <div>
-                <p className="text-xs text-gray-500">Resultados</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{formatNumber(campaign.totalResults)}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Resultados</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{formatNumber(campaign.results)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <Users size={16} className="text-gray-400" />
+              <Users size={16} className="text-slate-400" />
               <div>
-                <p className="text-xs text-gray-500">Objetivo</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{campaign.objective}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Anuncios</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{campaign.ads_count}</p>
               </div>
             </div>
           </div>
           <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">Uso budget:</span>
-              <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <span className="text-xs text-slate-500 dark:text-slate-400">Uso budget:</span>
+              <div className="w-24 h-2 bg-slate-200 dark:bg-slate-700 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full"
                   style={{
@@ -145,13 +149,13 @@ function CampaignRow({ campaign, showAmounts, palette }: CampaignRowProps) {
                   }}
                 />
               </div>
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{budgetPercent.toFixed(0)}%</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{budgetPercent.toFixed(0)}%</span>
             </div>
             <span className={cn(
               'text-xs px-2 py-1 rounded',
-              campaign.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+              isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
             )}>
-              {campaign.status === 'ACTIVE' ? 'Campaña activa' : 'Campaña pausada'}
+              {isActive ? 'Campaña activa' : 'Campaña pausada'}
             </span>
           </div>
         </div>
@@ -160,57 +164,80 @@ function CampaignRow({ campaign, showAmounts, palette }: CampaignRowProps) {
   )
 }
 
-// ==================== HELPER ====================
-
-function useCampaignsWithMetrics() {
-  return mockCampaigns.map(campaign => {
-    const metrics = mockMetrics.filter(m => m.campaignName === campaign.name)
-    const totalSpend = metrics.reduce((sum, m) => sum + m.spend, 0)
-    const totalResults = metrics.reduce((sum, m) => sum + m.results, 0)
-    const totalImpressions = metrics.reduce((sum, m) => sum + m.impressions, 0)
-    const totalClicks = metrics.reduce((sum, m) => sum + m.clicks, 0)
-
-    return {
-      ...campaign,
-      totalSpend,
-      totalResults,
-      cpr: totalResults > 0 ? totalSpend / totalResults : 0,
-      ctr: totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0,
-      budgetUsed: (totalSpend / campaign.budget) * 100
-    }
-  })
-}
-
 // ==================== CAMPAIGNS PAGE ====================
 
 export default function Campaigns() {
   const { palette } = useTheme()
+  const { selectedClientId } = useSelectedClient()
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'PAUSED'>('ALL')
   const [showAmounts, setShowAmounts] = useState(true)
 
-  const campaignsWithMetrics = useCampaignsWithMetrics()
+  const fetchCampaigns = async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await api.getCampaigns(selectedClientId || undefined)
+      setCampaigns(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error cargando campañas')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchCampaigns()
+  }, [selectedClientId])
 
   const filteredCampaigns = statusFilter === 'ALL'
-    ? campaignsWithMetrics
-    : campaignsWithMetrics.filter(c => c.status === statusFilter)
+    ? campaigns
+    : campaigns.filter(c => c.status === statusFilter)
 
-  const activeCampaigns = campaignsWithMetrics.filter(c => c.status === 'ACTIVE').length
-  const totalSpend = campaignsWithMetrics.reduce((sum, c) => sum + c.totalSpend, 0)
+  const activeCampaigns = campaigns.filter(c => c.status === 'ACTIVE').length
+  const totalSpend = campaigns.reduce((sum, c) => sum + c.spend, 0)
+  const totalResults = campaigns.reduce((sum, c) => sum + c.results, 0)
+  const avgCpr = totalResults > 0 ? totalSpend / totalResults : 0
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <p className="text-red-500">{error}</p>
+        <button
+          onClick={fetchCampaigns}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
+        >
+          <RefreshCw size={16} />
+          Reintentar
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Campañas</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Campañas</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {activeCampaigns} activas • {showAmounts ? formatMoney(totalSpend) : '•••'} invertido
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Status Filter */}
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 dark:bg-gray-800 rounded-lg p-1">
             {(['ALL', 'ACTIVE', 'PAUSED'] as const).map((status) => (
               <button
                 key={status}
@@ -218,8 +245,8 @@ export default function Campaigns() {
                 className={cn(
                   'px-3 py-1 text-xs font-medium rounded-md transition-colors',
                   statusFilter === status
-                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white dark:bg-gray-700 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300'
                 )}
               >
                 {status === 'ALL' ? 'Todas' : status === 'ACTIVE' ? 'Activas' : 'Pausadas'}
@@ -230,7 +257,7 @@ export default function Campaigns() {
           {/* Toggle amounts */}
           <button
             onClick={() => setShowAmounts(!showAmounts)}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"
+            className="p-2 rounded-lg hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-gray-800 text-slate-500 dark:text-slate-400"
             title={showAmounts ? 'Ocultar montos' : 'Mostrar montos'}
           >
             {showAmounts ? <Eye size={18} /> : <EyeOff size={18} />}
@@ -241,25 +268,25 @@ export default function Campaigns() {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm">
-          <p className="text-xs text-gray-500">Campañas Activas</p>
-          <p className="text-xl font-semibold text-gray-900 dark:text-white">{activeCampaigns}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Campañas Activas</p>
+          <p className="text-xl font-semibold text-slate-900 dark:text-white">{activeCampaigns}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm">
-          <p className="text-xs text-gray-500">Resultados Totales</p>
-          <p className="text-xl font-semibold text-gray-900 dark:text-white">
-            {formatNumber(campaignsWithMetrics.reduce((sum, c) => sum + c.totalResults, 0))}
+          <p className="text-xs text-slate-500 dark:text-slate-400">Resultados Totales</p>
+          <p className="text-xl font-semibold text-slate-900 dark:text-white">
+            {formatNumber(totalResults)}
           </p>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm">
-          <p className="text-xs text-gray-500">Gasto Total</p>
-          <p className="text-xl font-semibold text-gray-900 dark:text-white">
+          <p className="text-xs text-slate-500 dark:text-slate-400">Gasto Total</p>
+          <p className="text-xl font-semibold text-slate-900 dark:text-white">
             {showAmounts ? formatMoney(totalSpend) : '•••••'}
           </p>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm">
-          <p className="text-xs text-gray-500">CPR Promedio</p>
-          <p className="text-xl font-semibold text-gray-900 dark:text-white">
-            {showAmounts ? formatMoney(campaignsWithMetrics.reduce((sum, c) => sum + c.cpr, 0) / campaignsWithMetrics.length) : '•••••'}
+          <p className="text-xs text-slate-500 dark:text-slate-400">CPR Promedio</p>
+          <p className="text-xl font-semibold text-slate-900 dark:text-white">
+            {showAmounts ? formatMoney(avgCpr) : '•••••'}
           </p>
         </div>
       </div>
@@ -278,8 +305,10 @@ export default function Campaigns() {
 
       {filteredCampaigns.length === 0 && (
         <div className="text-center py-12">
-          <Target className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">No hay campañas con este filtro</p>
+          <Target className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-500 dark:text-slate-400">
+            {campaigns.length === 0 ? 'No hay campañas. Sube un CSV para comenzar.' : 'No hay campañas con este filtro'}
+          </p>
         </div>
       )}
     </div>

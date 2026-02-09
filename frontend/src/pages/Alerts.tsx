@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   AlertTriangle,
   TrendingDown,
@@ -8,12 +8,17 @@ import {
   CheckCircle,
   Clock,
   X,
-  Bell
+  Bell,
+  Loader2,
+  RefreshCw
 } from 'lucide-react'
 import { useTheme } from '../lib/theme'
-import { mockAlerts } from '../lib/mockData'
+import { api, type Alert } from '../lib/api'
 import { timeAgo, cn } from '../lib/utils'
-import type { Alert, AlertType, AlertSeverity } from '../types'
+import { useSelectedClient } from '../components/Layout'
+
+type AlertType = string
+type AlertSeverity = 'INFO' | 'WARNING' | 'CRITICAL'
 
 // ==================== ALERT ROW (1 línea) ====================
 
@@ -73,7 +78,7 @@ function AlertRow({ alert, onAcknowledge, palette }: AlertRowProps) {
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{alert.title}</p>
+          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{alert.title}</p>
           <span
             className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white flex-shrink-0"
             style={{ backgroundColor: borderColor }}
@@ -81,47 +86,47 @@ function AlertRow({ alert, onAcknowledge, palette }: AlertRowProps) {
             {alert.severity}
           </span>
           {alert.acknowledged && (
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 flex items-center gap-0.5">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center gap-0.5">
               <CheckCircle className="w-3 h-3" />
               Leída
             </span>
           )}
         </div>
-        <p className="text-xs text-gray-500 truncate">{alert.message}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{alert.message}</p>
       </div>
 
       {/* Ad name */}
-      {alert.adName && (
+      {alert.ad_name && (
         <div className="text-right hidden sm:block">
-          <p className="text-xs text-gray-500">Anuncio</p>
-          <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[120px]">{alert.adName}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Anuncio</p>
+          <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[120px]">{alert.ad_name}</p>
         </div>
       )}
 
       {/* Change */}
-      {alert.changePercent !== undefined && (
+      {alert.change_percent !== undefined && (
         <div className="text-right hidden md:block">
           <p className={cn(
             'text-sm font-semibold',
-            alert.changePercent > 0 ? 'text-red-600' : 'text-green-600'
+            alert.change_percent > 0 ? 'text-red-600' : 'text-green-600'
           )}>
-            {alert.changePercent > 0 ? '+' : ''}{alert.changePercent.toFixed(0)}%
+            {alert.change_percent > 0 ? '+' : ''}{alert.change_percent.toFixed(0)}%
           </p>
-          <p className="text-xs text-gray-500">cambio</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">cambio</p>
         </div>
       )}
 
       {/* Time */}
-      <div className="text-xs text-gray-400 flex items-center gap-1 flex-shrink-0">
+      <div className="text-xs text-slate-400 flex items-center gap-1 flex-shrink-0">
         <Clock className="w-3 h-3" />
-        {timeAgo(alert.createdAt)}
+        {timeAgo(alert.created_at)}
       </div>
 
       {/* Actions */}
       {!alert.acknowledged && (
         <button
           onClick={() => onAcknowledge(alert.id)}
-          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-gray-600"
+          className="p-1.5 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-gray-700 rounded text-slate-400 hover:text-slate-600 dark:text-slate-400"
         >
           <X className="w-4 h-4" />
         </button>
@@ -134,17 +139,47 @@ function AlertRow({ alert, onAcknowledge, palette }: AlertRowProps) {
 
 export default function Alerts() {
   const { palette } = useTheme()
-  const [alerts, setAlerts] = useState(mockAlerts)
+  const { selectedClientId } = useSelectedClient()
+  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<'ALL' | 'ACTIVE' | 'ACKNOWLEDGED'>('ALL')
 
-  const handleAcknowledge = (id: string) => {
-    setAlerts(prev => prev.map(a =>
-      a.id === id ? { ...a, acknowledged: true } : a
-    ))
+  const fetchAlerts = async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await api.getAlerts({ clientId: selectedClientId || undefined })
+      setAlerts(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error cargando alertas')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleAcknowledgeAll = () => {
-    setAlerts(prev => prev.map(a => ({ ...a, acknowledged: true })))
+  useEffect(() => {
+    fetchAlerts()
+  }, [selectedClientId])
+
+  const handleAcknowledge = async (id: string) => {
+    try {
+      await api.acknowledgeAlert(id)
+      setAlerts(prev => prev.map(a =>
+        a.id === id ? { ...a, acknowledged: true } : a
+      ))
+    } catch (err) {
+      console.error('Error acknowledging alert:', err)
+    }
+  }
+
+  const handleAcknowledgeAll = async () => {
+    try {
+      await api.acknowledgeAllAlerts()
+      setAlerts(prev => prev.map(a => ({ ...a, acknowledged: true })))
+    } catch (err) {
+      console.error('Error acknowledging all alerts:', err)
+    }
   }
 
   const filteredAlerts = alerts.filter(a => {
@@ -156,13 +191,36 @@ export default function Alerts() {
   const activeCount = alerts.filter(a => !a.acknowledged).length
   const criticalCount = alerts.filter(a => !a.acknowledged && a.severity === 'CRITICAL').length
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <p className="text-red-500">{error}</p>
+        <button
+          onClick={fetchAlerts}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
+        >
+          <RefreshCw size={16} />
+          Reintentar
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Alertas</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Alertas</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {activeCount > 0
               ? `${activeCount} alerta${activeCount > 1 ? 's' : ''} activa${activeCount > 1 ? 's' : ''}`
               : 'Sin alertas activas'}
@@ -174,7 +232,7 @@ export default function Alerts() {
 
         <div className="flex items-center gap-2">
           {/* Filter */}
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 dark:bg-gray-800 rounded-lg p-1">
             {(['ALL', 'ACTIVE', 'ACKNOWLEDGED'] as const).map((f) => (
               <button
                 key={f}
@@ -182,8 +240,8 @@ export default function Alerts() {
                 className={cn(
                   'px-3 py-1 text-xs font-medium rounded-md transition-colors',
                   filter === f
-                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white dark:bg-gray-700 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300'
                 )}
               >
                 {f === 'ALL' ? 'Todas' : f === 'ACTIVE' ? 'Activas' : 'Leídas'}
@@ -217,7 +275,7 @@ export default function Alerts() {
               className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border-l-4"
               style={{ borderLeftColor: color }}
             >
-              <p className="text-xs text-gray-500">{label}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
               <p className="text-xl font-semibold" style={{ color }}>{count}</p>
             </div>
           )
@@ -238,8 +296,8 @@ export default function Alerts() {
 
       {filteredAlerts.length === 0 && (
         <div className="text-center py-12">
-          <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">
+          <Bell className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-500 dark:text-slate-400">
             {filter === 'ACTIVE'
               ? 'No hay alertas activas'
               : filter === 'ACKNOWLEDGED'

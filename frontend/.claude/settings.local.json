@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ssh root@76.13.166.17 \"sudo -u postgres psql -c \"\"GRANT ALL PRIVILEGES ON DATABASE emiti_finance TO emiti;\"\" && sudo -u postgres psql -d emiti_finance -c \"\"GRANT ALL ON SCHEMA public TO emiti;\"\"\")",
+      "Bash(ssh root@76.13.166.17 \"sudo -u postgres psql -c \"\"ALTER USER emiti WITH PASSWORD ''Emiti2024Secure!'';\"\" && PGPASSWORD=''Emiti2024Secure!'' psql -h 127.0.0.1 -U emiti -d emiti_finance -c ''SELECT 1;''\")",
+      "Bash(ssh root@76.13.166.17 \"systemctl restart emiti-finance && sleep 3 && curl -s http://localhost:8001/health\")",
+      "Bash(ssh:*)",
+      "Bash(curl:*)",
+      "Bash(openssl s_client:*)",
+      "Bash(openssl x509:*)",
+      "Bash(tree:*)",
+      "Bash(npm run build:*)",
+      "Bash(ping:*)",
+      "Bash(nc:*)",
+      "Bash(doctl account get:*)",
+      "Bash(whois 137.184.84.69)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(for port in 22 80 443 8000 8001 8080 3000)",
+      "Bash(do nc -z -w 2 137.184.84.69 $port)",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash(rsync:*)",
+      "Bash(scp:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(ai\\): upgrade AI system to production-grade 9/10\n\nBackend:\n- Add response caching with MD5 hash and 5min TTL\n- Add Tool Use system \\(pause_campaign, adjust_budget, create_alert, scale_ad, suggest_creative_refresh\\)\n- Add statistical anomaly detection with Z-score\n- Add weekly digest generation for client reports\n- Add contextual suggestions based on current page\n- Add explainable AI with confidence indicators\n- New endpoints: /detect-anomalies, /weekly-digest, /suggestions\n\nFrontend AIChat:\n- Add Claude AI integration \\(smart mode toggle\\)\n- Add voice input with Web Speech API\n- Add proactive alerts badge and panel\n- Add query history and favorites\n- Add contextual page-aware suggestions\n- Add chart export as PNG\n- Add confidence indicators on responses\n- Improve UX with expand/collapse, dark mode\n\nAlso includes:\n- Client filtering persistence across all pages\n- Auth system and Meta OAuth integration\n- Various bug fixes and UI improvements\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  }
+}

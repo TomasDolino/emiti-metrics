@@ -1,12 +1,14 @@
 """
 Router para upload y procesamiento de CSVs
 """
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Depends
 from typing import Optional
 
 from ..services.csv_processor import process_csv, get_campaign_summary
 from ..services.analysis import analyze_campaign
 from ..models.schemas import CampaignObjective, AnalysisResponse
+from ..auth import get_current_user
+from ..database import UserDB
 
 router = APIRouter()
 
@@ -15,7 +17,8 @@ router = APIRouter()
 async def upload_csv(
     file: UploadFile = File(...),
     client_id: str = Form(...),
-    objective: CampaignObjective = Form(CampaignObjective.MESSAGES)
+    objective: CampaignObjective = Form(CampaignObjective.MESSAGES),
+    current_user: UserDB = Depends(get_current_user)
 ):
     """
     Sube y procesa un archivo CSV de Meta Ads.
@@ -53,7 +56,8 @@ async def upload_and_analyze(
     file: UploadFile = File(...),
     client_id: str = Form(...),
     objective: CampaignObjective = Form(CampaignObjective.MESSAGES),
-    campaign_name: Optional[str] = Form(None)
+    campaign_name: Optional[str] = Form(None),
+    current_user: UserDB = Depends(get_current_user)
 ):
     """
     Sube un CSV y ejecuta análisis completo.
@@ -84,7 +88,7 @@ async def upload_and_analyze(
 
 
 @router.get("/template")
-async def get_csv_template():
+async def get_csv_template(current_user: UserDB = Depends(get_current_user)):
     """
     Retorna información sobre el formato esperado del CSV.
     """
