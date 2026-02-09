@@ -22,6 +22,7 @@ const Diagnostics = lazy(() => import('./pages/Diagnostics'))
 const Playbook = lazy(() => import('./pages/Playbook'))
 const Upload = lazy(() => import('./pages/Upload'))
 const AILab = lazy(() => import('./pages/AILab'))
+const MetaConnect = lazy(() => import('./pages/MetaConnect'))
 
 function PageLoader() {
   return (
@@ -75,6 +76,7 @@ function AppRoutes() {
           <Route path="clients" element={<Clients />} />
           <Route path="compare" element={<Compare />} />
           <Route path="ai-lab" element={<AILab />} />
+          <Route path="meta" element={<MetaConnect />} />
         </Route>
       </Routes>
     </Suspense>

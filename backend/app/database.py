@@ -155,6 +155,25 @@ class ClientConfigDB(Base):
     client = relationship("ClientDB", back_populates="config")
 
 
+class MetaTokenDB(Base):
+    """Stores Meta API tokens per client."""
+    __tablename__ = "meta_tokens"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    client_id = Column(String, ForeignKey("clients.id"), unique=True, nullable=False)
+    access_token = Column(Text, nullable=False)  # Encrypted in production
+    ad_account_id = Column(String, nullable=True)  # Format: act_XXXXXXXXX
+    user_id = Column(String, nullable=True)
+    scopes = Column(JSON, default=[])
+    expires_at = Column(DateTime, nullable=True)
+    status = Column(String, default="valid")  # valid, expiring_soon, expired, invalid
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship
+    client = relationship("ClientDB")
+
+
 class LearningDB(Base):
     __tablename__ = "learnings"
 
@@ -191,6 +210,37 @@ class UserDB(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    # Two-Factor Authentication (2FA)
+    totp_secret = Column(String, nullable=True)  # Encrypted TOTP secret
+    is_2fa_enabled = Column(Boolean, default=False)
+    backup_codes = Column(JSON, default=[])  # List of hashed backup codes
+
+    # Security fields for IP whitelisting and intrusion detection
+    allowed_ips = Column(JSON, default=[])  # List of allowed IP addresses/CIDR ranges
+    last_login_ip = Column(String, nullable=True)
+    failed_login_count = Column(Integer, default=0)
+    locked_until = Column(DateTime, nullable=True)  # Account lockout timestamp
+
+    # Relationships
+    refresh_tokens = relationship("RefreshTokenDB", back_populates="user", cascade="all, delete-orphan")
+    login_history = relationship("LoginHistoryDB", back_populates="user", cascade="all, delete-orphan")
+    security_alerts = relationship("SecurityAlertDB", back_populates="user", cascade="all, delete-orphan")
+
+
+class RefreshTokenDB(Base):
+    """Stores refresh tokens for JWT authentication."""
+    __tablename__ = "refresh_tokens"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    token_hash = Column(String, nullable=False, unique=True, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    is_revoked = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationship
+    user = relationship("UserDB", back_populates="refresh_tokens")
+
 
 class SnapshotDB(Base):
     __tablename__ = "snapshots"
@@ -201,6 +251,98 @@ class SnapshotDB(Base):
     period_end = Column(DateTime, nullable=False)
     metrics_summary = Column(JSON, default={})
     analysis_data = Column(JSON, default={})
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class LoginHistoryDB(Base):
+    """Stores login history for security auditing."""
+    __tablename__ = "login_history"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    ip_address = Column(String, nullable=False)
+    user_agent = Column(String, nullable=True)
+    success = Column(Boolean, nullable=False)
+    failure_reason = Column(String, nullable=True)  # e.g., "invalid_password", "account_locked", "ip_blocked"
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationship
+    user = relationship("UserDB", back_populates="login_history")
+
+
+class SecurityAlertDB(Base):
+    """Stores security alerts for intrusion detection."""
+    __tablename__ = "security_alerts"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    alert_type = Column(String, nullable=False)  # e.g., "MULTIPLE_FAILED_LOGINS", "NEW_IP", "UNUSUAL_HOURS", "RAPID_REQUESTS"
+    severity = Column(String, default="WARNING")  # INFO, WARNING, CRITICAL
+    ip_address = Column(String, nullable=True)
+    details = Column(JSON, default={})
+    acknowledged = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationship
+    user = relationship("UserDB", back_populates="security_alerts")
+
+
+class SessionDB(Base):
+    """Stores active sessions with fingerprinting for security tracking."""
+    __tablename__ = "sessions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    token_hash = Column(String, nullable=False, unique=True, index=True)
+    fingerprint_hash = Column(String, nullable=True, index=True)
+    fingerprint_data = Column(JSON, default={})  # Full fingerprint details
+    ip_address = Column(String, nullable=False)
+    user_agent = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    last_activity = Column(DateTime, default=datetime.utcnow)
+    revoked_at = Column(DateTime, nullable=True)
+    revoke_reason = Column(String, nullable=True)  # e.g., "user_requested", "password_changed", "max_sessions_exceeded"
+
+    # Relationship
+    user = relationship("UserDB", backref="sessions")
+
+
+class WebAuthnCredentialDB(Base):
+    """Stores WebAuthn/FIDO2 credentials for hardware security keys."""
+    __tablename__ = "webauthn_credentials"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    credential_id = Column(String, nullable=False, unique=True, index=True)  # Base64 encoded
+    public_key = Column(Text, nullable=False)  # Base64 encoded public key
+    sign_count = Column(Integer, default=0)
+    device_name = Column(String, nullable=True)  # User-friendly name like "YubiKey 5"
+    transports = Column(JSON, default=[])  # USB, NFC, BLE, internal
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_used = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True)
+
+    # Relationship
+    user = relationship("UserDB", backref="webauthn_credentials")
+
+
+class CSPViolationDB(Base):
+    """Stores Content Security Policy violation reports."""
+    __tablename__ = "csp_violations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    document_uri = Column(String, nullable=True)
+    violated_directive = Column(String, nullable=True)
+    blocked_uri = Column(String, nullable=True)
+    source_file = Column(String, nullable=True)
+    line_number = Column(Integer, nullable=True)
+    column_number = Column(Integer, nullable=True)
+    original_policy = Column(Text, nullable=True)
+    disposition = Column(String, nullable=True)  # "enforce" or "report"
+    user_agent = Column(String, nullable=True)
+    ip_address = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

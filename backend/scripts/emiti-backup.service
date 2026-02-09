@@ -1,0 +1,40 @@
+[Unit]
+Description=Emiti Metrics Database Backup Service
+Documentation=https://github.com/emiti/emiti-metrics
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=oneshot
+User=emiti
+Group=emiti
+WorkingDirectory=/opt/emiti-metrics/backend
+
+# Environment file with DATABASE_URL and ENCRYPTION_KEY
+EnvironmentFile=/etc/emiti-metrics/backup.env
+
+# Backup directory configuration
+Environment=BACKUP_DIR=/var/backups/emiti-metrics
+Environment=BACKUP_RETENTION=30
+
+# Execute backup script
+ExecStart=/usr/bin/python3 /opt/emiti-metrics/backend/scripts/backup.py backup
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/backups/emiti-metrics /var/log
+
+# Resource limits
+MemoryMax=1G
+CPUQuota=50%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=emiti-backup
+
+[Install]
+WantedBy=multi-user.target

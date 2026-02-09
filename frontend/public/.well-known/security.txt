@@ -1,0 +1,26 @@
+# Emiti Metrics Security Policy
+# https://securitytxt.org/
+
+Contact: mailto:security@emiti.cloud
+Contact: https://github.com/emiti/emiti-metrics/security/advisories/new
+Expires: 2027-02-09T00:00:00.000Z
+Encryption: https://metrics.emiti.cloud/.well-known/pgp-key.txt
+Preferred-Languages: es, en
+Canonical: https://metrics.emiti.cloud/.well-known/security.txt
+Policy: https://metrics.emiti.cloud/security-policy
+
+# Scope
+# This security.txt applies to the following domains:
+# - metrics.emiti.cloud
+# - api.emiti.cloud (if applicable)
+
+# Acknowledgments
+# We appreciate security researchers who help us keep our platform safe.
+# Responsible disclosure is welcome.
+
+# Bug Bounty
+# We currently do not have a formal bug bounty program.
+# However, we acknowledge and thank researchers who report valid vulnerabilities.
+
+# Hiring
+# Hiring: https://emiti.cloud/careers

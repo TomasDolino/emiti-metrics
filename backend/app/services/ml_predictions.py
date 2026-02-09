@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime, timedelta
-from scipy import stats
+# Removed scipy dependency - using numpy instead
 
 
 # ==================== FATIGUE PREDICTION MODEL ====================
@@ -218,8 +218,14 @@ def forecast_roas(df: pd.DataFrame, days_ahead: int = 7) -> Dict:
     if len(x_clean) < 3:
         x_clean, y_clean = x, y_cpr
 
-    # Fit linear regression
-    slope, intercept, r_value, p_value, std_err = stats.linregress(x_clean, y_clean)
+    # Fit linear regression using numpy polyfit
+    coeffs = np.polyfit(x_clean, y_clean, 1)
+    slope, intercept = coeffs[0], coeffs[1]
+
+    # Calculate residuals for confidence interval estimation
+    y_pred = slope * x_clean + intercept
+    residuals = y_clean - y_pred
+    std_err = np.std(residuals) / np.sqrt(len(x_clean))
 
     # Proyectar próximos días
     future_days = list(range(len(daily), len(daily) + days_ahead))

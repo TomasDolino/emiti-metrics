@@ -1,0 +1,19 @@
+[Unit]
+Description=Daily Emiti Metrics Database Backup Timer
+Documentation=https://github.com/emiti/emiti-metrics
+
+[Timer]
+# Run daily at 3:00 AM
+OnCalendar=*-*-* 03:00:00
+
+# Randomize start time up to 15 minutes to avoid thundering herd
+RandomizedDelaySec=900
+
+# Run immediately if last scheduled time was missed (e.g., system was off)
+Persistent=true
+
+# Wait 5 minutes after boot before first backup if missed
+OnBootSec=5min
+
+[Install]
+WantedBy=timers.target

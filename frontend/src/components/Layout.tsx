@@ -22,6 +22,7 @@ import {
   Upload,
   Brain,
   Sparkles,
+  Facebook,
   Sun,
   Moon,
   RefreshCw,
@@ -69,6 +70,7 @@ const navItems = [
   { name: 'Clientes', href: '/clients', icon: Users },
   { name: 'Agencia', href: '/agency', icon: Building2 },
   { name: 'Subir Datos', href: '/upload', icon: Upload },
+  { name: 'Meta Ads', href: '/meta', icon: Facebook },
 ]
 
 export default function Layout() {

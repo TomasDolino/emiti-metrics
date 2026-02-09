@@ -13,19 +13,96 @@ from ..database import get_db, MetricDB, ClientDB, CampaignDB, UserDB
 router = APIRouter()
 
 
-def classify_ad(cpr: float, ctr: float, frequency: float, results: int, days: int, threshold_cpr: float = 300):
-    """Clasifica un anuncio basado en métricas."""
+def classify_ad(cpr: float, ctr: float, frequency: float, results: int, days: int, spend: float = 0, threshold_cpr: float = 300):
+    """
+    Clasifica un anuncio y genera recomendaciones específicas.
+    Retorna: (classification, recommendation, action, priority)
+    """
+    # TESTING - Pocos datos para decidir
     if results < 5 or days < 3:
-        return "TESTING"
+        needed_spend = max(500 - spend, 0)
+        needed_days = max(3 - days, 0)
+        return {
+            "classification": "TESTING",
+            "recommendation": f"Esperá {needed_days} días más o ${needed_spend:,.0f} más de gasto antes de decidir. Con {results} resultados en {days} días aún no hay datos suficientes.",
+            "action": "ESPERAR",
+            "action_detail": f"Dejar correr hasta tener al menos 5 resultados o 3 días",
+            "priority": 3,
+            "reason": f"Solo {results} resultados en {days} días - datos insuficientes"
+        }
+
+    # FATIGADO - Frecuencia muy alta
     if frequency > 3.5:
-        return "FATIGADO"
+        return {
+            "classification": "FATIGADO",
+            "recommendation": f"La frecuencia está en {frequency:.1f}x (muy alta). El público ya vio este anuncio demasiadas veces. Pausá y creá una variante con nuevo copy o imagen.",
+            "action": "PAUSAR_Y_RENOVAR",
+            "action_detail": "Pausar este anuncio y crear variante con nuevo creativo",
+            "priority": 1,
+            "reason": f"Frecuencia {frequency:.1f}x > 3.5x indica saturación"
+        }
+
+    # PAUSAR - CPR muy alto
     if cpr > threshold_cpr * 1.5:
-        return "PAUSAR"
+        over_threshold = ((cpr / threshold_cpr) - 1) * 100
+        return {
+            "classification": "PAUSAR",
+            "recommendation": f"El CPR (${cpr:,.0f}) está {over_threshold:.0f}% por encima del objetivo. Este anuncio no está siendo rentable. Pausalo y reasigná el presupuesto a los ganadores.",
+            "action": "PAUSAR",
+            "action_detail": "Pausar inmediatamente y redistribuir presupuesto",
+            "priority": 1,
+            "reason": f"CPR ${cpr:,.0f} muy superior al objetivo de ${threshold_cpr:,.0f}"
+        }
+
+    # GANADOR - Excelente performance
     if cpr < threshold_cpr * 0.7 and ctr > 1.0:
-        return "GANADOR"
+        savings = ((threshold_cpr - cpr) / threshold_cpr) * 100
+        return {
+            "classification": "GANADOR",
+            "recommendation": f"¡Excelente! CPR ${cpr:,.0f} ({savings:.0f}% mejor que el objetivo) y CTR {ctr:.2f}%. Aumentá el presupuesto 20-30% gradualmente. Considerá duplicarlo en otros ad sets.",
+            "action": "ESCALAR",
+            "action_detail": "Aumentar presupuesto 20-30% y considerar duplicar",
+            "priority": 1,
+            "reason": f"CPR excelente (${cpr:,.0f}) + CTR alto ({ctr:.2f}%)"
+        }
+
+    # ESCALABLE - Buen performance, puede crecer
     if cpr < threshold_cpr:
-        return "ESCALABLE"
-    return "TESTING"
+        margin = ((threshold_cpr - cpr) / threshold_cpr) * 100
+        if frequency > 2.5:
+            return {
+                "classification": "ESCALABLE",
+                "recommendation": f"CPR bueno (${cpr:,.0f}, {margin:.0f}% bajo objetivo) pero frecuencia subiendo ({frequency:.1f}x). Aumentá presupuesto 15% pero monitoreá la frecuencia de cerca.",
+                "action": "ESCALAR_CON_CUIDADO",
+                "action_detail": "Aumentar presupuesto 15% máximo, monitorear frecuencia",
+                "priority": 2,
+                "reason": f"Buen CPR pero frecuencia {frequency:.1f}x acercándose al límite"
+            }
+        else:
+            return {
+                "classification": "ESCALABLE",
+                "recommendation": f"Buen rendimiento con CPR ${cpr:,.0f} ({margin:.0f}% bajo objetivo). Aumentá el presupuesto 20% para obtener más resultados. La frecuencia ({frequency:.1f}x) está saludable.",
+                "action": "ESCALAR",
+                "action_detail": "Aumentar presupuesto 20%",
+                "priority": 2,
+                "reason": f"CPR ${cpr:,.0f} bajo objetivo, frecuencia saludable"
+            }
+
+    # Default TESTING - En el límite
+    return {
+        "classification": "TESTING",
+        "recommendation": f"El CPR (${cpr:,.0f}) está cerca del objetivo (${threshold_cpr:,.0f}). Dejalo correr unos días más para ver si mejora o empeora antes de tomar acción.",
+        "action": "MONITOREAR",
+        "action_detail": "Observar evolución por 3-5 días más",
+        "priority": 3,
+        "reason": f"CPR ${cpr:,.0f} cerca del umbral, necesita más datos"
+    }
+
+
+def classify_ad_simple(cpr: float, ctr: float, frequency: float, results: int, days: int, threshold_cpr: float = 300):
+    """Versión simple que solo retorna la clasificación (para compatibilidad)."""
+    result = classify_ad(cpr, ctr, frequency, results, days, 0, threshold_cpr)
+    return result["classification"]
 
 
 @router.get("/dashboard")
@@ -144,8 +221,8 @@ async def get_dashboard_summary(
         ctr = (ad["clicks"] / ad["impressions"] * 100) if ad["impressions"] > 0 else 0
         freq = ad["frequency_sum"] / days_running if days_running > 0 else 0
 
-        classification = classify_ad(cpr, ctr, freq, ad["results"], days_running)
-        classification_counts[classification] += 1
+        analysis = classify_ad(cpr, ctr, freq, ad["results"], days_running, ad["spend"])
+        classification_counts[analysis["classification"]] += 1
 
         top_ads.append({
             "ad_name": ad["ad_name"],
@@ -159,7 +236,12 @@ async def get_dashboard_summary(
             "ctr": ctr,
             "frequency": freq,
             "days_running": days_running,
-            "classification": classification
+            "classification": analysis["classification"],
+            "recommendation": analysis["recommendation"],
+            "action": analysis["action"],
+            "action_detail": analysis["action_detail"],
+            "priority": analysis["priority"],
+            "reason": analysis["reason"]
         })
 
     # Sort by results descending, take top 10
@@ -311,7 +393,7 @@ async def get_ads_analysis(
         ctr = (ad["clicks"] / ad["impressions"] * 100) if ad["impressions"] > 0 else 0
         freq = ad["frequency_sum"] / days_running if days_running > 0 else 0
 
-        classification = classify_ad(cpr, ctr, freq, ad["results"], days_running)
+        analysis = classify_ad(cpr, ctr, freq, ad["results"], days_running, ad["spend"])
 
         ads.append({
             "ad_name": ad["ad_name"],
@@ -325,7 +407,12 @@ async def get_ads_analysis(
             "ctr": ctr,
             "frequency": freq,
             "days_running": days_running,
-            "classification": classification
+            "classification": analysis["classification"],
+            "recommendation": analysis["recommendation"],
+            "action": analysis["action"],
+            "action_detail": analysis["action_detail"],
+            "priority": analysis["priority"],
+            "reason": analysis["reason"]
         })
 
     return sorted(ads, key=lambda x: x["results"], reverse=True)

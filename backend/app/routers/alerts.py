@@ -39,7 +39,8 @@ async def list_alerts(
     acknowledged: Optional[bool] = None,
     severity: Optional[AlertSeverity] = None,
     limit: int = 50,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserDB = Depends(get_current_user)
 ):
     """Lista todas las alertas."""
     query = db.query(AlertDB)
@@ -61,7 +62,8 @@ async def list_alerts(
 @router.get("/active")
 async def get_active_alerts(
     client_id: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserDB = Depends(get_current_user)
 ):
     """Obtiene solo alertas no reconocidas."""
     query = db.query(AlertDB).filter(AlertDB.acknowledged == False)
@@ -77,7 +79,8 @@ async def get_active_alerts(
 @router.get("/count")
 async def get_alerts_count(
     client_id: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserDB = Depends(get_current_user)
 ):
     """Cuenta alertas por estado y severidad."""
     base_query = db.query(AlertDB)
@@ -116,7 +119,8 @@ async def acknowledge_alert(alert_id: str, db: Session = Depends(get_db), curren
 @router.post("/acknowledge-all")
 async def acknowledge_all_alerts(
     client_id: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserDB = Depends(get_current_user)
 ):
     """Marca todas las alertas como reconocidas."""
     query = db.query(AlertDB).filter(AlertDB.acknowledged == False)

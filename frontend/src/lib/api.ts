@@ -53,6 +53,15 @@ export interface AdAnalysis {
   classification: 'GANADOR' | 'ESCALABLE' | 'TESTING' | 'FATIGADO' | 'PAUSAR'
   days_running: number
   client_id: string
+  // Nuevos campos de recomendaciones
+  recommendation?: string
+  action?: string
+  action_detail?: string
+  priority?: number
+  reason?: string
+  // Para imágenes de Meta (próxima feature)
+  thumbnail_url?: string
+  image_url?: string
 }
 
 export interface DashboardData {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Image, Eye, EyeOff, ChevronRight, ChevronDown, TrendingUp, TrendingDown, Target, DollarSign, Loader2, RefreshCw } from 'lucide-react'
+import { Image, Eye, EyeOff, ChevronRight, ChevronDown, TrendingUp, TrendingDown, Target, DollarSign, Loader2, RefreshCw, Lightbulb, Zap, Clock, Pause, AlertTriangle } from 'lucide-react'
 import { useTheme } from '../lib/theme'
 import { api, type AdAnalysis } from '../lib/api'
 import { formatMoney, formatNumber, formatPercent, getClassificationColor, cn } from '../lib/utils'
@@ -19,6 +19,38 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
 
   // Calculate fatigue score based on frequency and days running
   const fatigueScore = Math.min(100, Math.round((ad.frequency / 4) * 50 + (ad.days_running / 30) * 50))
+
+  // Get action icon based on action type
+  const getActionIcon = () => {
+    switch (ad.action) {
+      case 'ESCALAR':
+        return <TrendingUp className="w-4 h-4" />
+      case 'ESPERAR':
+        return <Clock className="w-4 h-4" />
+      case 'PAUSAR':
+        return <Pause className="w-4 h-4" />
+      case 'RENOVAR':
+        return <AlertTriangle className="w-4 h-4" />
+      default:
+        return <Zap className="w-4 h-4" />
+    }
+  }
+
+  // Get action button color
+  const getActionColor = () => {
+    switch (ad.action) {
+      case 'ESCALAR':
+        return 'bg-green-500'
+      case 'ESPERAR':
+        return 'bg-blue-500'
+      case 'PAUSAR':
+        return 'bg-red-500'
+      case 'RENOVAR':
+        return 'bg-amber-500'
+      default:
+        return 'bg-slate-500'
+    }
+  }
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border-l-4 overflow-hidden transition-shadow hover:shadow-sm" style={{ borderLeftColor: borderColor }}>
@@ -149,6 +181,38 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
             </div>
             <span className="text-xs text-slate-500 dark:text-slate-400">Campaña: {ad.campaign_name}</span>
           </div>
+
+          {/* AI Recommendation */}
+          {ad.recommendation && (
+            <div className="mt-3 p-3 bg-gradient-to-r from-slate-100 to-white dark:from-gray-700 dark:to-gray-800 rounded-lg border border-slate-200 dark:border-gray-600">
+              <div className="flex items-start gap-2">
+                <div className={cn('p-1.5 rounded text-white flex-shrink-0', getActionColor())}>
+                  {getActionIcon()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={cn('px-2 py-0.5 rounded text-xs font-bold text-white', getActionColor())}>
+                      {ad.action}
+                    </span>
+                    {ad.priority && (
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                        {ad.priority === 1 ? '🔥 Alta' : ad.priority === 2 ? '⚡ Media' : '📋 Normal'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm font-medium text-slate-800 dark:text-white">
+                    {ad.recommendation}
+                  </p>
+                  {ad.action_detail && (
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                      <Lightbulb className="w-3 h-3 inline mr-1" />
+                      {ad.action_detail}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

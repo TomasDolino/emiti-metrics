@@ -1,8 +1,11 @@
 """
 Router para upload y procesamiento de CSVs
 """
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Depends, Request
 from typing import Optional
+
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from ..services.csv_processor import process_csv, get_campaign_summary
 from ..services.analysis import analyze_campaign
@@ -10,11 +13,23 @@ from ..models.schemas import CampaignObjective, AnalysisResponse
 from ..auth import get_current_user
 from ..database import UserDB
 
+# Rate limiter - uses remote address as key
+def get_rate_limit_key(request: Request) -> str:
+    """Get rate limit key - user_id if authenticated, otherwise IP."""
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        return f"user:{auth_header[:50]}"
+    return get_remote_address(request)
+
+limiter = Limiter(key_func=get_rate_limit_key)
+
 router = APIRouter()
 
 
 @router.post("/csv")
+@limiter.limit("5/minute")
 async def upload_csv(
+    request: Request,
     file: UploadFile = File(...),
     client_id: str = Form(...),
     objective: CampaignObjective = Form(CampaignObjective.MESSAGES),
@@ -52,7 +67,9 @@ async def upload_csv(
 
 
 @router.post("/csv/analyze")
+@limiter.limit("5/minute")
 async def upload_and_analyze(
+    request: Request,
     file: UploadFile = File(...),
     client_id: str = Form(...),
     objective: CampaignObjective = Form(CampaignObjective.MESSAGES),

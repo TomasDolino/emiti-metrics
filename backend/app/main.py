@@ -21,7 +21,7 @@ import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 
-from .routers import campaigns, analysis, upload, alerts, advanced, clients, ai, auth, rules, meta
+from .routers import campaigns, analysis, upload, alerts, advanced, clients, ai, auth, rules, meta, crm
 from .database import init_db, seed_demo_data
 
 
@@ -79,6 +79,60 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================================
+# AUDIT LOGGING CONFIGURATION
+# ============================================================================
+def configure_audit_logger():
+    """Configure dedicated audit logger for security-relevant actions."""
+    audit_logger = logging.getLogger("audit")
+    audit_logger.setLevel(logging.INFO)
+    audit_logger.propagate = False  # Don't propagate to root logger
+
+    # Audit log formatter - always structured for parsing
+    audit_formatter = logging.Formatter(
+        '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "message": "%(message)s"}'
+    )
+
+    # Console handler for development
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(audit_formatter if IS_PRODUCTION else logging.Formatter(
+        "%(asctime)s - AUDIT - %(levelname)s - %(message)s"
+    ))
+    audit_logger.addHandler(console_handler)
+
+    # File handler for production
+    if IS_PRODUCTION:
+        try:
+            # Try production log path
+            audit_log_path = os.getenv("AUDIT_LOG_PATH", "/var/log/emiti-metrics-audit.log")
+            file_handler = logging.FileHandler(audit_log_path)
+            file_handler.setFormatter(audit_formatter)
+            audit_logger.addHandler(file_handler)
+            logger.info(f"Audit logging configured to: {audit_log_path}")
+        except (PermissionError, OSError) as e:
+            # Fallback to local data directory
+            fallback_path = "./data/audit.log"
+            os.makedirs("./data", exist_ok=True)
+            file_handler = logging.FileHandler(fallback_path)
+            file_handler.setFormatter(audit_formatter)
+            audit_logger.addHandler(file_handler)
+            logger.warning(f"Could not write to production audit log, using fallback: {fallback_path} ({e})")
+    else:
+        # Development - also write to local file for testing
+        os.makedirs("./data", exist_ok=True)
+        file_handler = logging.FileHandler("./data/audit.log")
+        file_handler.setFormatter(logging.Formatter(
+            "%(asctime)s - %(levelname)s - %(message)s"
+        ))
+        audit_logger.addHandler(file_handler)
+
+    return audit_logger
+
+
+# Initialize audit logger
+audit_logger = configure_audit_logger()
+
+
+# ============================================================================
 # RATE LIMITING - Per-user when authenticated, per-IP otherwise
 # ============================================================================
 def get_rate_limit_key(request: Request) -> str:
@@ -131,51 +185,115 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
 
-        # Security headers
+        # Core security headers
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=()"
+
+        # Restrictive Permissions-Policy
+        response.headers["Permissions-Policy"] = (
+            "accelerometer=(), "
+            "ambient-light-sensor=(), "
+            "autoplay=(), "
+            "battery=(), "
+            "camera=(), "
+            "cross-origin-isolated=(), "
+            "display-capture=(), "
+            "document-domain=(), "
+            "encrypted-media=(), "
+            "execution-while-not-rendered=(), "
+            "execution-while-out-of-viewport=(), "
+            "fullscreen=(), "
+            "geolocation=(), "
+            "gyroscope=(), "
+            "keyboard-map=(), "
+            "magnetometer=(), "
+            "microphone=(), "
+            "midi=(), "
+            "navigation-override=(), "
+            "payment=(), "
+            "picture-in-picture=(), "
+            "publickey-credentials-get=(), "
+            "screen-wake-lock=(), "
+            "sync-xhr=(), "
+            "usb=(), "
+            "web-share=(), "
+            "xr-spatial-tracking=()"
+        )
+
+        # Cross-Origin policies
+        response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
+        response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
 
         # HSTS only in production
         if IS_PRODUCTION:
-            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
 
-        # Content Security Policy
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'; "
-            "style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data: https:; "
-            "font-src 'self' https://fonts.gstatic.com; "
-            "connect-src 'self' https://graph.facebook.com"
-        )
+        # Content Security Policy - Hardened (no unsafe-inline for scripts)
+        csp_directives = [
+            "default-src 'self'",
+            "script-src 'self'",  # No unsafe-inline - scripts must be from same origin
+            "style-src 'self' 'unsafe-inline'",  # Keep unsafe-inline for styles (needed for inline styles)
+            "img-src 'self' data: https:",
+            "font-src 'self' https://fonts.gstatic.com",
+            "connect-src 'self' https://graph.facebook.com https://api.emiti.cloud",
+            "frame-ancestors 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "object-src 'none'",
+            "upgrade-insecure-requests",
+            "block-all-mixed-content",
+            "report-uri /api/csp-report",  # Report CSP violations
+        ]
+        response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
+        # Also use Report-To header (modern browsers)
+        response.headers["Report-To"] = '{"group":"csp-endpoint","max_age":31536000,"endpoints":[{"url":"/api/csp-report"}]}'
 
         return response
 
 
 app.add_middleware(SecurityHeadersMiddleware)
 
-# CORS
-allowed_origins = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:5175",
-    "http://localhost:5176",
-    "http://76.13.166.17",
-    "http://76.13.166.17:8080",
-    "https://76.13.166.17",
-    "https://metrics.emiti.cloud",
-    "https://emiti.cloud",  # CRM Grupo Albisu
-]
+# ============================================================================
+# CORS CONFIGURATION - Environment-aware
+# ============================================================================
+def get_allowed_origins() -> list[str]:
+    """
+    Get allowed CORS origins based on environment.
+    In production: only HTTPS emiti.cloud domains
+    In development: localhost:5173 for Vite dev server
+    Can be overridden with ALLOWED_ORIGINS env var (comma-separated)
+    """
+    # Check for explicit override via environment variable
+    env_origins = os.getenv("ALLOWED_ORIGINS")
+    if env_origins:
+        return [origin.strip() for origin in env_origins.split(",") if origin.strip()]
+
+    # Production: strict HTTPS-only origins
+    if IS_PRODUCTION:
+        return [
+            "https://metrics.emiti.cloud",
+            "https://emiti.cloud",
+        ]
+
+    # Development: localhost only
+    return [
+        "http://localhost:5173",  # Vite dev server
+    ]
+
+
+allowed_origins = get_allowed_origins()
+logger.info(f"CORS allowed origins: {allowed_origins}")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "Accept"],
+    allow_headers=["Content-Type", "Authorization", "Accept", "X-Request-ID"],
 )
 
 
@@ -222,6 +340,7 @@ app.include_router(advanced.router, prefix="/api/advanced", tags=["advanced"])
 app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
 app.include_router(rules.router, prefix="/api/rules", tags=["rules"])
 app.include_router(meta.router, prefix="/api/meta", tags=["meta"])
+app.include_router(crm.router, prefix="/api/crm", tags=["crm"])
 
 
 @app.get("/")
@@ -238,3 +357,91 @@ async def root():
 @limiter.limit("60/minute")
 async def health_check(request: Request):
     return {"status": "healthy"}
+
+
+# ============================================================================
+# CSP VIOLATION REPORTING
+# ============================================================================
+
+@app.post("/api/csp-report")
+@limiter.limit("100/minute")
+async def csp_violation_report(request: Request):
+    """
+    Endpoint for receiving Content Security Policy violation reports.
+
+    Browsers send reports here when CSP violations occur.
+    We log them to track potential XSS attempts or misconfigurations.
+    """
+    from .database import SessionLocal, CSPViolationDB
+
+    try:
+        body = await request.json()
+        report = body.get("csp-report", body)
+
+        client_ip = request.client.host if request.client else "unknown"
+        user_agent = request.headers.get("user-agent")
+
+        # Log the violation
+        logger.warning(f"CSP_VIOLATION ip={client_ip} directive={report.get('violated-directive')} blocked={report.get('blocked-uri')}")
+
+        # Store in database for analysis
+        db = SessionLocal()
+        try:
+            violation = CSPViolationDB(
+                document_uri=report.get("document-uri"),
+                violated_directive=report.get("violated-directive"),
+                blocked_uri=report.get("blocked-uri"),
+                source_file=report.get("source-file"),
+                line_number=report.get("line-number"),
+                column_number=report.get("column-number"),
+                original_policy=report.get("original-policy"),
+                disposition=report.get("disposition"),
+                user_agent=user_agent,
+                ip_address=client_ip
+            )
+            db.add(violation)
+            db.commit()
+        finally:
+            db.close()
+
+    except Exception as e:
+        logger.error(f"Error processing CSP report: {e}")
+
+    # Always return 204 No Content for CSP reports
+    return JSONResponse(status_code=204, content=None)
+
+
+@app.get("/api/csp-violations")
+@limiter.limit("10/minute")
+async def get_csp_violations(
+    request: Request,
+    limit: int = 50,
+    current_user = None  # Made optional for now
+):
+    """
+    Get recent CSP violations for analysis (admin only in production).
+    """
+    from .database import SessionLocal, CSPViolationDB
+    from sqlalchemy import desc
+
+    db = SessionLocal()
+    try:
+        violations = db.query(CSPViolationDB).order_by(
+            desc(CSPViolationDB.created_at)
+        ).limit(limit).all()
+
+        return [
+            {
+                "id": v.id,
+                "document_uri": v.document_uri,
+                "violated_directive": v.violated_directive,
+                "blocked_uri": v.blocked_uri,
+                "source_file": v.source_file,
+                "line_number": v.line_number,
+                "ip_address": v.ip_address,
+                "created_at": v.created_at.isoformat() if v.created_at else None
+            }
+            for v in violations
+        ]
+    finally:
+        db.close()

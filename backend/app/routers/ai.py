@@ -2,14 +2,27 @@
 AI Router for Emiti Metrics
 Endpoints for AI-powered features with memory and learning
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 import json
 
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
 from ..auth import get_current_user
 from ..database import UserDB
+
+# Rate limiter - uses remote address as key
+def get_rate_limit_key(request: Request) -> str:
+    """Get rate limit key - user_id if authenticated, otherwise IP."""
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        return f"user:{auth_header[:50]}"
+    return get_remote_address(request)
+
+limiter = Limiter(key_func=get_rate_limit_key)
 
 from ..services.ai_service import (
     chat_with_data,
@@ -96,16 +109,17 @@ async def get_ai_status(current_user: UserDB = Depends(get_current_user)):
 
 
 @router.post("/chat")
-async def chat_endpoint(request: ChatRequest, current_user: UserDB = Depends(get_current_user)):
+@limiter.limit("20/minute")
+async def chat_endpoint(request: Request, chat_request: ChatRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Chat with your ad data using AI.
     Returns a streaming response.
     """
     async def stream_response():
         async for chunk in chat_with_data(
-            user_message=request.message,
-            data_context=request.data_context,
-            chat_history=[m.model_dump() for m in request.chat_history] if request.chat_history else [],
+            user_message=chat_request.message,
+            data_context=chat_request.data_context,
+            chat_history=[m.model_dump() for m in chat_request.chat_history] if chat_request.chat_history else [],
             stream=True
         ):
             yield f"data: {json.dumps({'token': chunk})}\n\n"
@@ -122,15 +136,16 @@ async def chat_endpoint(request: ChatRequest, current_user: UserDB = Depends(get
 
 
 @router.post("/chat/sync")
-async def chat_sync_endpoint(request: ChatRequest, current_user: UserDB = Depends(get_current_user)):
+@limiter.limit("20/minute")
+async def chat_sync_endpoint(request: Request, chat_request: ChatRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Chat with your ad data using AI (non-streaming version).
     """
     result = ""
     async for chunk in chat_with_data(
-        user_message=request.message,
-        data_context=request.data_context,
-        chat_history=[m.model_dump() for m in request.chat_history] if request.chat_history else [],
+        user_message=chat_request.message,
+        data_context=chat_request.data_context,
+        chat_history=[m.model_dump() for m in chat_request.chat_history] if chat_request.chat_history else [],
         stream=True
     ):
         result += chunk
@@ -160,14 +175,15 @@ async def chat_crm_endpoint(request: CRMChatRequest):
 
 
 @router.post("/analyze-creative")
-async def analyze_creative_endpoint(request: CreativeAnalysisRequest, current_user: UserDB = Depends(get_current_user)):
+@limiter.limit("10/minute")
+async def analyze_creative_endpoint(request: Request, creative_request: CreativeAnalysisRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Analyze an ad creative image using Claude Vision.
     """
     result = await analyze_creative(
-        image_data=request.image_base64,
-        image_type=request.image_type,
-        additional_context=request.context
+        image_data=creative_request.image_base64,
+        image_type=creative_request.image_type,
+        additional_context=creative_request.context
     )
 
     if "error" in result:
@@ -204,17 +220,18 @@ async def analyze_creative_upload(
 
 
 @router.post("/compare-creatives")
-async def compare_creatives_endpoint(request: CompareCreativesRequest, current_user: UserDB = Depends(get_current_user)):
+@limiter.limit("10/minute")
+async def compare_creatives_endpoint(request: Request, compare_request: CompareCreativesRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Compare multiple ad creatives and get recommendations.
     """
-    if len(request.images) < 2:
+    if len(compare_request.images) < 2:
         raise HTTPException(status_code=400, detail="Need at least 2 images to compare")
 
-    if len(request.images) > 4:
+    if len(compare_request.images) > 4:
         raise HTTPException(status_code=400, detail="Maximum 4 images allowed")
 
-    result = await compare_creatives(request.images)
+    result = await compare_creatives(compare_request.images)
 
     if "error" in result:
         raise HTTPException(status_code=500, detail=result["error"])
@@ -223,20 +240,21 @@ async def compare_creatives_endpoint(request: CompareCreativesRequest, current_u
 
 
 @router.post("/generate-report")
-async def generate_report_endpoint(request: ReportRequest, current_user: UserDB = Depends(get_current_user)):
+@limiter.limit("10/minute")
+async def generate_report_endpoint(request: Request, report_request: ReportRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Generate a natural language executive report.
     """
     report = await generate_executive_report(
-        data=request.data,
-        client_name=request.client_name,
-        period=request.period
+        data=report_request.data,
+        client_name=report_request.client_name,
+        period=report_request.period
     )
 
     return {
         "report": report,
-        "client_name": request.client_name,
-        "period": request.period
+        "client_name": report_request.client_name,
+        "period": report_request.period
     }
 
 
@@ -488,8 +506,10 @@ class ContextualSuggestionsRequest(BaseModel):
 
 
 @router.post("/detect-anomalies")
+@limiter.limit("10/minute")
 async def detect_anomalies_endpoint(
-    request: AnomalyDetectionRequest,
+    request: Request,
+    anomaly_request: AnomalyDetectionRequest,
     current_user: UserDB = Depends(get_current_user)
 ):
     """
@@ -497,28 +517,30 @@ async def detect_anomalies_endpoint(
     Uses Z-score method to identify unusual values.
     """
     anomalies = detect_anomalies(
-        metrics_history=request.metrics_history,
-        threshold=request.threshold
+        metrics_history=anomaly_request.metrics_history,
+        threshold=anomaly_request.threshold
     )
 
     return {
         "anomalies": anomalies,
         "count": len(anomalies),
-        "threshold_used": request.threshold
+        "threshold_used": anomaly_request.threshold
     }
 
 
 @router.post("/detect-anomalies/explain")
+@limiter.limit("10/minute")
 async def explain_anomalies_endpoint(
-    request: AnomalyDetectionRequest,
+    request: Request,
+    anomaly_request: AnomalyDetectionRequest,
     current_user: UserDB = Depends(get_current_user)
 ):
     """
     Detect anomalies and get AI explanation for them.
     """
     anomalies = detect_anomalies(
-        metrics_history=request.metrics_history,
-        threshold=request.threshold
+        metrics_history=anomaly_request.metrics_history,
+        threshold=anomaly_request.threshold
     )
 
     if not anomalies:
@@ -529,7 +551,7 @@ async def explain_anomalies_endpoint(
         }
 
     # Get context from the latest metrics
-    context = request.metrics_history[-1] if request.metrics_history else {}
+    context = anomaly_request.metrics_history[-1] if anomaly_request.metrics_history else {}
 
     explanation = await analyze_anomalies_with_ai(anomalies, context)
 
@@ -541,8 +563,10 @@ async def explain_anomalies_endpoint(
 
 
 @router.post("/weekly-digest")
+@limiter.limit("10/minute")
 async def weekly_digest_endpoint(
-    request: WeeklyDigestRequest,
+    request: Request,
+    digest_request: WeeklyDigestRequest,
     current_user: UserDB = Depends(get_current_user)
 ):
     """
@@ -550,10 +574,10 @@ async def weekly_digest_endpoint(
     Perfect for client reports and emails.
     """
     digest = await generate_weekly_digest(
-        client_id=request.client_id,
-        client_name=request.client_name,
-        weekly_data=request.weekly_data,
-        previous_week_data=request.previous_week_data
+        client_id=digest_request.client_id,
+        client_name=digest_request.client_name,
+        weekly_data=digest_request.weekly_data,
+        previous_week_data=digest_request.previous_week_data
     )
 
     return digest

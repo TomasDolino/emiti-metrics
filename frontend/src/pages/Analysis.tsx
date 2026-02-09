@@ -7,7 +7,12 @@ import {
   EyeOff,
   BarChart2,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Zap,
+  Clock,
+  Pause,
+  TrendingUp,
+  AlertTriangle
 } from 'lucide-react'
 import { useTheme } from '../lib/theme'
 import { api, type AdAnalysis } from '../lib/api'
@@ -22,30 +27,43 @@ interface AnalysisRowProps {
   isExpanded: boolean
   onToggle: () => void
   showAmounts: boolean
-  palette: ReturnType<typeof useTheme>['palette']
 }
 
-function AnalysisRow({ analysis, isExpanded, onToggle, showAmounts, palette }: AnalysisRowProps) {
+function AnalysisRow({ analysis, isExpanded, onToggle, showAmounts }: AnalysisRowProps) {
   const borderColor = getClassificationColor(analysis.classification as AdClassification)
 
   // Calculate fatigue score based on frequency and days running
   const fatigueScore = Math.min(100, Math.round((analysis.frequency / 4) * 50 + (analysis.days_running / 30) * 50))
 
-  // Generate recommendations based on classification
-  const getRecommendations = () => {
-    switch (analysis.classification) {
-      case 'GANADOR':
-        return ['Aumentar presupuesto gradualmente', 'Crear variantes similares', 'Expandir a nuevas audiencias']
-      case 'ESCALABLE':
-        return ['Probar incremento de presupuesto 20-30%', 'Monitorear frecuencia al escalar']
-      case 'TESTING':
-        return ['Esperar más datos para evaluar', 'Comparar con otros anuncios del conjunto']
-      case 'FATIGADO':
-        return ['Renovar creatividad', 'Pausar y rotar con otros anuncios', 'Considerar nuevas audiencias']
+  // Get action icon based on action type
+  const getActionIcon = () => {
+    switch (analysis.action) {
+      case 'ESCALAR':
+        return <TrendingUp className="w-4 h-4" />
+      case 'ESPERAR':
+        return <Clock className="w-4 h-4" />
       case 'PAUSAR':
-        return ['Pausar inmediatamente', 'Reasignar presupuesto a ganadores', 'Analizar qué falló']
+        return <Pause className="w-4 h-4" />
+      case 'RENOVAR':
+        return <AlertTriangle className="w-4 h-4" />
       default:
-        return ['Continuar monitoreando']
+        return <Zap className="w-4 h-4" />
+    }
+  }
+
+  // Get action button color
+  const getActionColor = () => {
+    switch (analysis.action) {
+      case 'ESCALAR':
+        return 'bg-green-500 hover:bg-green-600'
+      case 'ESPERAR':
+        return 'bg-blue-500 hover:bg-blue-600'
+      case 'PAUSAR':
+        return 'bg-red-500 hover:bg-red-600'
+      case 'RENOVAR':
+        return 'bg-amber-500 hover:bg-amber-600'
+      default:
+        return 'bg-slate-500 hover:bg-slate-600'
     }
   }
 
@@ -149,24 +167,42 @@ function AnalysisRow({ analysis, isExpanded, onToggle, showAmounts, palette }: A
             </div>
           </div>
 
-          {/* Recommendations */}
-          <div
-            className="rounded-lg p-3"
-            style={{ backgroundColor: `${palette.primary}10` }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <Lightbulb className="w-4 h-4" style={{ color: palette.primary }} />
-              <h4 className="font-medium text-sm" style={{ color: palette.primary }}>Recomendaciones</h4>
+          {/* AI Recommendation */}
+          {analysis.recommendation && (
+            <div className="rounded-lg p-4 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-700 border border-slate-200 dark:border-gray-600">
+              <div className="flex items-start gap-3">
+                <div className={cn('p-2 rounded-lg text-white', getActionColor())}>
+                  {getActionIcon()}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={cn('px-2 py-0.5 rounded text-xs font-bold text-white', getActionColor())}>
+                      {analysis.action}
+                    </span>
+                    {analysis.priority && (
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        Prioridad: {analysis.priority === 1 ? '🔥 Alta' : analysis.priority === 2 ? '⚡ Media' : '📋 Normal'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white mb-1">
+                    {analysis.recommendation}
+                  </p>
+                  {analysis.action_detail && (
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      <Lightbulb className="w-3 h-3 inline mr-1" />
+                      {analysis.action_detail}
+                    </p>
+                  )}
+                  {analysis.reason && (
+                    <p className="text-xs text-slate-500 dark:text-slate-500 mt-2 italic">
+                      📊 {analysis.reason}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
-            <ul className="space-y-1">
-              {getRecommendations().map((rec, i) => (
-                <li key={i} className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-1">
-                  <span style={{ color: palette.primary }}>•</span>
-                  {rec}
-                </li>
-              ))}
-            </ul>
-          </div>
+          )}
         </div>
       )}
     </div>
@@ -176,7 +212,7 @@ function AnalysisRow({ analysis, isExpanded, onToggle, showAmounts, palette }: A
 // ==================== ANALYSIS PAGE ====================
 
 export default function Analysis() {
-  const { palette } = useTheme()
+  useTheme() // For consistency
   const { selectedClientId } = useSelectedClient()
   const [ads, setAds] = useState<AdAnalysis[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -319,7 +355,6 @@ export default function Analysis() {
             isExpanded={expandedId === analysis.ad_name}
             onToggle={() => setExpandedId(expandedId === analysis.ad_name ? null : analysis.ad_name)}
             showAmounts={showAmounts}
-            palette={palette}
           />
         ))}
       </div>

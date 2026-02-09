@@ -311,6 +311,328 @@ class MetaOAuthService:
                 print(f"Error fetching campaigns: {e}")
                 return []
 
+    async def get_ads_with_creatives(
+        self,
+        access_token: str,
+        ad_account_id: str,
+        limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """
+        Get ads with their creative content (images, videos, thumbnails).
+
+        Args:
+            access_token: Valid Meta access token
+            ad_account_id: The ad account ID (format: act_XXXXXXXXX)
+            limit: Maximum number of ads to return
+
+        Returns:
+            List of ads with creative URLs
+        """
+        fields = [
+            "id",
+            "name",
+            "status",
+            "effective_status",
+            "campaign_id",
+            "adset_id",
+            "creative{id,name,title,body,thumbnail_url,image_url,object_story_spec,asset_feed_spec}",
+        ]
+
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(
+                    f"{self.GRAPH_API_BASE}/{ad_account_id}/ads",
+                    params={
+                        "access_token": access_token,
+                        "fields": ",".join(fields),
+                        "limit": limit,
+                    }
+                )
+
+                if response.status_code != 200:
+                    print(f"Error getting ads: {response.text}")
+                    return []
+
+                ads = response.json().get("data", [])
+
+                # Process each ad to extract image URLs
+                processed_ads = []
+                for ad in ads:
+                    creative = ad.get("creative", {})
+
+                    # Try to get image URL from different sources
+                    image_url = creative.get("image_url")
+                    thumbnail_url = creative.get("thumbnail_url")
+
+                    # Check object_story_spec for image
+                    story_spec = creative.get("object_story_spec", {})
+                    if not image_url and story_spec:
+                        link_data = story_spec.get("link_data", {})
+                        image_url = link_data.get("image_url") or link_data.get("picture")
+
+                        # Check video_data for thumbnail
+                        video_data = story_spec.get("video_data", {})
+                        if not thumbnail_url and video_data:
+                            thumbnail_url = video_data.get("image_url")
+
+                    processed_ads.append({
+                        "id": ad.get("id"),
+                        "name": ad.get("name"),
+                        "status": ad.get("status"),
+                        "effective_status": ad.get("effective_status"),
+                        "campaign_id": ad.get("campaign_id"),
+                        "adset_id": ad.get("adset_id"),
+                        "creative_id": creative.get("id"),
+                        "creative_name": creative.get("name"),
+                        "title": creative.get("title"),
+                        "body": creative.get("body"),
+                        "thumbnail_url": thumbnail_url,
+                        "image_url": image_url,
+                    })
+
+                return processed_ads
+
+            except Exception as e:
+                print(f"Error fetching ads with creatives: {e}")
+                return []
+
+    async def update_ad_status(
+        self,
+        access_token: str,
+        ad_id: str,
+        status: str  # ACTIVE, PAUSED, DELETED
+    ) -> Dict[str, Any]:
+        """
+        Update an ad's status (pause, activate, delete).
+
+        Args:
+            access_token: Valid Meta access token
+            ad_id: The ad ID
+            status: New status (ACTIVE, PAUSED, DELETED)
+
+        Returns:
+            Result of the update operation
+        """
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(
+                    f"{self.GRAPH_API_BASE}/{ad_id}",
+                    params={"access_token": access_token},
+                    data={"status": status}
+                )
+
+                if response.status_code != 200:
+                    error_data = response.json().get("error", {})
+                    return {
+                        "success": False,
+                        "error": error_data.get("message", "Unknown error")
+                    }
+
+                return {
+                    "success": True,
+                    "ad_id": ad_id,
+                    "new_status": status
+                }
+
+            except Exception as e:
+                return {"success": False, "error": str(e)}
+
+    async def update_campaign_budget(
+        self,
+        access_token: str,
+        campaign_id: str,
+        daily_budget: Optional[int] = None,  # In cents
+        lifetime_budget: Optional[int] = None  # In cents
+    ) -> Dict[str, Any]:
+        """
+        Update a campaign's budget.
+
+        Args:
+            access_token: Valid Meta access token
+            campaign_id: The campaign ID
+            daily_budget: New daily budget in cents (e.g., 1000 = $10.00)
+            lifetime_budget: New lifetime budget in cents
+
+        Returns:
+            Result of the update operation
+        """
+        data = {}
+        if daily_budget is not None:
+            data["daily_budget"] = daily_budget
+        if lifetime_budget is not None:
+            data["lifetime_budget"] = lifetime_budget
+
+        if not data:
+            return {"success": False, "error": "No budget specified"}
+
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(
+                    f"{self.GRAPH_API_BASE}/{campaign_id}",
+                    params={"access_token": access_token},
+                    data=data
+                )
+
+                if response.status_code != 200:
+                    error_data = response.json().get("error", {})
+                    return {
+                        "success": False,
+                        "error": error_data.get("message", "Unknown error")
+                    }
+
+                return {
+                    "success": True,
+                    "campaign_id": campaign_id,
+                    "updated_budget": data
+                }
+
+            except Exception as e:
+                return {"success": False, "error": str(e)}
+
+    async def update_adset_budget(
+        self,
+        access_token: str,
+        adset_id: str,
+        daily_budget: Optional[int] = None,
+        lifetime_budget: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """
+        Update an ad set's budget.
+
+        Args:
+            access_token: Valid Meta access token
+            adset_id: The ad set ID
+            daily_budget: New daily budget in cents
+            lifetime_budget: New lifetime budget in cents
+
+        Returns:
+            Result of the update operation
+        """
+        data = {}
+        if daily_budget is not None:
+            data["daily_budget"] = daily_budget
+        if lifetime_budget is not None:
+            data["lifetime_budget"] = lifetime_budget
+
+        if not data:
+            return {"success": False, "error": "No budget specified"}
+
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(
+                    f"{self.GRAPH_API_BASE}/{adset_id}",
+                    params={"access_token": access_token},
+                    data=data
+                )
+
+                if response.status_code != 200:
+                    error_data = response.json().get("error", {})
+                    return {
+                        "success": False,
+                        "error": error_data.get("message", "Unknown error")
+                    }
+
+                return {
+                    "success": True,
+                    "adset_id": adset_id,
+                    "updated_budget": data
+                }
+
+            except Exception as e:
+                return {"success": False, "error": str(e)}
+
+    async def update_campaign_status(
+        self,
+        access_token: str,
+        campaign_id: str,
+        status: str  # ACTIVE, PAUSED, DELETED
+    ) -> Dict[str, Any]:
+        """
+        Update a campaign's status.
+
+        Args:
+            access_token: Valid Meta access token
+            campaign_id: The campaign ID
+            status: New status (ACTIVE, PAUSED, DELETED)
+
+        Returns:
+            Result of the update operation
+        """
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(
+                    f"{self.GRAPH_API_BASE}/{campaign_id}",
+                    params={"access_token": access_token},
+                    data={"status": status}
+                )
+
+                if response.status_code != 200:
+                    error_data = response.json().get("error", {})
+                    return {
+                        "success": False,
+                        "error": error_data.get("message", "Unknown error")
+                    }
+
+                return {
+                    "success": True,
+                    "campaign_id": campaign_id,
+                    "new_status": status
+                }
+
+            except Exception as e:
+                return {"success": False, "error": str(e)}
+
+    async def get_ad_insights(
+        self,
+        access_token: str,
+        ad_id: str,
+        date_preset: str = "last_30d"
+    ) -> Dict[str, Any]:
+        """
+        Get detailed insights for a specific ad.
+
+        Args:
+            access_token: Valid Meta access token
+            ad_id: The ad ID
+            date_preset: Date range preset
+
+        Returns:
+            Ad insights data
+        """
+        fields = [
+            "impressions",
+            "reach",
+            "clicks",
+            "spend",
+            "cpm",
+            "cpc",
+            "ctr",
+            "frequency",
+            "actions",
+            "cost_per_action_type",
+        ]
+
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(
+                    f"{self.GRAPH_API_BASE}/{ad_id}/insights",
+                    params={
+                        "access_token": access_token,
+                        "fields": ",".join(fields),
+                        "date_preset": date_preset,
+                    }
+                )
+
+                if response.status_code != 200:
+                    return {}
+
+                data = response.json().get("data", [])
+                return data[0] if data else {}
+
+            except Exception as e:
+                print(f"Error fetching ad insights: {e}")
+                return {}
+
     async def get_campaign_insights(
         self,
         access_token: str,
