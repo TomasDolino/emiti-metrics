@@ -74,7 +74,7 @@ export interface DashboardData {
   avg_cpm: number
   avg_frequency: number
   classification_counts: Record<string, number>
-  daily_metrics: Array<{ date: string; spend: number; results: number; impressions: number }>
+  daily_metrics: Array<{ date: string; spend: number; results: number; impressions: number; clicks: number; reach: number }>
   top_ads: AdAnalysis[]
   top_campaigns?: Array<{ name: string; spend: number; results: number; cpr: number }>
   patterns?: Array<{ pattern: string; impact: string }>

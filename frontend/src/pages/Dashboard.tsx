@@ -539,13 +539,14 @@ function EvolutionSliderWidget({ dashboard, showAmounts, periodDays, periodLabel
     if (!dashboard.daily_metrics || dashboard.daily_metrics.length === 0) return []
 
     let cumulativeReach = 0
-    return dashboard.daily_metrics.map((d) => {
+    return dashboard.daily_metrics.map((d: { date: string; spend: number; results: number; impressions: number; clicks?: number; reach?: number }) => {
       // Calculate daily CPR (spend / results)
       const dailyCpr = safeDivide(d.spend, d.results)
-      // Estimate daily CTR (we'll use avg or simulate based on impressions)
-      const dailyCtr = safeDivide(safeNumber(d.results) * 10, d.impressions) * 100 // Approximation
-      // Frequency = impressions / reach estimate
-      const dailyReach = safeDivide(d.impressions, dashboard.avg_frequency || 2)
+      // Calculate daily CTR using real clicks data from backend
+      const dailyClicks = safeNumber(d.clicks)
+      const dailyCtr = safeDivide(dailyClicks, d.impressions) * 100
+      // Use real reach data if available, otherwise estimate
+      const dailyReach = safeNumber(d.reach) || safeDivide(d.impressions, dashboard.avg_frequency || 2)
       const dailyFrequency = safeDivide(d.impressions, dailyReach, 1)
       // Cumulative reach
       cumulativeReach += dailyReach
@@ -553,7 +554,7 @@ function EvolutionSliderWidget({ dashboard, showAmounts, periodDays, periodLabel
       return {
         ...d,
         cpr: dailyCpr,
-        ctr: Math.min(dailyCtr, 10), // Cap at 10%
+        ctr: Math.min(dailyCtr, 15), // Cap at 15% (reasonable max)
         frequency: Math.min(dailyFrequency, 5), // Cap at 5
         cumulativeReach: Math.round(cumulativeReach),
       }

@@ -179,10 +179,12 @@ async def get_dashboard_summary(
     for m in metrics:
         date_key = m.date.strftime("%Y-%m-%d") if m.date else "unknown"
         if date_key not in daily_data:
-            daily_data[date_key] = {"date": date_key, "spend": 0, "results": 0, "impressions": 0}
+            daily_data[date_key] = {"date": date_key, "spend": 0, "results": 0, "impressions": 0, "clicks": 0, "reach": 0}
         daily_data[date_key]["spend"] += m.spend or 0
         daily_data[date_key]["results"] += m.results or 0
         daily_data[date_key]["impressions"] += m.impressions or 0
+        daily_data[date_key]["clicks"] += m.clicks or 0
+        daily_data[date_key]["reach"] += m.reach or 0
 
     daily_metrics = sorted(daily_data.values(), key=lambda x: x["date"])
 

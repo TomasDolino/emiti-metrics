@@ -26,6 +26,8 @@ interface DailyMetric {
   spend: number
   results: number
   impressions: number
+  clicks: number
+  reach: number
   cpr: number
   ctr: number
 }
@@ -60,8 +62,11 @@ export default function Metrics() {
   // Process daily data with calculated CPR and CTR
   const dailyData: DailyMetric[] = (dashboardData?.daily_metrics || []).map(day => ({
     ...day,
+    clicks: day.clicks || 0,
+    reach: day.reach || 0,
     cpr: day.results > 0 ? day.spend / day.results : 0,
-    ctr: day.impressions > 0 ? (day.results / day.impressions) * 100 : 0
+    // CTR = clicks / impressions * 100 (not results/impressions)
+    ctr: day.impressions > 0 ? ((day.clicks || 0) / day.impressions) * 100 : 0
   }))
 
   const metricConfig: Record<MetricType, { label: string; color: string; format: (v: number) => string }> = {
