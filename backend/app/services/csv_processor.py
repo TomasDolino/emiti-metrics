@@ -67,23 +67,61 @@ def normalize_column_name(col: str) -> str:
 
 
 def clean_numeric(value) -> float:
-    """Limpia y convierte valores numéricos."""
+    """
+    Limpia y convierte valores numéricos.
+    Soporta formato argentino (1.234,56) y formato US (1,234.56).
+    """
     if pd.isna(value):
         return 0.0
     if isinstance(value, (int, float)):
         return float(value)
     if isinstance(value, str):
-        # Remove currency symbols, thousand separators, etc.
-        cleaned = value.replace('$', '').replace(',', '').replace('.', '').replace(' ', '')
-        # Handle percentage
+        # Remove currency symbols and spaces
+        cleaned = value.replace('$', '').replace(' ', '').strip()
+
+        # Handle percentage first
         if '%' in cleaned:
             cleaned = cleaned.replace('%', '')
-            try:
-                return float(cleaned) / 100
-            except ValueError:
-                return 0.0
+            # For percentages, try to parse after handling separators
+
+        # Detect format: Argentine (1.234,56) vs US (1,234.56)
+        # If has both . and , -> determine by position of last separator
+        has_comma = ',' in cleaned
+        has_period = '.' in cleaned
+
+        if has_comma and has_period:
+            # Both separators: last one is decimal
+            last_comma = cleaned.rfind(',')
+            last_period = cleaned.rfind('.')
+            if last_comma > last_period:
+                # Argentine format: 1.234,56 -> comma is decimal
+                cleaned = cleaned.replace('.', '').replace(',', '.')
+            else:
+                # US format: 1,234.56 -> period is decimal
+                cleaned = cleaned.replace(',', '')
+        elif has_comma:
+            # Only comma: could be decimal (1,5) or thousand (1,000)
+            # If comma followed by exactly 2 digits at end, treat as decimal
+            parts = cleaned.split(',')
+            if len(parts) == 2 and len(parts[1]) <= 2:
+                cleaned = cleaned.replace(',', '.')
+            else:
+                cleaned = cleaned.replace(',', '')
+        elif has_period:
+            # Only period: could be decimal (1.5) or thousand (1.000)
+            # If period followed by exactly 3 digits, could be thousand separator
+            parts = cleaned.split('.')
+            if len(parts) == 2 and len(parts[1]) == 3 and len(parts[0]) <= 3:
+                # Likely thousand separator: 1.000 = 1000
+                cleaned = cleaned.replace('.', '')
+            # Otherwise keep period as decimal
+
         try:
-            return float(cleaned)
+            result = float(cleaned)
+            # If was a percentage, divide by 100
+            if '%' in value:
+                return result / 100
+            return result
         except ValueError:
             return 0.0
     return 0.0
