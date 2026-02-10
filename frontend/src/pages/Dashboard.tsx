@@ -52,7 +52,7 @@ import { useSelectedClient } from '../components/Layout'
 import { DashboardSkeleton } from '../components/Skeleton'
 import AIInsightsWidget from '../components/AIInsightsWidget'
 import { api, type DashboardData, type AdAnalysis, type Alert, type Client } from '../lib/api'
-import { formatMoney, formatNumber, formatPercent, getClassificationColor, cn } from '../lib/utils'
+import { formatMoney, formatNumber, formatPercent, getClassificationColor, cn, safeDivide, safeNumber } from '../lib/utils'
 import type { AdClassification } from '../lib/utils'
 
 // ==================== TYPES ====================
@@ -245,7 +245,7 @@ function MetricCard({ title, value, change, icon, trendIsGood, hidden, details, 
                   ? 'text-emerald-600'
                   : 'text-red-600'
               }`}>
-                {Math.abs(change).toFixed(1)}%
+                {Math.abs(safeNumber(change)).toFixed(1)}%
               </span>
               <span className="text-xs text-slate-400">vs anterior</span>
             </div>
@@ -292,7 +292,7 @@ function MetricCard({ title, value, change, icon, trendIsGood, hidden, details, 
                       ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400"
                       : "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400"
                   )}>
-                    {d.trend >= 0 ? '+' : ''}{d.trend.toFixed(1)}%
+                    {d.trend >= 0 ? '+' : ''}{safeNumber(d.trend).toFixed(1)}%
                   </span>
                 )}
               </div>
@@ -418,15 +418,15 @@ function BudgetPacingWidget({ dashboard }: { dashboard: DashboardData }) {
   const today = new Date()
   const dayOfMonth = today.getDate()
   const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
-  const expectedPacing = (dayOfMonth / daysInMonth) * 100
+  const expectedPacing = safeDivide(dayOfMonth, daysInMonth) * 100
 
   // Estimate monthly budget based on daily spend
-  const dailyAvg = dashboard.total_spend / (dashboard.period_days || 30)
+  const dailyAvg = safeDivide(dashboard.total_spend, dashboard.period_days || 30)
   const projectedMonthlySpend = dailyAvg * daysInMonth
   const currentMonthSpend = dailyAvg * dayOfMonth
-  const actualPacing = (currentMonthSpend / projectedMonthlySpend) * 100
+  const actualPacing = safeDivide(currentMonthSpend, projectedMonthlySpend) * 100
 
-  const pacingDiff = actualPacing - expectedPacing
+  const pacingDiff = safeNumber(actualPacing) - safeNumber(expectedPacing)
   const status = Math.abs(pacingDiff) < 10 ? 'on-track' : pacingDiff > 0 ? 'ahead' : 'behind'
 
   return (
@@ -476,7 +476,7 @@ function BudgetPacingWidget({ dashboard }: { dashboard: DashboardData }) {
               "text-lg font-bold",
               status === 'on-track' ? "text-green-600" : status === 'ahead' ? "text-amber-600" : "text-blue-600"
             )}>
-              {actualPacing.toFixed(0)}%
+              {safeNumber(actualPacing).toFixed(0)}%
             </p>
           </div>
           <div className="text-center p-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
@@ -497,8 +497,8 @@ function BudgetPacingWidget({ dashboard }: { dashboard: DashboardData }) {
           {status === 'behind' && <TrendingDown className="w-4 h-4" />}
           <span>
             {status === 'on-track' && 'En track - El gasto va acorde al esperado'}
-            {status === 'ahead' && `Adelantado ${pacingDiff.toFixed(0)}% - Considera reducir gasto`}
-            {status === 'behind' && `Atrasado ${Math.abs(pacingDiff).toFixed(0)}% - Hay margen para escalar`}
+            {status === 'ahead' && `Adelantado ${safeNumber(pacingDiff).toFixed(0)}% - Considera reducir gasto`}
+            {status === 'behind' && `Atrasado ${Math.abs(safeNumber(pacingDiff)).toFixed(0)}% - Hay margen para escalar`}
           </span>
         </div>
       </div>
@@ -541,12 +541,12 @@ function EvolutionSliderWidget({ dashboard, showAmounts, periodDays, periodLabel
     let cumulativeReach = 0
     return dashboard.daily_metrics.map((d) => {
       // Calculate daily CPR (spend / results)
-      const dailyCpr = d.results > 0 ? d.spend / d.results : 0
+      const dailyCpr = safeDivide(d.spend, d.results)
       // Estimate daily CTR (we'll use avg or simulate based on impressions)
-      const dailyCtr = d.impressions > 0 ? ((d.results * 10) / d.impressions) * 100 : 0 // Approximation
+      const dailyCtr = safeDivide(safeNumber(d.results) * 10, d.impressions) * 100 // Approximation
       // Frequency = impressions / reach estimate
-      const dailyReach = d.impressions / (dashboard.avg_frequency || 2)
-      const dailyFrequency = dailyReach > 0 ? d.impressions / dailyReach : 1
+      const dailyReach = safeDivide(d.impressions, dashboard.avg_frequency || 2)
+      const dailyFrequency = safeDivide(d.impressions, dailyReach, 1)
       // Cumulative reach
       cumulativeReach += dailyReach
 
@@ -921,7 +921,7 @@ function ClassificationChart({ dashboard }: ClassificationChartProps) {
                     return (
                       <div className="bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">
                         <p className="font-medium text-slate-900 dark:text-white">{data.name}</p>
-                        <p className="text-sm text-slate-500">{data.value} anuncios ({((data.value / totalAds) * 100).toFixed(0)}%)</p>
+                        <p className="text-sm text-slate-500">{data.value} anuncios ({(safeDivide(data.value, totalAds) * 100).toFixed(0)}%)</p>
                       </div>
                     )
                   }}
@@ -946,7 +946,7 @@ function ClassificationChart({ dashboard }: ClassificationChartProps) {
                 <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
                 <span className="text-sm text-slate-600 dark:text-slate-400 flex-1">{item.name}</span>
                 <span className="text-sm font-bold text-slate-900 dark:text-white">{item.value}</span>
-                <span className="text-xs text-slate-400">({((item.value / totalAds) * 100).toFixed(0)}%)</span>
+                <span className="text-xs text-slate-400">({(safeDivide(item.value, totalAds) * 100).toFixed(0)}%)</span>
               </button>
             ))}
           </div>
@@ -1534,9 +1534,9 @@ export default function Dashboard() {
             hidden={!showAmounts}
             accentColor="#8b5cf6"
             details={[
-              { label: 'Promedio diario', value: formatMoney(dashboard.total_spend / (dashboard.period_days || 30)) },
+              { label: 'Promedio diario', value: formatMoney(safeDivide(dashboard.total_spend, dashboard.period_days || 30)) },
               { label: 'CPM promedio', value: formatMoney(dashboard.avg_cpm) },
-              { label: 'Costo por clic', value: formatMoney(dashboard.total_spend / (dashboard.total_impressions * (dashboard.avg_ctr / 100) || 1)), info: 'Estimado' },
+              { label: 'Costo por clic', value: formatMoney(safeDivide(dashboard.total_spend, safeNumber(dashboard.total_impressions) * safeNumber(dashboard.avg_ctr, 1) / 100)), info: 'Estimado' },
               { label: 'Alcance', value: formatNumber(dashboard.total_reach) },
             ]}
             onClick={() => navigate('/metrics')}
@@ -1549,9 +1549,9 @@ export default function Dashboard() {
             trendIsGood={true}
             accentColor="#10b981"
             details={[
-              { label: 'Promedio diario', value: formatNumber(Math.round(dashboard.total_results / (dashboard.period_days || 30))) },
-              { label: 'Mejor día', value: dashboard.daily_metrics?.length > 0 ? formatNumber(Math.max(...dashboard.daily_metrics.map(d => d.results))) : '—' },
-              { label: 'Peor día', value: dashboard.daily_metrics?.length > 0 ? formatNumber(Math.min(...dashboard.daily_metrics.map(d => d.results))) : '—' },
+              { label: 'Promedio diario', value: formatNumber(Math.round(safeDivide(dashboard.total_results, dashboard.period_days || 30))) },
+              { label: 'Mejor día', value: dashboard.daily_metrics?.length > 0 ? formatNumber(Math.max(...dashboard.daily_metrics.map(d => d.results || 0))) : '—' },
+              { label: 'Peor día', value: dashboard.daily_metrics?.length > 0 ? formatNumber(Math.min(...dashboard.daily_metrics.map(d => d.results || 0))) : '—' },
               { label: 'Alcance total', value: formatNumber(dashboard.total_reach) },
             ]}
             onClick={() => navigate('/analysis')}
@@ -1564,11 +1564,16 @@ export default function Dashboard() {
             trendIsGood={false}
             hidden={!showAmounts}
             accentColor="#3b82f6"
-            details={[
-              { label: 'Ganadores', value: formatMoney(dashboard.top_ads?.filter(a => a.classification === 'GANADOR').reduce((a, b) => a + b.cpr, 0) / (dashboard.classification_counts?.GANADOR || 1) || 0), info: 'Promedio' },
-              { label: 'Escalables', value: formatMoney(dashboard.top_ads?.filter(a => a.classification === 'ESCALABLE').reduce((a, b) => a + b.cpr, 0) / (dashboard.classification_counts?.ESCALABLE || 1) || 0), info: 'Promedio' },
-              { label: 'Testing', value: formatMoney(dashboard.top_ads?.filter(a => a.classification === 'TESTING').reduce((a, b) => a + b.cpr, 0) / (dashboard.classification_counts?.TESTING || 1) || 0), info: 'Promedio' },
-            ]}
+            details={(() => {
+              const ganadores = dashboard.top_ads?.filter(a => a.classification === 'GANADOR') || []
+              const escalables = dashboard.top_ads?.filter(a => a.classification === 'ESCALABLE') || []
+              const testing = dashboard.top_ads?.filter(a => a.classification === 'TESTING') || []
+              return [
+                { label: 'Ganadores', value: formatMoney(safeDivide(ganadores.reduce((a, b) => a + safeNumber(b.cpr), 0), ganadores.length)), info: 'Promedio' },
+                { label: 'Escalables', value: formatMoney(safeDivide(escalables.reduce((a, b) => a + safeNumber(b.cpr), 0), escalables.length)), info: 'Promedio' },
+                { label: 'Testing', value: formatMoney(safeDivide(testing.reduce((a, b) => a + safeNumber(b.cpr), 0), testing.length)), info: 'Promedio' },
+              ]
+            })()}
             onClick={() => navigate('/ads')}
           />
           <MetricCard
@@ -1579,8 +1584,8 @@ export default function Dashboard() {
             accentColor="#06b6d4"
             details={[
               { label: 'Impresiones', value: formatNumber(dashboard.total_impressions) },
-              { label: 'Clics estimados', value: formatNumber(Math.round(dashboard.total_impressions * (dashboard.avg_ctr / 100))) },
-              { label: 'Frecuencia', value: dashboard.avg_frequency.toFixed(1), info: dashboard.avg_frequency > 3 ? 'Alta' : 'Normal' },
+              { label: 'Clics estimados', value: formatNumber(Math.round(safeNumber(dashboard.total_impressions) * safeNumber(dashboard.avg_ctr) / 100)) },
+              { label: 'Frecuencia', value: safeNumber(dashboard.avg_frequency).toFixed(1), info: safeNumber(dashboard.avg_frequency) > 3 ? 'Alta' : 'Normal' },
             ]}
             onClick={() => navigate('/metrics')}
           />

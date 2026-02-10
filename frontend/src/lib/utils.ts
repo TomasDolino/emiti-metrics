@@ -2,7 +2,11 @@ import { clsx, type ClassValue } from 'clsx'
 
 // ==================== FORMATTING ====================
 
-export function formatMoney(amount: number, currency = 'ARS'): string {
+/**
+ * Safely format a value as money. Returns '—' for invalid values.
+ */
+export function formatMoney(amount: number | null | undefined, currency = 'ARS'): string {
+  if (amount == null || !Number.isFinite(amount)) return '—'
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency,
@@ -11,15 +15,27 @@ export function formatMoney(amount: number, currency = 'ARS'): string {
   }).format(amount)
 }
 
-export function formatPercent(value: number, decimals = 1): string {
-  return `${value >= 0 ? '' : ''}${value.toFixed(decimals)}%`
+/**
+ * Safely format a value as percentage. Returns '—' for invalid values.
+ */
+export function formatPercent(value: number | null | undefined, decimals = 1): string {
+  if (value == null || !Number.isFinite(value)) return '—'
+  return `${value.toFixed(decimals)}%`
 }
 
-export function formatNumber(value: number): string {
+/**
+ * Safely format a number. Returns '—' for invalid values.
+ */
+export function formatNumber(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return '—'
   return new Intl.NumberFormat('es-AR').format(Math.round(value))
 }
 
-export function formatCompact(value: number): string {
+/**
+ * Safely format a number in compact form (K, M). Returns '—' for invalid values.
+ */
+export function formatCompact(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return '—'
   if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
   if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
   return formatNumber(value)
@@ -55,36 +71,51 @@ export function timeAgo(date: string | Date): string {
   return formatDate(date)
 }
 
+// ==================== SAFE MATH ====================
+
+/**
+ * Safe division that returns fallback (default 0) if divisor is 0 or result is not finite.
+ */
+export function safeDivide(numerator: number | null | undefined, denominator: number | null | undefined, fallback = 0): number {
+  if (numerator == null || denominator == null || denominator === 0) return fallback
+  const result = numerator / denominator
+  return Number.isFinite(result) ? result : fallback
+}
+
+/**
+ * Safely get a numeric value, returning fallback if invalid.
+ */
+export function safeNumber(value: number | null | undefined, fallback = 0): number {
+  if (value == null || !Number.isFinite(value)) return fallback
+  return value
+}
+
 // ==================== CALCULATIONS ====================
 
 export function calculateTrend(current: number, previous: number): number {
   if (previous === 0) return current > 0 ? 100 : 0
-  return ((current - previous) / previous) * 100
+  const result = ((current - previous) / previous) * 100
+  return Number.isFinite(result) ? result : 0
 }
 
-export function calculateCTR(clicks: number, impressions: number): number {
-  if (impressions === 0) return 0
-  return (clicks / impressions) * 100
+export function calculateCTR(clicks: number | null | undefined, impressions: number | null | undefined): number {
+  return safeDivide(clicks, impressions) * 100
 }
 
-export function calculateCPR(spend: number, results: number): number {
-  if (results === 0) return 0
-  return spend / results
+export function calculateCPR(spend: number | null | undefined, results: number | null | undefined): number {
+  return safeDivide(spend, results)
 }
 
-export function calculateCPM(spend: number, impressions: number): number {
-  if (impressions === 0) return 0
-  return (spend / impressions) * 1000
+export function calculateCPM(spend: number | null | undefined, impressions: number | null | undefined): number {
+  return safeDivide(spend, impressions) * 1000
 }
 
-export function calculateROAS(revenue: number, spend: number): number {
-  if (spend === 0) return 0
-  return revenue / spend
+export function calculateROAS(revenue: number | null | undefined, spend: number | null | undefined): number {
+  return safeDivide(revenue, spend)
 }
 
-export function calculateFrequency(impressions: number, reach: number): number {
-  if (reach === 0) return 0
-  return impressions / reach
+export function calculateFrequency(impressions: number | null | undefined, reach: number | null | undefined): number {
+  return safeDivide(impressions, reach)
 }
 
 // ==================== FATIGUE DETECTION ====================
