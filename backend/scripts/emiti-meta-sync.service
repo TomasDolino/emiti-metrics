@@ -1,0 +1,15 @@
+[Unit]
+Description=Emiti Metrics - Meta Ads Sync
+After=network.target postgresql.service
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/var/www/metrics-backend
+EnvironmentFile=/var/www/metrics-backend/.env
+ExecStart=/var/www/metrics-backend/venv/bin/python /var/www/metrics-backend/scripts/sync_meta.py
+StandardOutput=append:/var/log/emiti-meta-sync.log
+StandardError=append:/var/log/emiti-meta-sync.log
+
+[Install]
+WantedBy=multi-user.target

@@ -25,12 +25,217 @@ import statistics
 
 # Configuration
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-# Haiku for chat (fast & cheap), Sonnet for complex analysis
-CLAUDE_CHAT_MODEL = "claude-3-haiku-20240307"     # ~$0.25/M input, $1.25/M output
-CLAUDE_MODEL = "claude-3-5-sonnet-20241022"       # For complex analysis
-CLAUDE_VISION_MODEL = "claude-3-5-sonnet-20241022"  # Vision tasks
+
+# Model definitions - Smart Routing System
+CLAUDE_OPUS = "claude-opus-4-5-20251101"      # Best quality, complex reasoning
+CLAUDE_SONNET = "claude-sonnet-4-20250514"    # Fast, cost-effective
+CLAUDE_HAIKU = "claude-haiku-4-5-20251001"    # Ultra-fast classifier
+
+# Default models (will be overridden by smart routing)
+CLAUDE_CHAT_MODEL = CLAUDE_SONNET    # Default for chat
+CLAUDE_MODEL = CLAUDE_SONNET         # Default for analysis
+CLAUDE_VISION_MODEL = CLAUDE_SONNET  # Default for vision
 MAX_TOKENS = 4096
-MAX_TOKENS_CHAT = 1024  # Shorter for faster chat responses
+MAX_TOKENS_CHAT = 2048  # More tokens for better responses
+MAX_TOKENS_OPUS = 8192  # More tokens for Opus complex tasks
+
+
+# ==================== SMART MODEL ROUTING ====================
+
+# Tasks that ALWAYS use Opus (complex reasoning needed)
+OPUS_TASKS = {
+    "executive_report",      # Client-facing reports need best quality
+    "weekly_digest",         # Comprehensive analysis
+    "strategic_recommendations",  # High-stakes decisions
+    "anomaly_explanation",   # Complex pattern analysis
+    "compare_creatives",     # Multi-image comparison
+}
+
+# Tasks that ALWAYS use Sonnet (speed matters, quality sufficient)
+SONNET_TASKS = {
+    "chat",                  # Quick responses
+    "quick_analysis",        # Simple queries
+    "daily_insights",        # Routine updates
+    "suggestions",           # UI suggestions
+}
+
+# Query complexity indicators for routing ambiguous cases
+COMPLEX_INDICATORS = [
+    "por qué",              # Why questions need deeper reasoning
+    "analiza",              # Analysis requests
+    "compara",              # Comparison requests
+    "estrategia",           # Strategy discussions
+    "recomendaciones",      # Recommendations
+    "reporte",              # Report requests
+    "explica",              # Explanations
+    "proyección",           # Projections
+    "tendencia",            # Trend analysis
+]
+
+
+def select_model(task_type: str, query: str = "", force_opus: bool = False) -> tuple[str, int]:
+    """
+    Smart model selection based on task type and query complexity (sync version).
+    For ambiguous cases, use select_model_smart() which includes Haiku classification.
+
+    Returns:
+        tuple: (model_id, max_tokens)
+    """
+    # Force Opus if explicitly requested
+    if force_opus:
+        return CLAUDE_OPUS, MAX_TOKENS_OPUS
+
+    # Rule 1: Check explicit task routing
+    if task_type in OPUS_TASKS:
+        return CLAUDE_OPUS, MAX_TOKENS_OPUS
+
+    if task_type in SONNET_TASKS:
+        return CLAUDE_SONNET, MAX_TOKENS_CHAT
+
+    # Rule 2: Check query complexity indicators
+    query_lower = query.lower()
+    complexity_score = sum(1 for indicator in COMPLEX_INDICATORS if indicator in query_lower)
+
+    # Multiple questions = complex
+    question_count = query.count("?")
+    if question_count > 2:
+        complexity_score += 2
+
+    # Long queries tend to be complex
+    if len(query) > 500:
+        complexity_score += 1
+
+    # Route based on complexity score
+    if complexity_score >= 2:
+        return CLAUDE_OPUS, MAX_TOKENS_OPUS
+
+    # Default to Sonnet for speed
+    return CLAUDE_SONNET, MAX_TOKENS_CHAT
+
+
+async def select_model_smart(task_type: str, query: str = "", force_opus: bool = False, use_haiku: bool = True) -> tuple[str, int]:
+    """
+    Smart model selection with Haiku classification for ambiguous cases.
+    This is the async version that can call Haiku for edge cases.
+
+    Args:
+        task_type: Type of task (chat, report, etc.)
+        query: User query text
+        force_opus: Force Opus regardless of rules
+        use_haiku: Use Haiku to classify ambiguous queries
+
+    Returns:
+        tuple: (model_id, max_tokens)
+    """
+    # Force Opus if explicitly requested
+    if force_opus:
+        track_model_usage(CLAUDE_OPUS)
+        return CLAUDE_OPUS, MAX_TOKENS_OPUS
+
+    # Rule 1: Check explicit task routing (no need for Haiku)
+    if task_type in OPUS_TASKS:
+        track_model_usage(CLAUDE_OPUS)
+        return CLAUDE_OPUS, MAX_TOKENS_OPUS
+
+    if task_type in SONNET_TASKS and not query:
+        track_model_usage(CLAUDE_SONNET)
+        return CLAUDE_SONNET, MAX_TOKENS_CHAT
+
+    # Rule 2: Calculate complexity score
+    query_lower = query.lower()
+    complexity_score = sum(1 for indicator in COMPLEX_INDICATORS if indicator in query_lower)
+
+    question_count = query.count("?")
+    if question_count > 2:
+        complexity_score += 2
+
+    if len(query) > 500:
+        complexity_score += 1
+
+    # Clear decisions based on rules
+    if complexity_score >= 3:  # Clearly complex
+        track_model_usage(CLAUDE_OPUS)
+        return CLAUDE_OPUS, MAX_TOKENS_OPUS
+
+    if complexity_score == 0 and len(query) < 100:  # Clearly simple
+        track_model_usage(CLAUDE_SONNET)
+        return CLAUDE_SONNET, MAX_TOKENS_CHAT
+
+    # AMBIGUOUS CASE (score 1-2): Use Haiku to decide
+    if use_haiku and query and complexity_score in [1, 2]:
+        track_model_usage(CLAUDE_HAIKU)
+        model = await classify_with_haiku(query)
+        if model == CLAUDE_OPUS:
+            track_model_usage(CLAUDE_OPUS)
+            return CLAUDE_OPUS, MAX_TOKENS_OPUS
+
+    # Default to Sonnet
+    track_model_usage(CLAUDE_SONNET)
+    return CLAUDE_SONNET, MAX_TOKENS_CHAT
+
+
+async def classify_with_haiku(query: str) -> str:
+    """
+    Use Haiku to classify ambiguous queries (ultra-fast, ultra-cheap).
+    Only called for truly ambiguous cases.
+    """
+    if not ANTHROPIC_API_KEY:
+        return CLAUDE_SONNET  # Fallback
+
+    headers = {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+    }
+
+    payload = {
+        "model": CLAUDE_HAIKU,
+        "max_tokens": 10,
+        "messages": [{
+            "role": "user",
+            "content": f"Clasifica esta consulta como SIMPLE o COMPLEX (solo responde una palabra):\n{query[:200]}"
+        }]
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.post(
+                "https://api.anthropic.com/v1/messages",
+                headers=headers,
+                json=payload
+            )
+            if response.status_code == 200:
+                result = response.json()
+                content = result.get("content", [{}])[0].get("text", "")
+                if "COMPLEX" in content.upper():
+                    return CLAUDE_OPUS
+    except Exception:
+        pass  # Fallback to Sonnet on any error
+
+    return CLAUDE_SONNET
+
+
+# Model usage tracking for optimization
+_model_usage: Dict[str, int] = {"opus": 0, "sonnet": 0, "haiku": 0}
+
+def track_model_usage(model: str):
+    """Track which model was used for analytics."""
+    if "opus" in model:
+        _model_usage["opus"] += 1
+    elif "sonnet" in model:
+        _model_usage["sonnet"] += 1
+    elif "haiku" in model:
+        _model_usage["haiku"] += 1
+
+def get_model_usage_stats() -> Dict:
+    """Get model usage statistics."""
+    total = sum(_model_usage.values()) or 1
+    return {
+        "usage": _model_usage,
+        "percentages": {
+            k: round(v / total * 100, 1) for k, v in _model_usage.items()
+        }
+    }
 
 # Cache for responses (simple in-memory, can be replaced with Redis)
 _response_cache: Dict[str, tuple] = {}  # hash -> (response, timestamp)
@@ -101,7 +306,7 @@ MÉTRICAS CLAVE A MONITOREAR:
 - ROAS: > 2x es rentable para la mayoría de negocios"""
 
 
-CREATIVE_ANALYST_PROMPT = """Eres un experto en análisis de creativos publicitarios para Meta Ads.
+CREATIVE_ANALYST_PROMPT = """Eres un experto en análisis de creativos publicitarios para Meta Ads con conocimiento profundo de copywriting, SEO y engagement.
 
 Analiza la imagen/video y proporciona:
 
@@ -131,6 +336,45 @@ Analiza la imagen/video y proporciona:
    - Justificación de cada recomendación
 
 Responde en español, sé directo y accionable."""
+
+
+COPY_ANALYST_PROMPT = """Eres un experto copywriter y especialista en SEO para anuncios de Meta Ads.
+
+Analiza el copy visible en la imagen y proporciona un análisis detallado en formato JSON:
+
+{
+  "detected_copy": "El texto exacto que detectas en la imagen",
+  "engagement_score": 75,  // 0-100 basado en: hook, emoción, claridad, urgencia
+  "seo_score": 80,  // 0-100 basado en: keywords, legibilidad, call-to-action
+  "hooks_analysis": "Análisis del gancho/hook inicial",
+  "cta_analysis": "Análisis del llamado a la acción",
+  "suggestions": [
+    "Sugerencia 1 para mejorar engagement",
+    "Sugerencia 2 para mejorar SEO",
+    "Sugerencia 3 específica para esta imagen"
+  ],
+  "keywords_detected": ["palabra1", "palabra2"],
+  "emotional_triggers": ["urgencia", "escasez", "beneficio"],
+  "readability": "alta/media/baja"
+}
+
+CRITERIOS DE SCORING:
+
+ENGAGEMENT (0-100):
+- Hook impactante (primeras 3 palabras): +30 puntos
+- Beneficio claro para el usuario: +25 puntos
+- Urgencia/escasez si aplica: +15 puntos
+- Emoción/conexión: +15 puntos
+- CTA claro y accionable: +15 puntos
+
+SEO (0-100):
+- Keywords relevantes al producto/servicio: +30 puntos
+- Legibilidad (oraciones cortas, palabras simples): +25 puntos
+- Call-to-action con verbo de acción: +20 puntos
+- Sin errores ortográficos/gramaticales: +15 puntos
+- Estructura visual del copy: +10 puntos
+
+Responde SOLO con el JSON, sin texto adicional."""
 
 
 REPORT_GENERATOR_PROMPT = """Eres un experto en comunicación de marketing que genera reportes para clientes.
@@ -676,13 +920,16 @@ PREGUNTA DEL USUARIO:
     if memory_available:
         save_message("user", user_message, client_id, user_id)
 
+    # Smart routing with Haiku classification for ambiguous queries
+    model, max_tokens = await select_model_smart("chat", user_message, use_haiku=True)
+
     if stream:
         full_response = ""
         async for chunk in call_claude_api_stream(
             messages,
             system=AD_ANALYST_PROMPT,
-            model=CLAUDE_CHAT_MODEL,
-            max_tokens=MAX_TOKENS_CHAT
+            model=model,
+            max_tokens=max_tokens
         ):
             full_response += chunk
             yield chunk
@@ -695,15 +942,15 @@ PREGUNTA DEL USUARIO:
             result = await call_claude_with_tools(
                 messages,
                 system=AD_ANALYST_PROMPT,
-                model=CLAUDE_CHAT_MODEL,
-                max_tokens=MAX_TOKENS_CHAT
+                model=model,
+                max_tokens=max_tokens
             )
         else:
             result = await call_claude_api(
                 messages,
                 system=AD_ANALYST_PROMPT,
-                model=CLAUDE_CHAT_MODEL,
-                max_tokens=MAX_TOKENS_CHAT
+                model=model,
+                max_tokens=max_tokens
             )
 
         content = result.get("content", "")
@@ -719,84 +966,153 @@ async def chat_crm(
     user_message: str,
     data_context: Dict,
     chat_history: List[Dict] = None,
-    user_id: str = "default"
-) -> str:
+    user_id: str = "crm_default"
+) -> tuple[str, int]:
     """
-    Chat for CRM Grupo Albisu.
+    Chat for CRM Grupo Albisu with persistent memory and learning.
     Non-streaming version for simpler frontend integration.
+
+    Returns:
+        tuple: (response_text, conversation_id)
     """
     # Import memory functions
     try:
-        from .ai_memory import save_message, build_ai_context
+        from .ai_memory import (
+            save_message, build_ai_context, search_knowledge,
+            get_conversation_history, update_preference
+        )
         memory_available = True
     except ImportError:
         memory_available = False
 
     # Build context from CRM data
     context_parts = []
+    conversation_id = 0
 
     # Get memory context if available
     if memory_available:
         memory_context = build_ai_context(user_id, None, user_message)
+
+        # Add relevant knowledge from past interactions
         if memory_context.get("relevant_knowledge"):
             knowledge_text = "\n".join([
-                f"- {k['title']}: {k['content'][:150]}"
-                for k in memory_context["relevant_knowledge"][:2]
+                f"- {k['title']}: {k['content'][:200]}"
+                for k in memory_context["relevant_knowledge"][:3]
             ])
-            context_parts.append(f"CONOCIMIENTO PREVIO:\n{knowledge_text}")
+            context_parts.append(f"📚 CONOCIMIENTO BASE:\n{knowledge_text}")
+
+        # Add user preferences to guide response style
+        if memory_context.get("user_preferences"):
+            prefs = memory_context["user_preferences"]
+            pref_instructions = []
+            if "response_style" in prefs:
+                pref_instructions.append(f"Estilo: {prefs['response_style']['value']}")
+            if "detail_level" in prefs:
+                pref_instructions.append(f"Nivel de detalle: {prefs['detail_level']['value']}")
+            if pref_instructions:
+                context_parts.append(f"🎯 PREFERENCIAS USUARIO: {', '.join(pref_instructions)}")
+
+        # Get persistent conversation history (beyond current session)
+        persistent_history = memory_context.get("conversation_history", [])
+        if persistent_history and len(persistent_history) > len(chat_history or []):
+            # There's older context we can use
+            context_parts.append(f"💬 Conversaciones previas: {len(persistent_history)} mensajes en historial")
+
+    # Current period info
+    if "periodo" in data_context:
+        context_parts.append(f"📅 PERÍODO: {data_context['periodo']}")
 
     if "metrics" in data_context:
         m = data_context["metrics"]
-        context_parts.append(f"""
-MÉTRICAS ACTUALES:
+        metrics_text = f"""
+📊 MÉTRICAS DEL MES:
 - Ventas totales: ${m.get('totalSales', 0):,.0f}
+- Cobrado: ${m.get('totalCollected', 0):,.0f}
+- Pendiente cobro: ${m.get('pendingPayment', 0):,.0f}
 - Pedidos: {m.get('totalOrders', 0)}
 - Ticket promedio: ${m.get('avgTicket', 0):,.0f}
-- Tasa de conversión: {m.get('conversionRate', 0):.1f}%
-""")
+- vs mes anterior: {m.get('salesChangeVsLastMonth', 'N/A')}"""
+        context_parts.append(metrics_text)
 
-    if "brands" in data_context:
+    if "statusBreakdown" in data_context:
+        status = data_context["statusBreakdown"]
+        status_text = "📋 ESTADOS: " + ", ".join([f"{k}: {v}" for k, v in status.items()])
+        context_parts.append(status_text)
+
+    if "brands" in data_context and data_context["brands"]:
         brands_text = "\n".join([
             f"- {b['name']}: ${b.get('sales', 0):,.0f} ({b.get('orders', 0)} pedidos)"
-            for b in data_context["brands"]
+            for b in data_context["brands"][:5]
         ])
-        context_parts.append(f"VENTAS POR MARCA:\n{brands_text}")
+        context_parts.append(f"🏷️ VENTAS POR MARCA:\n{brands_text}")
 
-    if "recent_orders" in data_context:
+    if "topSellers" in data_context and data_context["topSellers"]:
+        sellers_text = "\n".join([
+            f"- {s['name']}: ${s.get('sales', 0):,.0f} ({s.get('orders', 0)} ventas)"
+            for s in data_context["topSellers"][:3]
+        ])
+        context_parts.append(f"🏆 TOP VENDEDORES:\n{sellers_text}")
+
+    if "stockAlerts" in data_context:
+        stock = data_context["stockAlerts"]
+        if stock.get("outOfStock"):
+            context_parts.append(f"🔴 AGOTADOS: {', '.join(stock['outOfStock'][:5])}")
+        if stock.get("lowStock"):
+            context_parts.append(f"🟡 STOCK BAJO: {', '.join(stock['lowStock'][:5])}")
+
+    if "recent_orders" in data_context and data_context["recent_orders"]:
         orders_text = "\n".join([
-            f"- #{o.get('id', '?')}: ${o.get('total', 0):,.0f} - {o.get('status', 'pendiente')}"
+            f"- #{o.get('id', '?')} {o.get('client', 'Cliente')}: ${o.get('total', 0):,.0f} ({o.get('status', 'pendiente')})"
             for o in data_context["recent_orders"][:5]
         ])
-        context_parts.append(f"PEDIDOS RECIENTES:\n{orders_text}")
+        context_parts.append(f"📦 PEDIDOS RECIENTES:\n{orders_text}")
 
     if "alerts" in data_context and data_context["alerts"]:
-        alerts_text = "\n".join([f"- ⚠️ {a}" for a in data_context["alerts"][:3]])
-        context_parts.append(f"ALERTAS:\n{alerts_text}")
+        alerts_text = "\n".join([f"- ⚠️ {a}" for a in data_context["alerts"]])
+        context_parts.append(f"🚨 ALERTAS ACTIVAS:\n{alerts_text}")
 
     context_message = "\n\n".join(context_parts) if context_parts else "Sin datos disponibles."
 
-    # Build messages
+    # Build messages with persistent history
     messages = []
 
+    # Add persistent history first (older context)
+    if memory_available:
+        persistent = get_conversation_history(user_id, None, 6)
+        for msg in persistent[-3:]:  # Last 3 from persistent
+            messages.append({
+                "role": msg["role"],
+                "content": msg["content"]
+            })
+
+    # Then add current session history
     if chat_history:
-        for msg in chat_history[-5:]:
+        for msg in chat_history[-4:]:  # Last 4 from current session
             messages.append({
                 "role": msg.get("role", "user"),
                 "content": msg.get("content", "")
             })
 
+    # Current message with full context
     messages.append({
         "role": "user",
-        "content": f"""DATOS DEL CRM:
+        "content": f"""DATOS DEL CRM GRUPO ALBISU:
 {context_message}
 
-CONSULTA:
+CONSULTA DEL USUARIO:
 {user_message}"""
     })
 
-    # Save user message
+    # Save user message to persistent memory
     if memory_available:
-        save_message("user", user_message, None, user_id)
+        conversation_id = save_message("user", user_message, None, user_id)
+
+        # Auto-detect and save preferences from query patterns
+        query_lower = user_message.lower()
+        if "detalle" in query_lower or "específico" in query_lower:
+            update_preference(user_id, "detail_level", "alto", 0.6)
+        elif "resumen" in query_lower or "breve" in query_lower:
+            update_preference(user_id, "detail_level", "bajo", 0.6)
 
     result = await call_claude_api(
         messages,
@@ -807,11 +1123,11 @@ CONSULTA:
 
     response = result.get("content", "Lo siento, no pude procesar tu consulta.")
 
-    # Save assistant response
+    # Save assistant response to persistent memory
     if memory_available:
         save_message("assistant", response, None, user_id)
 
-    return response
+    return response, conversation_id
 
 
 # ==================== ANOMALY DETECTION ====================
@@ -904,10 +1220,12 @@ Explica brevemente:
 async def analyze_creative(
     image_data: str | bytes,
     image_type: str = "image/jpeg",
-    additional_context: str = ""
+    additional_context: str = "",
+    analysis_type: str = "full"  # 'visual', 'copy', or 'full'
 ) -> Dict:
     """
     Analyze an ad creative using Claude Vision.
+    Supports visual analysis, copy/SEO analysis, or full analysis.
     """
     # Convert bytes to base64 if needed
     if isinstance(image_data, bytes):
@@ -915,55 +1233,123 @@ async def analyze_creative(
     else:
         image_b64 = image_data
 
-    messages = [{
-        "role": "user",
-        "content": [
-            {
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": image_type,
-                    "data": image_b64
-                }
-            },
-            {
-                "type": "text",
-                "text": f"""Analiza este creativo publicitario.
+    # Build the image content block
+    image_block = {
+        "type": "image",
+        "source": {
+            "type": "base64",
+            "media_type": image_type,
+            "data": image_b64
+        }
+    }
+
+    results = {
+        "timestamp": datetime.now().isoformat(),
+        "analysis_type": analysis_type
+    }
+
+    # Visual analysis
+    if analysis_type in ["visual", "full"]:
+        visual_messages = [{
+            "role": "user",
+            "content": [
+                image_block,
+                {
+                    "type": "text",
+                    "text": f"""Analiza este creativo publicitario.
 
 {f'CONTEXTO ADICIONAL: {additional_context}' if additional_context else ''}
 
 Proporciona un análisis completo siguiendo las directrices del sistema."""
-            }
-        ]
-    }]
+                }
+            ]
+        }]
 
-    result = await call_claude_api(
-        messages,
-        system=CREATIVE_ANALYST_PROMPT,
-        model=CLAUDE_VISION_MODEL,
-        use_cache=False  # Don't cache image analysis
-    )
+        visual_result = await call_claude_api(
+            visual_messages,
+            system=CREATIVE_ANALYST_PROMPT,
+            model=CLAUDE_VISION_MODEL,
+            use_cache=False
+        )
 
-    if "error" in result:
-        return result
+        if "error" in visual_result:
+            return visual_result
 
-    # Parse the response and extract score
-    content = result.get("content", "")
+        content = visual_result.get("content", "")
+        results["analysis"] = content
 
-    # Try to extract score from response
-    score = 70  # Default score
-    if "score" in content.lower():
-        import re
-        score_match = re.search(r'(\d{1,3})\s*[/de]{0,2}\s*100', content)
-        if score_match:
-            score = int(score_match.group(1))
+        # Extract score from response
+        score = 70
+        if "score" in content.lower():
+            import re
+            score_match = re.search(r'(\d{1,3})\s*[/de]{0,2}\s*100', content)
+            if score_match:
+                score = int(score_match.group(1))
+        results["score"] = min(100, max(0, score))
+        results["usage"] = visual_result.get("usage", {})
 
-    return {
-        "analysis": content,
-        "score": min(100, max(0, score)),
-        "timestamp": datetime.now().isoformat(),
-        "usage": result.get("usage", {})
-    }
+    # Copy/SEO analysis
+    if analysis_type in ["copy", "full"]:
+        copy_messages = [{
+            "role": "user",
+            "content": [
+                image_block,
+                {
+                    "type": "text",
+                    "text": f"""Analiza el copy y texto visible en este creativo publicitario.
+{f'CONTEXTO: {additional_context}' if additional_context else ''}
+
+Responde SOLO con el JSON especificado en las instrucciones del sistema."""
+                }
+            ]
+        }]
+
+        copy_result = await call_claude_api(
+            copy_messages,
+            system=COPY_ANALYST_PROMPT,
+            model=CLAUDE_VISION_MODEL,
+            use_cache=False
+        )
+
+        if "error" not in copy_result:
+            copy_content = copy_result.get("content", "{}")
+            try:
+                # Parse JSON from response
+                import re
+                json_match = re.search(r'\{[\s\S]*\}', copy_content)
+                if json_match:
+                    copy_analysis = json.loads(json_match.group())
+                    results["copy_analysis"] = copy_analysis
+
+                    # If only copy analysis, use its scores
+                    if analysis_type == "copy":
+                        results["score"] = copy_analysis.get("engagement_score", 70)
+                        results["analysis"] = f"""## Análisis de Copy
+
+**Copy detectado:** {copy_analysis.get('detected_copy', 'No detectado')}
+
+**Engagement Score:** {copy_analysis.get('engagement_score', 'N/A')}/100
+**SEO Score:** {copy_analysis.get('seo_score', 'N/A')}/100
+
+### Análisis del Hook
+{copy_analysis.get('hooks_analysis', 'N/A')}
+
+### Análisis del CTA
+{copy_analysis.get('cta_analysis', 'N/A')}
+
+### Sugerencias de Mejora
+{"".join([f'- {s}' + chr(10) for s in copy_analysis.get('suggestions', [])])}"""
+            except (json.JSONDecodeError, AttributeError):
+                # If JSON parsing fails, still include raw analysis
+                results["copy_analysis"] = {
+                    "engagement_score": 70,
+                    "seo_score": 70,
+                    "suggestions": ["Ver análisis detallado arriba"],
+                    "detected_copy": "Ver análisis",
+                    "raw_analysis": copy_content
+                }
+
+    return results
 
 
 async def compare_creatives(
@@ -1074,9 +1460,15 @@ COMPARACIÓN VS PERÍODO ANTERIOR:
 El reporte debe ser profesional, destacar los logros, y terminar con próximos pasos claros."""
     }]
 
+    # Smart routing: Executive reports use Opus for best quality
+    model, max_tokens = select_model("executive_report", "")
+    track_model_usage(model)
+
     result = await call_claude_api(
         messages,
         system=REPORT_GENERATOR_PROMPT,
+        model=model,
+        max_tokens=max_tokens
     )
 
     return result.get("content", "Error generando reporte")
@@ -1123,9 +1515,15 @@ Responde en formato JSON con esta estructura:
 }}"""
     }]
 
+    # Smart routing: Strategic recommendations use Opus for better analysis
+    model, max_tokens = select_model("strategic_recommendations", "")
+    track_model_usage(model)
+
     result = await call_claude_api(
         messages,
         system=RECOMMENDATIONS_PROMPT,
+        model=model,
+        max_tokens=max_tokens
     )
 
     content = result.get("content", "{}")

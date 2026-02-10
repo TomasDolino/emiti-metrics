@@ -73,7 +73,7 @@ function ClientSelector({ selected, onChange }: ClientSelectorProps) {
               </div>
               {isSelected && (
                 <div className="w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center">
-                  <Check size={12} className="text-white" />
+                  <Check size={12} className="text-white" aria-hidden="true" />
                 </div>
               )}
             </button>
@@ -141,7 +141,7 @@ function ComparisonTable({ comparison, showAmounts }: ComparisonTableProps) {
                         {displayValue}
                       </span>
                       {v.isTop && (
-                        <Trophy size={14} className="inline ml-1.5 text-amber-500" />
+                        <Trophy size={14} className="inline ml-1.5 text-amber-500" aria-hidden="true" />
                       )}
                     </td>
                   )
@@ -188,7 +188,7 @@ function ClientCompareCard({ summary }: { summary: ClientSummary }) {
               ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
               : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
           )}>
-            {summary.trend === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+            {summary.trend === 'up' ? <TrendingUp size={12} aria-hidden="true" /> : <TrendingDown size={12} aria-hidden="true" />}
             {Math.abs(summary.trendPercent).toFixed(0)}%
           </div>
         )}
@@ -237,13 +237,13 @@ function ClientCompareCard({ summary }: { summary: ClientSummary }) {
         <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/50 flex gap-3">
           {summary.fatigued > 0 && (
             <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-              <AlertTriangle size={12} />
+              <AlertTriangle size={12} aria-hidden="true" />
               {summary.fatigued} fatigados
             </span>
           )}
           {summary.alerts > 0 && (
             <span className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
-              <AlertTriangle size={12} />
+              <AlertTriangle size={12} aria-hidden="true" />
               {summary.alerts} alertas
             </span>
           )}
@@ -272,7 +272,7 @@ export default function Compare() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500/10 to-indigo-500/10">
-            <GitCompare className="w-6 h-6 text-violet-500" />
+            <GitCompare className="w-6 h-6 text-violet-500" aria-hidden="true" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Comparar</h1>
@@ -308,14 +308,23 @@ export default function Compare() {
             </button>
           </div>
 
-          <button className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-            <Filter className="w-4 h-4" />
+          <button
+            aria-label="Filtrar datos"
+            className="min-w-[44px] min-h-[44px] p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+          >
+            <Filter className="w-4 h-4" aria-hidden="true" />
           </button>
-          <button className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-            <RefreshCw className="w-4 h-4" />
+          <button
+            aria-label="Actualizar datos"
+            className="min-w-[44px] min-h-[44px] p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+          >
+            <RefreshCw className="w-4 h-4" aria-hidden="true" />
           </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 text-white font-medium shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all">
-            <Download className="w-4 h-4" />
+          <button
+            aria-label="Exportar datos"
+            className="min-h-[44px] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 text-white font-medium shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+          >
+            <Download className="w-4 h-4" aria-hidden="true" />
             <span className="hidden sm:inline">Exportar</span>
           </button>
         </div>
@@ -325,8 +334,8 @@ export default function Compare() {
       {compareMode === 'periods' && (
         <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg shadow-violet-500/5">
           <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-violet-500" />
-            Comparar Períodos
+            <Calendar className="w-4 h-4 text-violet-500" aria-hidden="true" />
+            Comparar Periodos
           </h3>
           <div className="flex flex-wrap items-center gap-3">
             <select
@@ -339,9 +348,9 @@ export default function Compare() {
               ))}
             </select>
             <div className="flex items-center gap-2 text-slate-400">
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4" aria-hidden="true" />
               <span className="text-sm">vs</span>
-              <ArrowRight className="w-4 h-4 rotate-180" />
+              <ArrowRight className="w-4 h-4 rotate-180" aria-hidden="true" />
             </div>
             <select
               value={periodB}
@@ -352,8 +361,8 @@ export default function Compare() {
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
-            <button className="ml-auto px-4 py-2 rounded-xl bg-violet-500 text-white text-sm font-medium hover:bg-violet-600 transition-colors flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
+            <button className="ml-auto min-h-[44px] px-4 py-2 rounded-xl bg-violet-500 text-white text-sm font-medium hover:bg-violet-600 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900">
+              <BarChart3 className="w-4 h-4" aria-hidden="true" />
               Comparar
             </button>
           </div>
@@ -380,7 +389,7 @@ export default function Compare() {
             <div className="bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-500/10 dark:to-indigo-500/10 rounded-2xl p-5 border border-violet-200/50 dark:border-violet-500/20">
               <div className="flex items-center gap-2 mb-4">
                 <div className="p-2 rounded-lg bg-violet-500/10">
-                  <Lightbulb size={18} className="text-violet-500" />
+                  <Lightbulb size={18} className="text-violet-500" aria-hidden="true" />
                 </div>
                 <h3 className="font-semibold text-slate-900 dark:text-white">Insights</h3>
               </div>
@@ -413,7 +422,7 @@ export default function Compare() {
               return (
                 <div key={industry} className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/10 dark:to-orange-500/10 rounded-2xl p-5 border border-amber-200/50 dark:border-amber-500/20">
                   <div className="flex items-center gap-2 mb-3">
-                    <BarChart3 className="w-5 h-5 text-amber-600" />
+                    <BarChart3 className="w-5 h-5 text-amber-600" aria-hidden="true" />
                     <h4 className="font-semibold text-amber-800 dark:text-amber-200">
                       Comparativa {industry}
                     </h4>
@@ -445,7 +454,7 @@ export default function Compare() {
       ) : (
         <div className="text-center py-16 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/10 to-indigo-500/10 flex items-center justify-center mx-auto mb-4">
-            <GitCompare className="w-8 h-8 text-violet-400" />
+            <GitCompare className="w-8 h-8 text-violet-400" aria-hidden="true" />
           </div>
           <p className="text-slate-600 dark:text-slate-400 font-medium">Seleccioná al menos 2 clientes para comparar</p>
           <p className="text-sm text-slate-400 mt-1">Podés comparar hasta 4 clientes simultáneamente</p>

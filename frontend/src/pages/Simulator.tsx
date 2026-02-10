@@ -24,7 +24,7 @@ export default function Simulator() {
           <p className="text-slate-500 dark:text-slate-400 mt-1">Proyecta el impacto de cambios antes de hacerlos</p>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-lg border p-8 text-center">
-          <Calculator className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <Calculator className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" aria-hidden="true" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">Seleccioná un cliente</h3>
           <p className="text-slate-500 dark:text-slate-400 mt-2">
             Elegí un cliente del selector para simular escenarios.
@@ -48,26 +48,26 @@ export default function Simulator() {
       <div className="flex gap-2">
         <button
           onClick={() => setActiveTab('budget')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+          className={`min-h-[44px] px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${
             activeTab === 'budget'
-              ? 'text-white'
-              : 'bg-white dark:bg-slate-900 border text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:bg-slate-800'
+              ? 'text-white focus:ring-blue-500'
+              : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 focus:ring-slate-500'
           }`}
           style={activeTab === 'budget' ? { backgroundColor: palette.primary } : undefined}
         >
-          <DollarSign className="w-4 h-4 inline mr-2" />
+          <DollarSign className="w-4 h-4 inline mr-2" aria-hidden="true" />
           Cambio de Budget
         </button>
         <button
           onClick={() => setActiveTab('pause')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+          className={`min-h-[44px] px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${
             activeTab === 'pause'
-              ? 'text-white'
-              : 'bg-white dark:bg-slate-900 border text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:bg-slate-800'
+              ? 'text-white focus:ring-blue-500'
+              : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 focus:ring-slate-500'
           }`}
           style={activeTab === 'pause' ? { backgroundColor: palette.primary } : undefined}
         >
-          <Pause className="w-4 h-4 inline mr-2" />
+          <Pause className="w-4 h-4 inline mr-2" aria-hidden="true" />
           Pausar Anuncio
         </button>
       </div>
@@ -99,15 +99,15 @@ export default function Simulator() {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {[-30, -10, 10, 20, 50].map(val => (
                   <button
                     key={val}
                     onClick={() => setBudgetChange(val)}
-                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
+                    className={`min-w-[44px] min-h-[44px] px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 focus:ring-blue-500 ${
                       budgetChange === val
                         ? 'border-current'
-                        : 'bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:bg-slate-800'
+                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                     }`}
                     style={budgetChange === val ? {
                       backgroundColor: `${palette.primary}15`,
@@ -121,10 +121,10 @@ export default function Simulator() {
               </div>
             </div>
 
-            <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+            <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-yellow-800">
+                <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="text-sm text-yellow-800 dark:text-yellow-200">
                   <strong>Rendimientos decrecientes:</strong> Al aumentar budget,
                   cada peso adicional rinde ~80% de lo esperado.
                 </div>
@@ -144,10 +144,10 @@ export default function Simulator() {
                   <div className="text-sm text-slate-500 dark:text-slate-400">Proyectado</div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 items-center py-3 border-t">
+                <div className="grid grid-cols-3 gap-4 items-center py-3 border-t border-slate-200 dark:border-slate-700">
                   <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-slate-400" />
-                    <span className="font-medium">Gasto</span>
+                    <DollarSign className="w-4 h-4 text-slate-400" aria-hidden="true" />
+                    <span className="font-medium text-slate-900 dark:text-white">Gasto</span>
                   </div>
                   <div className="text-center">
                     ${budgetResult.current.spend.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
@@ -161,10 +161,10 @@ export default function Simulator() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 items-center py-3 border-t">
+                <div className="grid grid-cols-3 gap-4 items-center py-3 border-t border-slate-200 dark:border-slate-700">
                   <div className="flex items-center gap-2">
-                    <Target className="w-4 h-4 text-slate-400" />
-                    <span className="font-medium">Resultados</span>
+                    <Target className="w-4 h-4 text-slate-400" aria-hidden="true" />
+                    <span className="font-medium text-slate-900 dark:text-white">Resultados</span>
                   </div>
                   <div className="text-center">
                     {budgetResult.current.results.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
@@ -178,10 +178,10 @@ export default function Simulator() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 items-center py-3 border-t">
+                <div className="grid grid-cols-3 gap-4 items-center py-3 border-t border-slate-200 dark:border-slate-700">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-slate-400" />
-                    <span className="font-medium">CPR</span>
+                    <TrendingUp className="w-4 h-4 text-slate-400" aria-hidden="true" />
+                    <span className="font-medium text-slate-900 dark:text-white">CPR</span>
                   </div>
                   <div className="text-center">
                     ${budgetResult.current.cpr.toFixed(0)}
@@ -221,7 +221,7 @@ export default function Simulator() {
                 <select
                   value={selectedAd}
                   onChange={(e) => setSelectedAd(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">-- Elegir anuncio --</option>
                   {ads.map(ad => (
@@ -241,51 +241,51 @@ export default function Simulator() {
 
               <div className="space-y-4">
                 {/* Current Contribution */}
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="text-sm text-blue-600 font-medium mb-2">Contribución Actual</div>
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="text-sm text-blue-600 dark:text-blue-400 font-medium mb-2">Contribucion Actual</div>
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
-                      <div className="text-lg font-bold text-blue-700">
+                      <div className="text-lg font-bold text-blue-700 dark:text-blue-300">
                         ${pauseResult.adContribution.spend.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
                       </div>
-                      <div className="text-xs text-blue-600">Gasto</div>
+                      <div className="text-xs text-blue-600 dark:text-blue-400">Gasto</div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-blue-700">
+                      <div className="text-lg font-bold text-blue-700 dark:text-blue-300">
                         {pauseResult.adContribution.results}
                       </div>
-                      <div className="text-xs text-blue-600">Resultados</div>
+                      <div className="text-xs text-blue-600 dark:text-blue-400">Resultados</div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-blue-700">
+                      <div className="text-lg font-bold text-blue-700 dark:text-blue-300">
                         {pauseResult.adContribution.percentOfTotal.toFixed(1)}%
                       </div>
-                      <div className="text-xs text-blue-600">Del total</div>
+                      <div className="text-xs text-blue-600 dark:text-blue-400">Del total</div>
                     </div>
                   </div>
                 </div>
 
                 {/* With Redistribution */}
-                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                  <div className="text-sm text-green-600 font-medium mb-2">Con Redistribución de Budget</div>
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="text-sm text-green-600 dark:text-green-400 font-medium mb-2">Con Redistribucion de Budget</div>
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
-                      <div className="text-lg font-bold text-green-700">
+                      <div className="text-lg font-bold text-green-700 dark:text-green-300">
                         {pauseResult.withRedistribution.results.toFixed(0)}
                       </div>
-                      <div className="text-xs text-green-600">Resultados</div>
+                      <div className="text-xs text-green-600 dark:text-green-400">Resultados</div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-green-700">
+                      <div className="text-lg font-bold text-green-700 dark:text-green-300">
                         ${pauseResult.withRedistribution.cpr.toFixed(0)}
                       </div>
-                      <div className="text-xs text-green-600">CPR</div>
+                      <div className="text-xs text-green-600 dark:text-green-400">CPR</div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-green-700">
+                      <div className="text-lg font-bold text-green-700 dark:text-green-300">
                         +{pauseResult.withRedistribution.extraResults.toFixed(0)}
                       </div>
-                      <div className="text-xs text-green-600">Extra</div>
+                      <div className="text-xs text-green-600 dark:text-green-400">Extra</div>
                     </div>
                   </div>
                 </div>
@@ -293,26 +293,26 @@ export default function Simulator() {
                 {/* Recommendation */}
                 <div className={`p-4 rounded-lg border ${
                   pauseResult.recommendation === 'pausar'
-                    ? 'bg-red-50 border-red-200'
-                    : 'bg-yellow-50 border-yellow-200'
+                    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                    : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
                 }`}>
                   <div className="flex items-center gap-2">
                     {pauseResult.recommendation === 'pausar' ? (
                       <>
-                        <Pause className="w-5 h-5 text-red-600" />
-                        <span className="font-medium text-red-700">Recomendación: Pausar</span>
+                        <Pause className="w-5 h-5 text-red-600 dark:text-red-400" aria-hidden="true" />
+                        <span className="font-medium text-red-700 dark:text-red-300">Recomendacion: Pausar</span>
                       </>
                     ) : (
                       <>
-                        <TrendingUp className="w-5 h-5 text-yellow-600" />
-                        <span className="font-medium text-yellow-700">Recomendación: Mantener</span>
+                        <TrendingUp className="w-5 h-5 text-yellow-600 dark:text-yellow-400" aria-hidden="true" />
+                        <span className="font-medium text-yellow-700 dark:text-yellow-300">Recomendacion: Mantener</span>
                       </>
                     )}
                   </div>
                   <p className="text-sm mt-2 text-slate-600 dark:text-slate-400">
                     {pauseResult.recommendation === 'pausar'
-                      ? 'Redistribuir el budget a otros anuncios generaría mejores resultados.'
-                      : 'Este anuncio tiene buen rendimiento, pausarlo empeoraría los resultados.'}
+                      ? 'Redistribuir el budget a otros anuncios generaria mejores resultados.'
+                      : 'Este anuncio tiene buen rendimiento, pausarlo empeoraria los resultados.'}
                   </p>
                 </div>
               </div>

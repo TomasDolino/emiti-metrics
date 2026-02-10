@@ -35,7 +35,7 @@ import { useAuth } from '../lib/AuthContext'
 import Settings from './Settings'
 import CommandPalette, { useCommandPalette } from './CommandPalette'
 import AIChat from './AIChat'
-import { mockClients } from '../lib/mockData'
+import { api, type Client } from '../lib/api'
 
 // Client context for global client selection
 interface ClientContextType {
@@ -78,6 +78,9 @@ export default function Layout() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false)
+  const [clients, setClients] = useState<Client[]>([])
+  const [syncing, setSyncing] = useState(false)
+  const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const location = useLocation()
   const navigate = useNavigate()
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -90,8 +93,48 @@ export default function Layout() {
     navigate('/login')
   }
 
-  const activeClients = mockClients.filter(c => c.isActive)
-  const selectedClient = selectedClientId ? mockClients.find(c => c.id === selectedClientId) : null
+  const handleSync = async () => {
+    if (!selectedClientId || syncing) return
+
+    setSyncing(true)
+    setSyncMessage(null)
+
+    try {
+      const result = await api.syncClientMeta(selectedClientId)
+      setSyncMessage({
+        type: 'success',
+        text: `${result.client_name}: ${result.total_metrics} métricas sincronizadas`
+      })
+      // Auto-hide after 4 seconds
+      setTimeout(() => setSyncMessage(null), 4000)
+      // Trigger a page refresh to show new data
+      window.dispatchEvent(new CustomEvent('metrics-synced'))
+    } catch (err: any) {
+      setSyncMessage({
+        type: 'error',
+        text: err.message || 'Error al sincronizar'
+      })
+      setTimeout(() => setSyncMessage(null), 5000)
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  // Fetch real clients from API
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const data = await api.getClients()
+        setClients(data)
+      } catch (err) {
+        console.error('Error fetching clients:', err)
+      }
+    }
+    fetchClients()
+  }, [])
+
+  const activeClients = clients.filter(c => c.is_active)
+  const selectedClient = selectedClientId ? clients.find(c => c.id === selectedClientId) : null
 
   // Close dropdown on escape key
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -205,26 +248,44 @@ export default function Layout() {
 
                     <div className="h-px bg-slate-200 dark:bg-slate-700 my-2" />
 
-                    {activeClients.map(client => (
-                      <button
-                        key={client.id}
-                        onClick={() => { setSelectedClientId(client.id); setClientDropdownOpen(false) }}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                          selectedClientId === client.id ? 'bg-violet-50 dark:bg-violet-500/10' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
-                        }`}
-                      >
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                          style={{ backgroundColor: client.color }}
-                        >
-                          {client.name.slice(0, 2).toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0 text-left">
-                          <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{client.name}</p>
-                          <p className="text-xs text-slate-400">{client.industry}</p>
-                        </div>
-                      </button>
-                    ))}
+                    {/* Sort: clients with data first, then clients without data */}
+                    {[...activeClients]
+                      .sort((a, b) => {
+                        const aHasData = (a.metrics_count || 0) > 0 || (a.campaigns_count || 0) > 0
+                        const bHasData = (b.metrics_count || 0) > 0 || (b.campaigns_count || 0) > 0
+                        if (aHasData && !bHasData) return -1
+                        if (!aHasData && bHasData) return 1
+                        return (b.metrics_count || 0) - (a.metrics_count || 0)
+                      })
+                      .map(client => {
+                        const hasData = (client.metrics_count || 0) > 0 || (client.campaigns_count || 0) > 0
+                        return (
+                          <button
+                            key={client.id}
+                            onClick={() => { setSelectedClientId(client.id); setClientDropdownOpen(false) }}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                              selectedClientId === client.id
+                                ? 'bg-violet-50 dark:bg-violet-500/10'
+                                : hasData
+                                  ? 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                                  : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 opacity-50'
+                            }`}
+                          >
+                            <div
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold ${!hasData ? 'opacity-60' : ''}`}
+                              style={{ backgroundColor: client.color }}
+                            >
+                              {client.name.slice(0, 2).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0 text-left">
+                              <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{client.name}</p>
+                              <p className="text-xs text-slate-400">
+                                {hasData ? client.industry : 'Sin datos'}
+                              </p>
+                            </div>
+                          </button>
+                        )
+                      })}
                   </div>
                 </div>
               </>
@@ -287,12 +348,29 @@ export default function Layout() {
 
           <div className="flex-1" />
 
-          {/* Action buttons */}
+          {/* Sync message toast */}
+          {syncMessage && (
+            <div className={`hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium animate-fadeIn ${
+              syncMessage.type === 'success'
+                ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300'
+            }`}>
+              {syncMessage.text}
+            </div>
+          )}
+
+          {/* Sync button */}
           <button
-            className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-            title="Actualizar datos"
+            onClick={handleSync}
+            disabled={!selectedClientId || syncing}
+            className={`hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl transition-colors ${
+              selectedClientId && !syncing
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                : 'bg-slate-50 dark:bg-slate-800/50 text-slate-300 dark:text-slate-600 cursor-not-allowed'
+            }`}
+            title={selectedClientId ? 'Sincronizar datos de Meta' : 'Selecciona un cliente para sincronizar'}
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
           </button>
 
           <button

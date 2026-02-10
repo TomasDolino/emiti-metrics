@@ -54,7 +54,7 @@ function ReportRow({ report, palette }: ReportRowProps) {
 
   return (
     <div
-      className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border-l-4 hover:shadow-sm transition-shadow"
+      className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border-l-4 hover:shadow-sm transition-shadow"
       style={{ borderLeftColor: typeColors[report.type] }}
     >
       {/* Icon */}
@@ -62,14 +62,14 @@ function ReportRow({ report, palette }: ReportRowProps) {
         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
         style={{ backgroundColor: `${typeColors[report.type]}20` }}
       >
-        <FileText className="w-4 h-4" style={{ color: typeColors[report.type] }} />
+        <FileText className="w-4 h-4" style={{ color: typeColors[report.type] }} aria-hidden="true" />
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-900 dark:text-white dark:text-white truncate">{report.title}</p>
+        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{report.title}</p>
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <Calendar className="w-3 h-3" />
+          <Calendar className="w-3 h-3" aria-hidden="true" />
           <span>{formatDateFull(report.dateRange.start)} - {formatDateFull(report.dateRange.end)}</span>
         </div>
       </div>
@@ -85,17 +85,18 @@ function ReportRow({ report, palette }: ReportRowProps) {
       {/* Created */}
       <div className="text-right hidden md:block">
         <div className="flex items-center gap-1 text-xs text-slate-400">
-          <Clock className="w-3 h-3" />
+          <Clock className="w-3 h-3" aria-hidden="true" />
           {formatDateFull(report.createdAt)}
         </div>
       </div>
 
       {/* Download */}
       <button
-        className="p-1.5 rounded-lg transition-colors"
+        className="p-2.5 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
         style={{ color: palette.primary, backgroundColor: `${palette.primary}10` }}
+        aria-label={`Descargar ${report.title}`}
       >
-        <Download className="w-4 h-4" />
+        <Download className="w-4 h-4" aria-hidden="true" />
       </button>
     </div>
   )
@@ -111,15 +112,16 @@ export default function Reports() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white dark:text-white">Reportes</h1>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Reportes</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Genera y descarga reportes de tus campañas</p>
         </div>
 
         <button
-          className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
           style={{ backgroundColor: palette.primary }}
+          aria-label="Crear nuevo reporte"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4" aria-hidden="true" />
           Nuevo Reporte
         </button>
       </div>
@@ -133,19 +135,20 @@ export default function Reports() {
         ].map((template) => (
           <button
             key={template.type}
-            className="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-shadow text-left group border-l-4"
+            className="p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-md transition-shadow text-left group border-l-4 focus:outline-none focus:ring-2 focus:ring-offset-2"
             style={{ borderLeftColor: template.color }}
+            aria-label={`Crear ${template.title}`}
           >
             <div className="flex items-start justify-between">
               <div
                 className="p-2 rounded-lg"
                 style={{ backgroundColor: `${template.color}15` }}
               >
-                <FileText className="w-5 h-5" style={{ color: template.color }} />
+                <FileText className="w-5 h-5" style={{ color: template.color }} aria-hidden="true" />
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:text-slate-400 transition-colors" />
+              <ChevronRight className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors" aria-hidden="true" />
             </div>
-            <h3 className="font-medium text-slate-900 dark:text-white dark:text-white mt-3">{template.title}</h3>
+            <h3 className="font-medium text-slate-900 dark:text-white mt-3">{template.title}</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{template.desc}</p>
           </button>
         ))}
@@ -153,7 +156,7 @@ export default function Reports() {
 
       {/* Report History */}
       <div>
-        <h2 className="font-medium text-slate-900 dark:text-white dark:text-white mb-3">Historial de Reportes</h2>
+        <h2 className="font-medium text-slate-900 dark:text-white mb-3">Historial de Reportes</h2>
         <div className="space-y-2">
           {mockReports.map((report) => (
             <ReportRow key={report.id} report={report} palette={palette} />
@@ -163,7 +166,7 @@ export default function Reports() {
 
       {mockReports.length === 0 && (
         <div className="text-center py-12">
-          <File className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <File className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" aria-hidden="true" />
           <p className="text-slate-500 dark:text-slate-400">No hay reportes generados</p>
         </div>
       )}

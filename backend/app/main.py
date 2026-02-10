@@ -21,7 +21,7 @@ import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 
-from .routers import campaigns, analysis, upload, alerts, advanced, clients, ai, auth, rules, meta, crm
+from .routers import campaigns, analysis, upload, alerts, advanced, clients, ai, auth, rules, meta, crm, creative
 from .database import init_db, seed_demo_data
 
 
@@ -341,6 +341,7 @@ app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
 app.include_router(rules.router, prefix="/api/rules", tags=["rules"])
 app.include_router(meta.router, prefix="/api/meta", tags=["meta"])
 app.include_router(crm.router, prefix="/api/crm", tags=["crm"])
+app.include_router(creative.router, prefix="/api/creative", tags=["creative"])
 
 
 @app.get("/")

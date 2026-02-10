@@ -18,7 +18,7 @@ function ClientRow({ client, palette }: ClientRowProps) {
 
   return (
     <div
-      className="bg-white dark:bg-gray-800 rounded-lg border-l-4 overflow-hidden hover:shadow-sm transition-shadow"
+      className="bg-white dark:bg-slate-800 rounded-lg border-l-4 overflow-hidden hover:shadow-sm transition-shadow"
       style={{ borderLeftColor: borderColor }}
     >
       {/* Main Row */}
@@ -74,47 +74,48 @@ function ClientRow({ client, palette }: ClientRowProps) {
 
         {/* Action */}
         <button
-          className="px-2 py-1 text-xs font-medium rounded-lg transition-colors"
+          className="px-2 py-1.5 text-xs font-medium rounded-lg transition-colors min-h-[40px] min-w-[40px]"
           style={{ color: palette.primary, backgroundColor: `${palette.primary}10` }}
           onClick={(e) => e.stopPropagation()}
+          aria-label={`Ver detalles de ${client.name}`}
         >
           Ver
         </button>
 
         {isExpanded ? (
-          <ChevronDown className="w-4 h-4 text-slate-400 transition-transform" />
+          <ChevronDown className="w-4 h-4 text-slate-400 transition-transform" aria-hidden="true" />
         ) : (
-          <ChevronRight className="w-4 h-4 text-slate-400 transition-transform hidden sm:block" />
+          <ChevronRight className="w-4 h-4 text-slate-400 transition-transform hidden sm:block" aria-hidden="true" />
         )}
       </div>
 
       {/* Expanded Details */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:bg-gray-800/50">
+        <div className="px-4 pb-4 pt-2 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <Building2 size={16} className="text-slate-400" />
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
+              <Building2 size={16} className="text-slate-400" aria-hidden="true" />
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Industria</p>
                 <p className="text-sm font-medium text-slate-900 dark:text-white">{client.industry || 'Sin especificar'}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <Globe size={16} className="text-slate-400" />
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
+              <Globe size={16} className="text-slate-400" aria-hidden="true" />
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Meta ID</p>
                 <p className="text-sm font-mono text-slate-900 dark:text-white">{client.meta_account_id || 'No conectado'}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <BarChart2 size={16} className="text-slate-400" />
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
+              <BarChart2 size={16} className="text-slate-400" aria-hidden="true" />
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Métricas</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Metricas</p>
                 <p className="text-sm text-slate-900 dark:text-white">{client.metrics_count ?? 0}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <Target size={16} className="text-slate-400" />
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
+              <Target size={16} className="text-slate-400" aria-hidden="true" />
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Campañas</p>
                 <p className="text-sm text-slate-900 dark:text-white">{client.campaigns_count ?? 0}</p>
@@ -124,8 +125,9 @@ function ClientRow({ client, palette }: ClientRowProps) {
           <div className="mt-3 flex items-center justify-between">
             <p className="text-xs text-slate-500 dark:text-slate-400">Cliente desde {formatDateFull(client.created_at)}</p>
             <button
-              className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+              className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors min-h-[40px]"
               style={{ backgroundColor: palette.primary, color: 'white' }}
+              aria-label={`Editar cliente ${client.name}`}
             >
               Editar Cliente
             </button>
@@ -184,9 +186,9 @@ export default function Clients() {
         <p className="text-red-500">{error}</p>
         <button
           onClick={fetchClients}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 min-h-[40px]"
         >
-          <RefreshCw size={16} />
+          <RefreshCw size={16} aria-hidden="true" />
           Reintentar
         </button>
       </div>
@@ -206,15 +208,15 @@ export default function Clients() {
 
         <div className="flex items-center gap-2">
           {/* Filter */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 dark:bg-gray-800 rounded-lg p-1">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
             {(['ALL', 'ACTIVE', 'INACTIVE'] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
                 className={cn(
-                  'px-3 py-1 text-xs font-medium rounded-md transition-colors',
+                  'px-3 py-1.5 text-xs font-medium rounded-md transition-colors min-h-[36px]',
                   filter === f
-                    ? 'bg-white dark:bg-gray-700 text-slate-900 dark:text-white shadow-sm'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
                     : 'text-slate-500 dark:text-slate-400'
                 )}
               >
@@ -224,10 +226,11 @@ export default function Clients() {
           </div>
 
           <button
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors min-h-[40px]"
             style={{ backgroundColor: palette.primary }}
+            aria-label="Agregar nuevo cliente"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4" aria-hidden="true" />
             Nuevo
           </button>
         </div>
@@ -235,15 +238,15 @@ export default function Clients() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border-l-4" style={{ borderLeftColor: palette.success }}>
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm border-l-4" style={{ borderLeftColor: palette.success }}>
           <p className="text-xs text-slate-500 dark:text-slate-400">Activos</p>
           <p className="text-xl font-semibold" style={{ color: palette.success }}>{activeCount}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border-l-4 border-slate-400">
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm border-l-4 border-slate-400">
           <p className="text-xs text-slate-500 dark:text-slate-400">Inactivos</p>
           <p className="text-xl font-semibold text-slate-600 dark:text-slate-400">{clients.length - activeCount}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border-l-4" style={{ borderLeftColor: palette.primary }}>
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm border-l-4" style={{ borderLeftColor: palette.primary }}>
           <p className="text-xs text-slate-500 dark:text-slate-400">Total</p>
           <p className="text-xl font-semibold" style={{ color: palette.primary }}>{clients.length}</p>
         </div>
@@ -257,16 +260,17 @@ export default function Clients() {
 
         {/* Add Client Card */}
         <button
-          className="w-full border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-4 flex items-center justify-center gap-2 text-slate-400 hover:border-slate-300 hover:text-slate-500 dark:text-slate-400 transition-colors"
+          className="w-full border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-4 flex items-center justify-center gap-2 text-slate-400 hover:border-slate-300 hover:text-slate-500 dark:hover:border-slate-600 dark:hover:text-slate-300 transition-colors min-h-[56px]"
+          aria-label="Agregar nuevo cliente"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-5 h-5" aria-hidden="true" />
           <span className="font-medium">Agregar Cliente</span>
         </button>
       </div>
 
       {filteredClients.length === 0 && clients.length > 0 && (
         <div className="text-center py-12">
-          <Building2 className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <Building2 className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" aria-hidden="true" />
           <p className="text-slate-500 dark:text-slate-400">No hay clientes con este filtro</p>
         </div>
       )}

@@ -1,9 +1,10 @@
 /**
  * Creative Analyzer Component
  * Analyze ad creatives with Claude Vision AI
+ * Includes: Visual analysis, Copy analysis, SEO suggestions
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import {
   Upload,
   Image as ImageIcon,
@@ -15,7 +16,11 @@ import {
   Eye,
   MessageSquare,
   Target,
-  Palette
+  Palette,
+  Camera,
+  FileText,
+  Search,
+  TrendingUp
 } from 'lucide-react'
 import { useTheme } from '../lib/theme'
 import { cn } from '../lib/utils'
@@ -24,13 +29,56 @@ interface AnalysisResult {
   analysis: string
   score: number
   timestamp: string
+  copy_analysis?: CopyAnalysis
+}
+
+interface CopyAnalysis {
+  engagement_score: number
+  seo_score: number
+  suggestions: string[]
+  detected_copy: string
+  hooks_analysis: string
+  cta_analysis: string
 }
 
 interface CreativeAnalyzerProps {
   onAnalysisComplete?: (result: AnalysisResult) => void
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+const MAX_IMAGE_SIZE = 4 * 1024 * 1024 // 4MB for API
+const MAX_DIMENSION = 2048 // Max width/height
+
+// Compress image for mobile uploads
+async function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+
+    img.onload = () => {
+      let { width, height } = img
+
+      // Scale down if too large
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height)
+        width *= ratio
+        height *= ratio
+      }
+
+      canvas.width = width
+      canvas.height = height
+      ctx?.drawImage(img, 0, 0, width, height)
+
+      // Compress to JPEG with 0.85 quality
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+      resolve(dataUrl)
+    }
+
+    img.onerror = reject
+    img.src = URL.createObjectURL(file)
+  })
+}
 
 export default function CreativeAnalyzer({ onAnalysisComplete }: CreativeAnalyzerProps) {
   const [image, setImage] = useState<string | null>(null)
@@ -39,42 +87,36 @@ export default function CreativeAnalyzer({ onAnalysisComplete }: CreativeAnalyze
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [analysisType, setAnalysisType] = useState<'visual' | 'copy' | 'full'>('full')
+  const [isCompressing, setIsCompressing] = useState(false)
 
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const { palette } = useTheme()
 
-  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
+  const processImage = useCallback(async (file: File) => {
     if (!file.type.startsWith('image/')) {
       setError('Por favor sube una imagen válida')
       return
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setError('La imagen es muy grande (máx 10MB)')
-      return
-    }
-
-    setImageFile(file)
     setError(null)
     setResult(null)
 
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      setImage(event.target?.result as string)
-    }
-    reader.readAsDataURL(file)
-  }, [])
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    const file = e.dataTransfer.files[0]
-    if (file && file.type.startsWith('image/')) {
+    // Compress large images
+    if (file.size > MAX_IMAGE_SIZE) {
+      setIsCompressing(true)
+      try {
+        const compressed = await compressImage(file)
+        setImage(compressed)
+        // Create a fake file object for the type
+        setImageFile(new File([file], file.name, { type: 'image/jpeg' }))
+      } catch (err) {
+        setError('Error al procesar la imagen')
+      } finally {
+        setIsCompressing(false)
+      }
+    } else {
       setImageFile(file)
-      setError(null)
-      setResult(null)
-
       const reader = new FileReader()
       reader.onload = (event) => {
         setImage(event.target?.result as string)
@@ -82,6 +124,21 @@ export default function CreativeAnalyzer({ onAnalysisComplete }: CreativeAnalyze
       reader.readAsDataURL(file)
     }
   }, [])
+
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) processImage(file)
+  }, [processImage])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files[0]
+    if (file) processImage(file)
+  }, [processImage])
+
+  const getAuthToken = () => {
+    return localStorage.getItem('metrics_token') || ''
+  }
 
   const analyzeCreative = async () => {
     if (!image || !imageFile) return
@@ -93,18 +150,23 @@ export default function CreativeAnalyzer({ onAnalysisComplete }: CreativeAnalyze
       // Convert image to base64 without the data URL prefix
       const base64 = image.split(',')[1]
 
-      const response = await fetch(`${API_BASE}/api/ai/analyze-creative`, {
+      const response = await fetch(`${API_BASE}/ai/analyze-creative`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getAuthToken()}`
+        },
         body: JSON.stringify({
           image_base64: base64,
-          image_type: imageFile.type,
-          context: context
+          image_type: imageFile.type || 'image/jpeg',
+          context: context,
+          analysis_type: analysisType // 'visual', 'copy', or 'full'
         })
       })
 
       if (!response.ok) {
-        throw new Error('Error al analizar el creativo')
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || 'Error al analizar el creativo')
       }
 
       const data = await response.json()
@@ -164,25 +226,60 @@ export default function CreativeAnalyzer({ onAnalysisComplete }: CreativeAnalyze
           {/* Upload area */}
           <div>
             {!image ? (
-              <label
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleDrop}
-                className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
-              >
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-                <Upload className="w-10 h-10 text-gray-400 mb-3" />
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                  Arrastra una imagen o haz click para subir
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  PNG, JPG hasta 10MB
-                </p>
-              </label>
+              <div className="space-y-4">
+                <div
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center h-52 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  {isCompressing ? (
+                    <>
+                      <Loader2 className="w-10 h-10 text-gray-400 mb-3 animate-spin" />
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                        Optimizando imagen...
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-10 h-10 text-gray-400 mb-3" />
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                        Arrastra o toca para subir
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        PNG, JPG - se optimizará automáticamente
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                {/* Mobile camera button */}
+                <button
+                  onClick={() => {
+                    const input = document.createElement('input')
+                    input.type = 'file'
+                    input.accept = 'image/*'
+                    input.capture = 'environment'
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0]
+                      if (file) processImage(file)
+                    }
+                    input.click()
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors md:hidden"
+                >
+                  <Camera className="w-5 h-5" />
+                  Tomar foto con cámara
+                </button>
+              </div>
             ) : (
               <div className="relative">
                 <img
@@ -198,6 +295,35 @@ export default function CreativeAnalyzer({ onAnalysisComplete }: CreativeAnalyze
                 </button>
               </div>
             )}
+
+            {/* Analysis type selector */}
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Tipo de análisis
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'full', label: 'Completo', icon: Sparkles },
+                  { id: 'visual', label: 'Visual', icon: Eye },
+                  { id: 'copy', label: 'Copy/SEO', icon: FileText },
+                ].map((type) => (
+                  <button
+                    key={type.id}
+                    onClick={() => setAnalysisType(type.id as typeof analysisType)}
+                    className={cn(
+                      'flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-medium transition-all',
+                      analysisType === type.id
+                        ? 'text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                    )}
+                    style={analysisType === type.id ? { backgroundColor: palette.primary } : undefined}
+                  >
+                    <type.icon className="w-4 h-4" />
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Context input */}
             <div className="mt-4">
@@ -216,19 +342,19 @@ export default function CreativeAnalyzer({ onAnalysisComplete }: CreativeAnalyze
             {/* Analyze button */}
             <button
               onClick={analyzeCreative}
-              disabled={!image || isAnalyzing}
+              disabled={!image || isAnalyzing || isCompressing}
               className="w-full mt-4 py-3 rounded-lg font-medium text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ backgroundColor: palette.primary }}
             >
               {isAnalyzing ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Analizando...
+                  Analizando con Claude AI...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-5 h-5" />
-                  Analizar Creativo
+                  Analizar {analysisType === 'full' ? 'Completo' : analysisType === 'visual' ? 'Visual' : 'Copy'}
                 </>
               )}
             </button>
@@ -278,6 +404,61 @@ export default function CreativeAnalyzer({ onAnalysisComplete }: CreativeAnalyze
                     </div>
                   </div>
                 </div>
+
+                {/* Copy Analysis Section (if available) */}
+                {result.copy_analysis && (
+                  <div className="space-y-3 border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <h4 className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                      <FileText className="w-4 h-4" style={{ color: palette.primary }} />
+                      Análisis de Copy
+                    </h4>
+
+                    {/* Engagement & SEO Scores */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <TrendingUp className="w-4 h-4 text-green-600" />
+                          <span className="text-xs text-green-700 dark:text-green-400 font-medium">Engagement</span>
+                        </div>
+                        <span className="text-2xl font-bold text-green-600">{result.copy_analysis.engagement_score}</span>
+                        <span className="text-xs text-green-600">/100</span>
+                      </div>
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Search className="w-4 h-4 text-blue-600" />
+                          <span className="text-xs text-blue-700 dark:text-blue-400 font-medium">SEO Score</span>
+                        </div>
+                        <span className="text-2xl font-bold text-blue-600">{result.copy_analysis.seo_score}</span>
+                        <span className="text-xs text-blue-600">/100</span>
+                      </div>
+                    </div>
+
+                    {/* Detected Copy */}
+                    {result.copy_analysis.detected_copy && (
+                      <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Copy detectado:</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">
+                          "{result.copy_analysis.detected_copy}"
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Suggestions */}
+                    {result.copy_analysis.suggestions && result.copy_analysis.suggestions.length > 0 && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-2">Sugerencias de mejora:</p>
+                        <ul className="space-y-1">
+                          {result.copy_analysis.suggestions.map((suggestion, i) => (
+                            <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+                              <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                              {suggestion}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Quick insights */}
                 <div className="grid grid-cols-2 gap-3">

@@ -62,7 +62,7 @@ function AlertRow({ alert, onAcknowledge, palette }: AlertRowProps) {
   return (
     <div
       className={cn(
-        'flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border-l-4 hover:shadow-sm transition-all',
+        'flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border-l-4 hover:shadow-sm transition-all',
         alert.acknowledged && 'opacity-60'
       )}
       style={{ borderLeftColor: borderColor }}
@@ -72,7 +72,7 @@ function AlertRow({ alert, onAcknowledge, palette }: AlertRowProps) {
         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
         style={{ backgroundColor: `${borderColor}20` }}
       >
-        <Icon className="w-4 h-4" style={{ color: borderColor }} />
+        <Icon className="w-4 h-4" style={{ color: borderColor }} aria-hidden="true" />
       </div>
 
       {/* Info */}
@@ -86,8 +86,8 @@ function AlertRow({ alert, onAcknowledge, palette }: AlertRowProps) {
             {alert.severity}
           </span>
           {alert.acknowledged && (
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center gap-0.5">
-              <CheckCircle className="w-3 h-3" />
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 flex items-center gap-0.5">
+              <CheckCircle className="w-3 h-3" aria-hidden="true" />
               Leída
             </span>
           )}
@@ -118,7 +118,7 @@ function AlertRow({ alert, onAcknowledge, palette }: AlertRowProps) {
 
       {/* Time */}
       <div className="text-xs text-slate-400 flex items-center gap-1 flex-shrink-0">
-        <Clock className="w-3 h-3" />
+        <Clock className="w-3 h-3" aria-hidden="true" />
         {timeAgo(alert.created_at)}
       </div>
 
@@ -126,9 +126,10 @@ function AlertRow({ alert, onAcknowledge, palette }: AlertRowProps) {
       {!alert.acknowledged && (
         <button
           onClick={() => onAcknowledge(alert.id)}
-          className="p-1.5 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-gray-700 rounded text-slate-400 hover:text-slate-600 dark:text-slate-400"
+          className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-slate-600 min-w-[40px] min-h-[40px] flex items-center justify-center"
+          aria-label={`Marcar alerta "${alert.title}" como leida`}
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4" aria-hidden="true" />
         </button>
       )}
     </div>
@@ -168,8 +169,8 @@ export default function Alerts() {
       setAlerts(prev => prev.map(a =>
         a.id === id ? { ...a, acknowledged: true } : a
       ))
-    } catch (err) {
-      console.error('Error acknowledging alert:', err)
+    } catch {
+      // Error silenciado - la UI muestra el estado actual
     }
   }
 
@@ -177,8 +178,8 @@ export default function Alerts() {
     try {
       await api.acknowledgeAllAlerts()
       setAlerts(prev => prev.map(a => ({ ...a, acknowledged: true })))
-    } catch (err) {
-      console.error('Error acknowledging all alerts:', err)
+    } catch {
+      // Error silenciado - la UI muestra el estado actual
     }
   }
 
@@ -193,8 +194,8 @@ export default function Alerts() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      <div className="flex items-center justify-center h-64" role="status" aria-label="Cargando alertas">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" aria-hidden="true" />
       </div>
     )
   }
@@ -205,9 +206,10 @@ export default function Alerts() {
         <p className="text-red-500">{error}</p>
         <button
           onClick={fetchAlerts}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 min-h-[40px]"
+          aria-label="Reintentar carga de alertas"
         >
-          <RefreshCw size={16} />
+          <RefreshCw size={16} aria-hidden="true" />
           Reintentar
         </button>
       </div>
@@ -232,19 +234,21 @@ export default function Alerts() {
 
         <div className="flex items-center gap-2">
           {/* Filter */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 dark:bg-gray-800 rounded-lg p-1">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1" role="tablist" aria-label="Filtro de alertas">
             {(['ALL', 'ACTIVE', 'ACKNOWLEDGED'] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
+                role="tab"
+                aria-selected={filter === f}
                 className={cn(
-                  'px-3 py-1 text-xs font-medium rounded-md transition-colors',
+                  'px-3 py-1 text-xs font-medium rounded-md transition-colors min-h-[32px]',
                   filter === f
-                    ? 'bg-white dark:bg-gray-700 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                 )}
               >
-                {f === 'ALL' ? 'Todas' : f === 'ACTIVE' ? 'Activas' : 'Leídas'}
+                {f === 'ALL' ? 'Todas' : f === 'ACTIVE' ? 'Activas' : 'Leidas'}
               </button>
             ))}
           </div>
@@ -252,8 +256,9 @@ export default function Alerts() {
           {activeCount > 0 && (
             <button
               onClick={handleAcknowledgeAll}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+              className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors min-h-[32px]"
               style={{ color: palette.primary, backgroundColor: `${palette.primary}10` }}
+              aria-label="Marcar todas las alertas como leidas"
             >
               Marcar todas
             </button>
@@ -272,7 +277,7 @@ export default function Alerts() {
           return (
             <div
               key={severity}
-              className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border-l-4"
+              className="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm border-l-4"
               style={{ borderLeftColor: color }}
             >
               <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
@@ -296,12 +301,12 @@ export default function Alerts() {
 
       {filteredAlerts.length === 0 && (
         <div className="text-center py-12">
-          <Bell className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <Bell className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" aria-hidden="true" />
           <p className="text-slate-500 dark:text-slate-400">
             {filter === 'ACTIVE'
               ? 'No hay alertas activas'
               : filter === 'ACKNOWLEDGED'
-                ? 'No hay alertas leídas'
+                ? 'No hay alertas leidas'
                 : 'No hay alertas'}
           </p>
         </div>

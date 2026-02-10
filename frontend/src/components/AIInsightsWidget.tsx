@@ -33,7 +33,7 @@ interface AIInsightsWidgetProps {
   clientName?: string
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
 export default function AIInsightsWidget({ clientId, clientName: _clientName }: AIInsightsWidgetProps) {
   // _clientName reserved for future use (e.g., displaying in insights)
@@ -45,7 +45,7 @@ export default function AIInsightsWidget({ clientId, clientName: _clientName }: 
   const fetchInsights = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`${API_BASE}/api/ai/daily-insights`, {
+      const response = await fetch(`${API_BASE}/ai/daily-insights`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

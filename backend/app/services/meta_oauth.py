@@ -586,8 +586,9 @@ class MetaOAuthService:
         self,
         access_token: str,
         ad_id: str,
-        date_preset: str = "last_30d"
-    ) -> Dict[str, Any]:
+        date_preset: str = "last_30d",
+        time_increment: int = 0
+    ) -> Any:
         """
         Get detailed insights for a specific ad.
 
@@ -595,9 +596,10 @@ class MetaOAuthService:
             access_token: Valid Meta access token
             ad_id: The ad ID
             date_preset: Date range preset
+            time_increment: 1 for daily breakdown, 0 for aggregated
 
         Returns:
-            Ad insights data
+            Ad insights data (list if time_increment=1, dict otherwise)
         """
         fields = [
             "impressions",
@@ -612,26 +614,93 @@ class MetaOAuthService:
             "cost_per_action_type",
         ]
 
+        params = {
+            "access_token": access_token,
+            "fields": ",".join(fields),
+            "date_preset": date_preset,
+        }
+
+        if time_increment > 0:
+            params["time_increment"] = time_increment
+
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(
                     f"{self.GRAPH_API_BASE}/{ad_id}/insights",
-                    params={
-                        "access_token": access_token,
-                        "fields": ",".join(fields),
-                        "date_preset": date_preset,
-                    }
+                    params=params
                 )
 
                 if response.status_code != 200:
-                    return {}
+                    return [] if time_increment else {}
 
                 data = response.json().get("data", [])
+
+                # Return list for daily breakdown, single dict for aggregated
+                if time_increment > 0:
+                    return data
                 return data[0] if data else {}
 
             except Exception as e:
                 print(f"Error fetching ad insights: {e}")
-                return {}
+                return [] if time_increment else {}
+
+    async def get_account_insights_by_ad(
+        self,
+        access_token: str,
+        ad_account_id: str,
+        days: int = 7
+    ) -> List[Dict[str, Any]]:
+        """
+        Get insights for all ads in an account with daily breakdown.
+        More efficient than calling get_ad_insights for each ad.
+
+        Args:
+            access_token: Valid Meta access token
+            ad_account_id: The ad account ID (format: act_XXXXXXXXX)
+            days: Number of days to fetch
+
+        Returns:
+            List of daily insights per ad
+        """
+        fields = [
+            "ad_id",
+            "ad_name",
+            "campaign_name",
+            "adset_name",
+            "impressions",
+            "reach",
+            "clicks",
+            "spend",
+            "cpm",
+            "ctr",
+            "frequency",
+            "actions",
+        ]
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            try:
+                response = await client.get(
+                    f"{self.GRAPH_API_BASE}/{ad_account_id}/insights",
+                    params={
+                        "access_token": access_token,
+                        "fields": ",".join(fields),
+                        "date_preset": f"last_{days}d",
+                        "time_increment": 1,  # Daily breakdown
+                        "level": "ad",  # Breakdown by ad
+                        "limit": 1000,
+                    }
+                )
+
+                if response.status_code != 200:
+                    error = response.json().get("error", {})
+                    print(f"Error getting account insights: {error.get('message', response.text)}")
+                    return []
+
+                return response.json().get("data", [])
+
+            except Exception as e:
+                print(f"Error fetching account insights: {e}")
+                return []
 
     async def get_campaign_insights(
         self,

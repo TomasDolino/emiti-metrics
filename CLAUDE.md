@@ -20,8 +20,32 @@ Marketing agency metrics dashboard for Meta Ads campaigns analysis.
   /app
     /routers       # API endpoints
     /services      # Business logic & security
-  /scripts         # Backup scripts
+  /scripts         # Backup, sync scripts
 ```
+
+## Meta Ads Sync (2026-02-10)
+Automatic sync from Meta Ads API 3x daily via systemd timer.
+
+```bash
+# Timer runs at 8:00, 14:00, 20:00 Argentina time
+systemctl status emiti-meta-sync.timer
+
+# Manual sync
+cd /var/www/metrics-backend && source venv/bin/activate
+python scripts/sync_meta.py
+
+# Logs
+cat /var/log/emiti-meta-sync.log
+```
+
+**Connected clients**: Estela Dezi, Mora Interiores, Affronti Marcos, Amueblarte PH, Restauracion Central, Wood Store
+
+## Dashboard Features (2026-02-10)
+- **Performance Score**: 5-metric weighted score (CPR 30%, CTR 20%, etc.)
+- **Period Selector**: Hoy, 7/14/30/60/90 días, custom range
+- **Dynamic Titles**: Charts show selected period in title
+- **Client Ranking**: All-brands view shows ranked clients
+- **Smart Sorting**: Sidebar dropdown shows clients with data first
 
 ## Security Rating: 9.2/10
 Implemented: JWT hardened, 2FA, WebAuthn, session fingerprinting, password breach checking, encrypted backups, CSP with reporting, audit logging, rate limiting, SAST in CI/CD.
@@ -44,8 +68,12 @@ journalctl -u emiti-backend -f
 # Manual backup
 cd /var/www/metrics-backend && source venv/bin/activate
 python scripts/backup.py backup
+
+# Deploy frontend
+cd frontend && npm run build
+scp -r dist/* root@76.13.166.17:/var/www/metrics/
 ```
 
 ## Pending Tasks
-- #26: Configure Cloudflare free
-- #27: Configure Backblaze B2 offsite backups
+- #26: Configure Cloudflare free (WAF, CDN, DDoS protection)
+- #27: Configure Backblaze B2 offsite backups (~$5/mes)

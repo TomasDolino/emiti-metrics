@@ -105,7 +105,7 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
           <p className="text-slate-500 dark:text-slate-400 mt-1">Importa datos de Meta Ads desde un archivo CSV</p>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-8 text-center">
-          <UploadIcon className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <UploadIcon className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" aria-hidden="true" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">Selecciona un cliente</h3>
           <p className="text-slate-500 dark:text-slate-400 mt-2">
             Elegi un cliente del selector para subir sus datos.
@@ -127,20 +127,21 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
         </div>
         <button
           onClick={downloadTemplate}
-          className="flex items-center gap-2 px-4 py-2 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border rounded-lg hover:bg-slate-50 dark:bg-slate-800 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors min-h-[40px]"
+          aria-label="Descargar plantilla CSV de ejemplo"
         >
-          <Download className="w-4 h-4" />
+          <Download className="w-4 h-4" aria-hidden="true" />
           Descargar Template
         </button>
       </div>
 
       {/* Instructions */}
-      <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
+      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4">
         <div className="flex items-start gap-3">
-          <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-800">
+          <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <div className="text-sm text-blue-800 dark:text-blue-200">
             <p className="font-medium mb-2">Como exportar datos de Meta Ads:</p>
-            <ol className="list-decimal list-inside space-y-1 text-blue-700">
+            <ol className="list-decimal list-inside space-y-1 text-blue-700 dark:text-blue-300">
               <li>Anda a Meta Ads Manager</li>
               <li>Selecciona el rango de fechas (recomendado: ultimos 30 dias)</li>
               <li>Configura las columnas: Gasto, Impresiones, Alcance, Frecuencia, Clics, CTR, CPM, Resultados, CPR</li>
@@ -169,11 +170,13 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
           accept=".csv"
           onChange={handleFileChange}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          aria-label="Seleccionar archivo CSV para subir"
         />
 
         <FileSpreadsheet
           className="w-12 h-12 mx-auto mb-4"
           style={{ color: dragActive ? palette.primary : '#9ca3af' }}
+          aria-hidden="true"
         />
 
         {selectedFile ? (
@@ -201,17 +204,18 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
           <button
             onClick={handleUpload}
             disabled={uploading}
-            className="flex items-center gap-2 px-6 py-3 text-white rounded-lg transition-colors disabled:opacity-50 hover:opacity-90"
+            className="flex items-center gap-2 px-6 py-3 text-white rounded-lg transition-colors disabled:opacity-50 hover:opacity-90 min-h-[44px]"
             style={{ backgroundColor: palette.primary }}
+            aria-label={uploading ? 'Subiendo archivo' : 'Subir archivo CSV'}
           >
             {uploading ? (
               <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" aria-hidden="true" />
                 Subiendo...
               </>
             ) : (
               <>
-                <UploadIcon className="w-5 h-5" />
+                <UploadIcon className="w-5 h-5" aria-hidden="true" />
                 Subir Archivo
               </>
             )}
@@ -224,21 +228,22 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
         <div
           className={`rounded-lg border p-6 ${
             result.success
-              ? 'bg-green-50 border-green-200'
-              : 'bg-red-50 border-red-200'
+              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+              : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
           }`}
+          role="alert"
         >
           <div className="flex items-start gap-3">
             {result.success ? (
-              <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
+              <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0" aria-hidden="true" />
             ) : (
-              <XCircle className="w-6 h-6 text-red-600 flex-shrink-0" />
+              <XCircle className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" aria-hidden="true" />
             )}
             <div className="flex-1">
-              <h3 className={`font-semibold ${result.success ? 'text-green-800' : 'text-red-800'}`}>
+              <h3 className={`font-semibold ${result.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
                 {result.success ? 'Datos cargados exitosamente' : 'Error al cargar'}
               </h3>
-              <p className={`mt-1 ${result.success ? 'text-green-700' : 'text-red-700'}`}>
+              <p className={`mt-1 ${result.success ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
                 {result.message}
               </p>
 
@@ -268,7 +273,7 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
       )}
 
       {/* Column Reference */}
-      <div className="bg-white dark:bg-slate-900 rounded-lg border p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
         <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Columnas Requeridas</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {[
@@ -293,10 +298,10 @@ Mensajes - Febrero 2024,Publico Amplio,Imagen Producto,2024-02-01,1200,10000,750
           ))}
         </div>
 
-        <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+        <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
           <div className="flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-yellow-800">
+            <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
               El sistema acepta columnas en espanol (exportacion de Meta Ads Argentina) y las normaliza automaticamente.
             </p>
           </div>

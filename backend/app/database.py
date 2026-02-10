@@ -83,6 +83,7 @@ class MetricDB(Base):
     campaign_name = Column(String, nullable=False)
     ad_set_name = Column(String, nullable=False)
     ad_name = Column(String, nullable=False)
+    ad_id = Column(String, nullable=True)  # Meta ad ID for deduplication
 
     # Core metrics
     spend = Column(Float, default=0)
@@ -326,6 +327,105 @@ class WebAuthnCredentialDB(Base):
 
     # Relationship
     user = relationship("UserDB", backref="webauthn_credentials")
+
+
+class CreativeDB(Base):
+    """Stores creative assets with analyzed attributes for comparison."""
+    __tablename__ = "creatives"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    client_id = Column(String, ForeignKey("clients.id"), nullable=False, index=True)
+    ad_id = Column(String, nullable=True, index=True)  # Meta ad ID
+    ad_name = Column(String, nullable=True)
+    image_url = Column(Text, nullable=True)  # URL from Meta
+    image_hash = Column(String, nullable=True, index=True)  # For deduplication
+
+    # Performance metrics (from Meta)
+    ctr = Column(Float, nullable=True)
+    cpc = Column(Float, nullable=True)
+    cpm = Column(Float, nullable=True)
+    cpr = Column(Float, nullable=True)  # Cost per result
+    results = Column(Integer, nullable=True)
+    spend = Column(Float, nullable=True)
+    impressions = Column(Integer, nullable=True)
+
+    # ==================== PHOTOGRAPHY ATTRIBUTES ====================
+    photo_type = Column(String, nullable=True)  # product_only, lifestyle, ambiente, detail, before_after
+    photo_angle = Column(String, nullable=True)  # frontal, 45deg, cenital, contrapicado, eye_level
+    photo_distance = Column(String, nullable=True)  # closeup, medio, full, wide
+    background_type = Column(String, nullable=True)  # white, gray, solid_color, lifestyle, exterior, texture
+    lighting = Column(String, nullable=True)  # natural_soft, natural_hard, studio, warm, cold, dramatic
+    shadows = Column(String, nullable=True)  # none, soft, defined, dramatic
+    depth_of_field = Column(String, nullable=True)  # blurred_bg, all_focused
+    image_quality = Column(String, nullable=True)  # high, medium, low
+
+    # ==================== COMPOSITION ATTRIBUTES ====================
+    rule_of_thirds = Column(Boolean, nullable=True)
+    focal_point = Column(String, nullable=True)  # clear, multiple, diffuse
+    negative_space = Column(String, nullable=True)  # 0-20, 20-40, 40-60, 60+
+    visual_direction = Column(String, nullable=True)  # to_cta, outward, neutral
+    symmetry = Column(String, nullable=True)  # symmetric, asymmetric_balanced, unbalanced
+    contrast_level = Column(String, nullable=True)  # high, medium, low
+    color_palette = Column(String, nullable=True)  # monochromatic, complementary, analogous, triadic
+    dominant_color = Column(String, nullable=True)  # hex color
+    product_count = Column(String, nullable=True)  # 1, 2-3, 4-6, catalog
+    has_props = Column(String, nullable=True)  # none, minimal, moderate, abundant
+    has_scale_reference = Column(String, nullable=True)  # person, object, none
+
+    # ==================== HUMAN ELEMENTS ====================
+    has_person = Column(Boolean, nullable=True)
+    person_type = Column(String, nullable=True)  # model, ugc, influencer, testimonial
+    person_visibility = Column(String, nullable=True)  # hands, partial, full_body
+    person_expression = Column(String, nullable=True)  # smile, neutral, serious, using_product
+    person_gaze = Column(String, nullable=True)  # to_camera, to_product, away
+    person_interaction = Column(String, nullable=True)  # using, touching, pointing, posing
+
+    # ==================== COMMERCIAL INFO ====================
+    has_price = Column(Boolean, nullable=True)
+    price_prominence = Column(String, nullable=True)  # small, prominent
+    has_discount = Column(Boolean, nullable=True)
+    discount_type = Column(String, nullable=True)  # percentage, fixed, 2x1, installments
+    discount_magnitude = Column(String, nullable=True)  # <20, 20-40, 40-60, >60
+    has_urgency = Column(Boolean, nullable=True)
+    urgency_type = Column(String, nullable=True)  # today, this_week, last_days
+    has_scarcity = Column(Boolean, nullable=True)
+    has_shipping_info = Column(Boolean, nullable=True)
+    shipping_type = Column(String, nullable=True)  # free, paid
+    has_guarantee = Column(Boolean, nullable=True)
+    logo_visibility = Column(String, nullable=True)  # none, subtle, prominent
+    has_badge = Column(Boolean, nullable=True)
+    badge_type = Column(String, nullable=True)  # new, bestseller, exclusive
+
+    # ==================== COPY/TEXT IN IMAGE ====================
+    has_text_overlay = Column(Boolean, nullable=True)
+    text_amount = Column(String, nullable=True)  # none, 1-5words, 6-15, 16+
+    text_position = Column(String, nullable=True)  # top, center, bottom, overlay
+    font_type = Column(String, nullable=True)  # sans_serif, serif, script, display
+    text_contrast = Column(String, nullable=True)  # high, medium, low
+    headline_type = Column(String, nullable=True)  # benefit, price, emotion, question, product_name
+    has_subheadline = Column(Boolean, nullable=True)
+    cta_text = Column(String, nullable=True)  # comprar, ver_mas, whatsapp, cotizar, none
+    has_emojis = Column(Boolean, nullable=True)
+    detected_copy = Column(Text, nullable=True)  # Actual text detected in image
+
+    # ==================== PRODUCT INFO ====================
+    product_category = Column(String, nullable=True)  # silla, mesa, sofa, cama, decoracion, etc
+    product_material = Column(String, nullable=True)  # madera, tela, metal, mixto
+    product_style = Column(String, nullable=True)  # modern, classic, rustic, minimalist
+    price_range = Column(String, nullable=True)  # economico, medio, premium
+
+    # ==================== FORMAT ====================
+    aspect_ratio = Column(String, nullable=True)  # 1:1, 4:5, 9:16, 16:9
+    media_type = Column(String, nullable=True)  # image, carousel, video
+
+    # ==================== METADATA ====================
+    analysis_version = Column(String, default="1.0")
+    analyzed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Raw JSON for additional attributes
+    extra_attributes = Column(JSON, default={})
 
 
 class CSPViolationDB(Base):

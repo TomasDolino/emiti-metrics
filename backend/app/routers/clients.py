@@ -7,20 +7,21 @@ from typing import List, Optional
 from datetime import datetime
 from uuid import uuid4
 
-from ..database import get_db, ClientDB, ClientConfigDB, UserDB
+from ..database import get_db, ClientDB, ClientConfigDB, UserDB, MetricDB, CampaignDB
 from ..models.schemas import Client
 from ..auth import get_current_user
+from sqlalchemy import func
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[Client])
+@router.get("/")
 async def list_clients(
     is_active: Optional[bool] = None,
     db: Session = Depends(get_db),
     current_user: UserDB = Depends(get_current_user)
 ):
-    """Lista todos los clientes."""
+    """Lista todos los clientes con conteo de métricas."""
     query = db.query(ClientDB)
 
     if is_active is not None:
@@ -28,17 +29,25 @@ async def list_clients(
 
     clients = query.order_by(ClientDB.name).all()
 
-    return [
-        Client(
-            id=c.id,
-            name=c.name,
-            industry=c.industry,
-            meta_account_id=c.meta_account_id,
-            is_active=c.is_active,
-            created_at=c.created_at.isoformat()
-        )
-        for c in clients
-    ]
+    result = []
+    for c in clients:
+        # Count metrics for this client
+        metrics_count = db.query(func.count(MetricDB.id)).filter(MetricDB.client_id == c.id).scalar() or 0
+        campaigns_count = db.query(func.count(CampaignDB.id)).filter(CampaignDB.client_id == c.id).scalar() or 0
+
+        result.append({
+            "id": c.id,
+            "name": c.name,
+            "industry": c.industry,
+            "meta_account_id": c.meta_account_id,
+            "color": getattr(c, 'color', None),
+            "is_active": c.is_active,
+            "metrics_count": metrics_count,
+            "campaigns_count": campaigns_count,
+            "created_at": c.created_at.isoformat()
+        })
+
+    return result
 
 
 @router.get("/brands")

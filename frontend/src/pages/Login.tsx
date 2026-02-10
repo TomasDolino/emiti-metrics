@@ -38,7 +38,7 @@ export default function Login() {
             className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
             style={{ background: `linear-gradient(135deg, ${palette.primary}, ${palette.secondary})` }}
           >
-            <Sparkles size={28} className="text-white" />
+            <Sparkles size={28} className="text-white" aria-hidden="true" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Emiti Metrics</h1>
@@ -54,8 +54,8 @@ export default function Login() {
 
           {/* Error */}
           {error && (
-            <div className="flex items-center gap-2 p-3 mb-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl text-red-600 dark:text-red-400 text-sm">
-              <AlertCircle size={16} />
+            <div className="flex items-center gap-2 p-3 mb-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl text-red-600 dark:text-red-400 text-sm" role="alert">
+              <AlertCircle size={16} aria-hidden="true" />
               {error}
             </div>
           )}
@@ -63,41 +63,47 @@ export default function Login() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
                 Email
               </label>
               <div className="relative">
                 <Mail
                   size={18}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  aria-hidden="true"
                 />
                 <input
+                  id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@email.com"
                   required
+                  autoComplete="email"
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-violet-500 dark:focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
                 Contraseña
               </label>
               <div className="relative">
                 <Lock
                   size={18}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  aria-hidden="true"
                 />
                 <input
+                  id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
                   minLength={6}
+                  autoComplete="current-password"
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-violet-500 dark:focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
                 />
               </div>
@@ -106,7 +112,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 text-white font-medium rounded-xl transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:-translate-y-0.5"
+              className="w-full py-3 text-white font-medium rounded-xl transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500"
               style={{ background: `linear-gradient(135deg, ${palette.primary}, ${palette.secondary})` }}
             >
               {isLoading ? 'Cargando...' : 'Iniciar Sesión'}

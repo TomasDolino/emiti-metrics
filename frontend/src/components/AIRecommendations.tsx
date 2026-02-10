@@ -36,7 +36,7 @@ interface AIRecommendationsProps {
   clientName?: string
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
 const categoryIcons = {
   budget: DollarSign,
@@ -103,9 +103,13 @@ export default function AIRecommendations({ clientId, clientName }: AIRecommenda
         }
       }
 
-      const response = await fetch(`${API_BASE}/api/ai/recommendations`, {
+      const token = localStorage.getItem('metrics_token') || ''
+      const response = await fetch(`${API_BASE}/ai/recommendations`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           client_id: clientId || 'all',
           data,
@@ -137,9 +141,9 @@ export default function AIRecommendations({ clientId, clientName }: AIRecommenda
     : recommendations.filter(r => r.category === focusArea)
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
@@ -149,10 +153,10 @@ export default function AIRecommendations({ clientId, clientName }: AIRecommenda
               <Lightbulb className="w-5 h-5" style={{ color: palette.primary }} />
             </div>
             <div>
-              <h2 className="font-semibold text-gray-900 dark:text-white">
+              <h2 className="font-semibold text-slate-900 dark:text-white">
                 Recomendaciones AI
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-slate-500">
                 {clientName ? `Para ${clientName}` : 'Todas las cuentas'}
               </p>
             </div>
@@ -161,7 +165,8 @@ export default function AIRecommendations({ clientId, clientName }: AIRecommenda
           <button
             onClick={fetchRecommendations}
             disabled={isLoading}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 transition-colors"
+            aria-label="Actualizar recomendaciones"
           >
             <RefreshCw className={cn('w-5 h-5', isLoading && 'animate-spin')} />
           </button>
@@ -169,7 +174,7 @@ export default function AIRecommendations({ clientId, clientName }: AIRecommenda
       </div>
 
       {/* Focus Area Tabs */}
-      <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex gap-2 overflow-x-auto scrollbar-hide">
+      <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-700 flex gap-2 overflow-x-auto scrollbar-hide">
         {(['all', 'budget', 'creative', 'audience'] as const).map((area) => (
           <button
             key={area}
@@ -178,7 +183,7 @@ export default function AIRecommendations({ clientId, clientName }: AIRecommenda
               'px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
               focusArea === area
                 ? 'text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
             )}
             style={focusArea === area ? { backgroundColor: palette.primary } : undefined}
           >
@@ -191,8 +196,8 @@ export default function AIRecommendations({ clientId, clientName }: AIRecommenda
       <div className="p-6">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400 mb-3" />
-            <p className="text-sm text-gray-500">Analizando datos...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-slate-400 mb-3" />
+            <p className="text-sm text-slate-500">Analizando datos...</p>
           </div>
         ) : error ? (
           <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400">
@@ -205,8 +210,8 @@ export default function AIRecommendations({ clientId, clientName }: AIRecommenda
         ) : filteredRecommendations.length === 0 ? (
           <div className="text-center py-12">
             <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-            <p className="font-medium text-gray-900 dark:text-white">Todo está optimizado</p>
-            <p className="text-sm text-gray-500 mt-1">No hay recomendaciones pendientes</p>
+            <p className="font-medium text-slate-900 dark:text-white">Todo está optimizado</p>
+            <p className="text-sm text-slate-500 mt-1">No hay recomendaciones pendientes</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -225,12 +230,12 @@ export default function AIRecommendations({ clientId, clientName }: AIRecommenda
                   onClick={() => setExpandedId(isExpanded ? null : rec.id)}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-white dark:bg-gray-700 flex-shrink-0">
-                      <Icon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                    <div className="p-2 rounded-lg bg-white dark:bg-slate-700 flex-shrink-0">
+                      <Icon className="w-4 h-4 text-slate-600 dark:text-slate-300" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-medium text-gray-900 dark:text-white">
+                        <h4 className="font-medium text-slate-900 dark:text-white">
                           {rec.title}
                         </h4>
                         <span className={cn(
@@ -242,7 +247,7 @@ export default function AIRecommendations({ clientId, clientName }: AIRecommenda
                           {rec.priority === 'high' ? 'Alta' : rec.priority === 'medium' ? 'Media' : 'Baja'}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                         {rec.description}
                       </p>
 
@@ -250,17 +255,19 @@ export default function AIRecommendations({ clientId, clientName }: AIRecommenda
                         <div className="mt-4 space-y-3 animate-fadeIn">
                           <div className="flex items-center gap-2 text-sm">
                             <TrendingUp className="w-4 h-4 text-green-500" />
-                            <span className="text-gray-600 dark:text-gray-400">Impacto estimado:</span>
+                            <span className="text-slate-600 dark:text-slate-400">Impacto estimado:</span>
                             <span className="font-medium text-green-600">{rec.impact}</span>
                           </div>
 
-                          <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
-                            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Acción sugerida</p>
-                            <p className="text-sm text-gray-900 dark:text-white">{rec.action}</p>
+                          <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600">
+                            <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Acción sugerida</p>
+                            <p className="text-sm text-slate-900 dark:text-white">{rec.action}</p>
                           </div>
 
                           <button
-                            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                            disabled={true}
+                            title="Proximamente"
+                            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             style={{ backgroundColor: palette.primary }}
                           >
                             <Zap className="w-4 h-4" />
@@ -272,7 +279,7 @@ export default function AIRecommendations({ clientId, clientName }: AIRecommenda
                     </div>
 
                     <ChevronRight className={cn(
-                      'w-5 h-5 text-gray-400 transition-transform flex-shrink-0',
+                      'w-5 h-5 text-slate-400 transition-transform flex-shrink-0',
                       isExpanded && 'rotate-90'
                     )} />
                   </div>

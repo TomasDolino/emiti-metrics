@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Image, Eye, EyeOff, ChevronRight, ChevronDown, TrendingUp, TrendingDown, Target, DollarSign, Loader2, RefreshCw, Lightbulb, Zap, Clock, Pause, AlertTriangle } from 'lucide-react'
 import { useTheme } from '../lib/theme'
 import { api, type AdAnalysis } from '../lib/api'
@@ -53,15 +54,15 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border-l-4 overflow-hidden transition-shadow hover:shadow-sm" style={{ borderLeftColor: borderColor }}>
+    <div className="bg-white dark:bg-slate-800 rounded-lg border-l-4 overflow-hidden transition-shadow hover:shadow-sm" style={{ borderLeftColor: borderColor }}>
       {/* Main Row */}
       <div
         className="flex items-center gap-3 p-3 cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         {/* Thumbnail */}
-        <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-          <Image className="w-5 h-5 text-slate-400" />
+        <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0">
+          <Image className="w-5 h-5 text-slate-400" aria-hidden="true" />
         </div>
 
         {/* Info */}
@@ -103,7 +104,7 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
 
         {/* Fatigue Bar */}
         <div className="w-12 hidden lg:block">
-          <div className="h-1.5 bg-slate-100 dark:bg-slate-800 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
             <div
               className={cn(
                 'h-full rounded-full',
@@ -124,18 +125,18 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
         </span>
 
         {isExpanded ? (
-          <ChevronDown size={16} className="text-slate-400 hidden sm:block transition-transform" />
+          <ChevronDown size={16} className="text-slate-400 hidden sm:block transition-transform" aria-hidden="true" />
         ) : (
-          <ChevronRight size={16} className="text-slate-400 hidden sm:block transition-transform" />
+          <ChevronRight size={16} className="text-slate-400 hidden sm:block transition-transform" aria-hidden="true" />
         )}
       </div>
 
       {/* Expanded Details */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:bg-gray-800/50">
+        <div className="px-4 pb-4 pt-2 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <DollarSign size={16} className="text-slate-400" />
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
+              <DollarSign size={16} className="text-slate-400" aria-hidden="true" />
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Gasto Total</p>
                 <p className="text-sm font-medium text-slate-900 dark:text-white">
@@ -143,22 +144,22 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <Target size={16} className="text-slate-400" />
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
+              <Target size={16} className="text-slate-400" aria-hidden="true" />
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Resultados</p>
                 <p className="text-sm font-medium text-slate-900 dark:text-white">{formatNumber(ad.results)}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <TrendingUp size={16} className="text-slate-400" />
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
+              <TrendingUp size={16} className="text-slate-400" aria-hidden="true" />
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Días Activo</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Dias Activo</p>
                 <p className="text-sm font-medium text-slate-900 dark:text-white">{ad.days_running}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg">
-              <TrendingDown size={16} className="text-slate-400" />
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
+              <TrendingDown size={16} className="text-slate-400" aria-hidden="true" />
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Frecuencia</p>
                 <p className="text-sm font-medium text-slate-900 dark:text-white">{ad.frequency.toFixed(1)}</p>
@@ -168,7 +169,7 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
           <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-500 dark:text-slate-400">Fatiga:</span>
-              <div className="w-24 h-2 bg-slate-200 dark:bg-slate-700 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="w-24 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                 <div
                   className={cn(
                     'h-full rounded-full',
@@ -184,7 +185,7 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
 
           {/* AI Recommendation */}
           {ad.recommendation && (
-            <div className="mt-3 p-3 bg-gradient-to-r from-slate-100 to-white dark:from-gray-700 dark:to-gray-800 rounded-lg border border-slate-200 dark:border-gray-600">
+            <div className="mt-3 p-3 bg-gradient-to-r from-slate-100 to-white dark:from-slate-700 dark:to-slate-800 rounded-lg border border-slate-200 dark:border-slate-600">
               <div className="flex items-start gap-2">
                 <div className={cn('p-1.5 rounded text-white flex-shrink-0', getActionColor())}>
                   {getActionIcon()}
@@ -205,7 +206,7 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
                   </p>
                   {ad.action_detail && (
                     <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                      <Lightbulb className="w-3 h-3 inline mr-1" />
+                      <Lightbulb className="w-3 h-3 inline mr-1" aria-hidden="true" />
                       {ad.action_detail}
                     </p>
                   )}
@@ -224,12 +225,27 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
 export default function Ads() {
   useTheme() // for consistency
   const { selectedClientId } = useSelectedClient()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [ads, setAds] = useState<AdAnalysis[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showAmounts, setShowAmounts] = useState(true)
   const [sortBy, setSortBy] = useState<'results' | 'spend' | 'cpr' | 'ctr'>('results')
-  const [filterClassification, setFilterClassification] = useState<AdClassification | 'ALL'>('ALL')
+
+  // Get initial filter from URL
+  const urlFilter = searchParams.get('filter') as AdClassification | null
+  const [filterClassification, setFilterClassification] = useState<AdClassification | 'ALL'>(urlFilter || 'ALL')
+
+  // Update URL when filter changes
+  const handleFilterChange = (classification: AdClassification | 'ALL') => {
+    setFilterClassification(classification)
+    if (classification === 'ALL') {
+      searchParams.delete('filter')
+    } else {
+      searchParams.set('filter', classification)
+    }
+    setSearchParams(searchParams)
+  }
 
   const fetchAds = async () => {
     setIsLoading(true)
@@ -283,9 +299,9 @@ export default function Ads() {
         <p className="text-red-500">{error}</p>
         <button
           onClick={fetchAds}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 min-h-[40px]"
         >
-          <RefreshCw size={16} />
+          <RefreshCw size={16} aria-hidden="true" />
           Reintentar
         </button>
       </div>
@@ -306,7 +322,8 @@ export default function Ads() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 dark:text-white"
+            className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-800 dark:text-white min-h-[40px]"
+            aria-label="Ordenar anuncios por"
           >
             <option value="results">Por Resultados</option>
             <option value="spend">Por Gasto</option>
@@ -317,10 +334,10 @@ export default function Ads() {
           {/* Toggle amounts */}
           <button
             onClick={() => setShowAmounts(!showAmounts)}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-gray-800 text-slate-500 dark:text-slate-400"
-            title={showAmounts ? 'Ocultar montos' : 'Mostrar montos'}
+            className="p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 min-w-[40px] min-h-[40px] flex items-center justify-center"
+            aria-label={showAmounts ? 'Ocultar montos' : 'Mostrar montos'}
           >
-            {showAmounts ? <Eye size={18} /> : <EyeOff size={18} />}
+            {showAmounts ? <Eye size={18} aria-hidden="true" /> : <EyeOff size={18} aria-hidden="true" />}
           </button>
         </div>
       </div>
@@ -328,12 +345,12 @@ export default function Ads() {
       {/* Classification Filter Pills */}
       <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
         <button
-          onClick={() => setFilterClassification('ALL')}
+          onClick={() => handleFilterChange('ALL')}
           className={cn(
-            'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-shrink-0',
+            'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-shrink-0 min-h-[40px]',
             filterClassification === 'ALL'
-              ? 'bg-gray-900 text-white dark:bg-white dark:text-slate-900'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:bg-gray-800'
+              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
           )}
         >
           Todos ({ads.length})
@@ -341,9 +358,9 @@ export default function Ads() {
         {(Object.entries(classificationCounts) as [AdClassification, number][]).map(([classification, count]) => (
           <button
             key={classification}
-            onClick={() => setFilterClassification(filterClassification === classification ? 'ALL' : classification)}
+            onClick={() => handleFilterChange(filterClassification === classification ? 'ALL' : classification)}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-shrink-0',
+              'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-shrink-0 min-h-[40px]',
               filterClassification === classification && 'ring-2 ring-offset-1'
             )}
             style={{
@@ -365,7 +382,7 @@ export default function Ads() {
 
       {sortedAds.length === 0 && (
         <div className="text-center py-12">
-          <Image className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <Image className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" aria-hidden="true" />
           <p className="text-slate-500 dark:text-slate-400">
             {ads.length === 0 ? 'No hay anuncios. Sube un CSV para comenzar.' : 'No hay anuncios con este filtro'}
           </p>

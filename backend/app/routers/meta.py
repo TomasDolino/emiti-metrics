@@ -640,6 +640,193 @@ async def quick_pause_ad(
     }
 
 
+@router.post("/sync/{client_id}")
+@limiter.limit("10/minute")
+async def sync_client_meta_data(
+    request: Request,
+    client_id: str,
+    days: int = 7,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """
+    Manually trigger Meta data sync for a specific client.
+    Fetches the latest metrics from Meta Ads API and saves to database.
+    """
+    from ..database import MetricDB
+
+    # Get client
+    client = db.query(ClientDB).filter(ClientDB.id == client_id, ClientDB.is_active == True).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found or inactive")
+
+    # Get token
+    token = db.query(MetaTokenDB).filter(
+        MetaTokenDB.client_id == client_id,
+        MetaTokenDB.access_token.isnot(None),
+        MetaTokenDB.ad_account_id.isnot(None)
+    ).first()
+
+    if not token:
+        raise HTTPException(status_code=404, detail="No Meta account connected for this client")
+
+    # Fetch insights from Meta
+    try:
+        insights_list = await meta_oauth_service.get_account_insights_by_ad(
+            token.access_token,
+            token.ad_account_id,
+            days=days
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch Meta data: {str(e)}")
+
+    if not insights_list:
+        return {
+            "success": True,
+            "client_id": client_id,
+            "message": "No insights found for this account",
+            "metrics_added": 0,
+            "metrics_updated": 0
+        }
+
+    # Process and save metrics
+    metrics_added = 0
+    metrics_updated = 0
+    unique_ads = set()
+
+    def extract_results(actions):
+        if not actions:
+            return 0
+        results = 0
+        result_actions = [
+            "onsite_conversion.messaging_conversation_started_7d",
+            "onsite_conversion.messaging_first_reply",
+            "lead", "onsite_conversion.lead",
+            "purchase", "omni_purchase", "omni_app_install",
+        ]
+        for action in actions:
+            if action.get("action_type", "") in result_actions:
+                try:
+                    results += int(float(action.get("value", 0)))
+                except:
+                    pass
+        return results
+
+    for insight in insights_list:
+        ad_id = insight.get("ad_id", "")
+        ad_name = insight.get("ad_name", "")
+        if not ad_id:
+            continue
+
+        unique_ads.add(ad_id)
+
+        # Parse date
+        date_str = insight.get("date_start") or insight.get("date_stop")
+        if not date_str:
+            continue
+
+        try:
+            date = datetime.strptime(date_str, "%Y-%m-%d")
+        except:
+            continue
+
+        # Extract metrics
+        try:
+            spend = float(insight.get("spend", 0) or 0)
+        except:
+            spend = 0.0
+
+        try:
+            impressions = int(float(insight.get("impressions", 0) or 0))
+        except:
+            impressions = 0
+
+        try:
+            reach = int(float(insight.get("reach", 0) or 0))
+        except:
+            reach = 0
+
+        try:
+            clicks = int(float(insight.get("clicks", 0) or 0))
+        except:
+            clicks = 0
+
+        if impressions == 0 and spend == 0:
+            continue
+
+        results = extract_results(insight.get("actions", []))
+        if results == 0:
+            results = clicks
+
+        # Calculate derived metrics
+        frequency = float(insight.get("frequency", 0) or 0)
+        if frequency == 0 and reach > 0:
+            frequency = impressions / reach
+
+        ctr = float(insight.get("ctr", 0) or 0)
+        if ctr == 0 and impressions > 0:
+            ctr = (clicks / impressions) * 100
+
+        cpr = spend / results if results > 0 else 0
+
+        cpm = float(insight.get("cpm", 0) or 0)
+        if cpm == 0 and impressions > 0:
+            cpm = (spend / impressions) * 1000
+
+        # Check if exists
+        existing = db.query(MetricDB).filter(
+            MetricDB.client_id == client_id,
+            MetricDB.ad_id == ad_id,
+            MetricDB.date == date
+        ).first()
+
+        if existing:
+            existing.spend = spend
+            existing.impressions = impressions
+            existing.reach = reach
+            existing.clicks = clicks
+            existing.results = results
+            existing.frequency = frequency
+            existing.ctr = ctr
+            existing.cost_per_result = cpr
+            existing.cpm = cpm
+            existing.campaign_name = insight.get("campaign_name", existing.campaign_name or "")
+            existing.ad_set_name = insight.get("adset_name", existing.ad_set_name or "")
+            metrics_updated += 1
+        else:
+            metric = MetricDB(
+                client_id=client_id,
+                campaign_name=insight.get("campaign_name", ""),
+                ad_set_name=insight.get("adset_name", ""),
+                ad_name=ad_name,
+                ad_id=ad_id,
+                date=date,
+                spend=spend,
+                impressions=impressions,
+                reach=reach,
+                clicks=clicks,
+                results=results,
+                frequency=frequency,
+                ctr=ctr,
+                cost_per_result=cpr,
+                cpm=cpm
+            )
+            db.add(metric)
+            metrics_added += 1
+
+    db.commit()
+
+    return {
+        "success": True,
+        "client_id": client_id,
+        "client_name": client.name,
+        "ads_synced": len(unique_ads),
+        "metrics_added": metrics_added,
+        "metrics_updated": metrics_updated,
+        "total_metrics": metrics_added + metrics_updated
+    }
+
+
 @router.post("/action/{client_id}/scale-campaign")
 @limiter.limit("20/minute")
 async def quick_scale_campaign(

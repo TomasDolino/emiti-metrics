@@ -46,7 +46,10 @@ function ClientHealthRow({ health, onSelect }: { health: AgencyClientHealth; onS
   return (
     <div
       onClick={onSelect}
-      className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border-l-4 hover:shadow-md transition-all cursor-pointer"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onSelect()}
+      className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border-l-4 hover:shadow-md transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2"
       style={{ borderLeftColor: statusColors[health.status] }}
     >
       {/* Avatar */}
@@ -60,7 +63,7 @@ function ClientHealthRow({ health, onSelect }: { health: AgencyClientHealth; onS
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-slate-900 dark:text-white dark:text-white truncate">{health.client.name}</p>
+          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{health.client.name}</p>
           <span
             className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white"
             style={{ backgroundColor: statusColors[health.status] }}
@@ -84,9 +87,9 @@ function ClientHealthRow({ health, onSelect }: { health: AgencyClientHealth; onS
       <div className="text-right hidden md:block">
         <div className={cn(
           'flex items-center gap-1 text-sm font-medium',
-          health.resultsTrend > 0 ? 'text-green-600' : health.resultsTrend < 0 ? 'text-red-600' : 'text-slate-500 dark:text-slate-400'
+          health.resultsTrend > 0 ? 'text-green-600 dark:text-green-400' : health.resultsTrend < 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'
         )}>
-          {health.resultsTrend > 0 ? <TrendingUp size={14} /> : health.resultsTrend < 0 ? <TrendingDown size={14} /> : null}
+          {health.resultsTrend > 0 ? <TrendingUp size={14} aria-hidden="true" /> : health.resultsTrend < 0 ? <TrendingDown size={14} aria-hidden="true" /> : null}
           {health.resultsTrend > 0 ? '+' : ''}{health.resultsTrend.toFixed(0)}%
         </div>
         <p className="text-[10px] text-slate-400">resultados</p>
@@ -94,13 +97,13 @@ function ClientHealthRow({ health, onSelect }: { health: AgencyClientHealth; onS
 
       {/* Pending Actions */}
       {health.pendingActions > 0 && (
-        <div className="flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium">
-          <Clock size={12} />
+        <div className="flex items-center gap-1 px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded text-xs font-medium">
+          <Clock size={12} aria-hidden="true" />
           {health.pendingActions}
         </div>
       )}
 
-      <ChevronRight size={16} className="text-slate-400" />
+      <ChevronRight size={16} className="text-slate-400" aria-hidden="true" />
     </div>
   )
 }
@@ -133,27 +136,27 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white dark:text-white">{knowledge.clientName} - Panel Detallado</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-400">✕</button>
+        <div className="sticky top-0 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between">
+          <h2 id="modal-title" className="text-lg font-semibold text-slate-900 dark:text-white">{knowledge.clientName} - Panel Detallado</h2>
+          <button onClick={onClose} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-lg" aria-label="Cerrar panel">✕</button>
         </div>
 
         <div className="p-4 space-y-4">
           {/* Budget Pacing */}
-          <div className="bg-slate-50 dark:bg-slate-800 dark:bg-gray-700/50 rounded-xl p-4">
-            <h3 className="font-medium text-slate-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
-              <Target size={18} style={{ color: pacingColors[pacing.status] }} />
+          <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4">
+            <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+              <Target size={18} aria-hidden="true" style={{ color: pacingColors[pacing.status] }} />
               Pacing de Budget
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Budget Mensual</p>
-                <p className="text-lg font-semibold text-slate-900 dark:text-white dark:text-white">{formatMoney(pacing.monthlyBudget)}</p>
+                <p className="text-lg font-semibold text-slate-900 dark:text-white">{formatMoney(pacing.monthlyBudget)}</p>
               </div>
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Gastado</p>
@@ -161,14 +164,14 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
               </div>
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">% del Budget</p>
-                <p className="text-lg font-semibold text-slate-900 dark:text-white dark:text-white">{pacing.percentSpent.toFixed(0)}%</p>
+                <p className="text-lg font-semibold text-slate-900 dark:text-white">{pacing.percentSpent.toFixed(0)}%</p>
               </div>
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">% del Mes</p>
-                <p className="text-lg font-semibold text-slate-900 dark:text-white dark:text-white">{pacing.percentOfMonth.toFixed(0)}%</p>
+                <p className="text-lg font-semibold text-slate-900 dark:text-white">{pacing.percentOfMonth.toFixed(0)}%</p>
               </div>
             </div>
-            <div className="h-2 bg-slate-200 dark:bg-slate-700 dark:bg-gray-600 rounded-full overflow-hidden mb-2">
+            <div className="h-2 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden mb-2">
               <div
                 className="h-full rounded-full transition-all"
                 style={{
@@ -186,9 +189,9 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
           </div>
 
           {/* Asset Dependency */}
-          <div className="bg-slate-50 dark:bg-slate-800 dark:bg-gray-700/50 rounded-xl p-4">
-            <h3 className="font-medium text-slate-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
-              <AlertTriangle size={18} style={{ color: riskColors[dependency.concentrationRisk] }} />
+          <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4">
+            <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+              <AlertTriangle size={18} aria-hidden="true" style={{ color: riskColors[dependency.concentrationRisk] }} />
               Dependencia de Activos
             </h3>
             <div className="flex items-center gap-4 mb-3">
@@ -206,14 +209,14 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
             <div className="space-y-1">
               {dependency.top3Ads.map((ad, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs">
-                  <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-700 dark:bg-gray-600 rounded-full overflow-hidden">
+                  <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full"
                       style={{ width: `${ad.percentage}%`, backgroundColor: palette.primary }}
                     />
                   </div>
-                  <span className="text-slate-600 dark:text-slate-400 dark:text-slate-400 truncate flex-1">{ad.name}</span>
-                  <span className="text-slate-900 dark:text-white dark:text-white font-medium">{ad.percentage.toFixed(0)}%</span>
+                  <span className="text-slate-600 dark:text-slate-400 truncate flex-1">{ad.name}</span>
+                  <span className="text-slate-900 dark:text-white font-medium">{ad.percentage.toFixed(0)}%</span>
                 </div>
               ))}
             </div>
@@ -221,15 +224,15 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
 
           {/* Budget Optimizer */}
           {optimizer.recommendations.length > 0 && (
-            <div className="bg-slate-50 dark:bg-slate-800 dark:bg-gray-700/50 rounded-xl p-4">
-              <h3 className="font-medium text-slate-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
-                <Zap size={18} style={{ color: palette.primary }} />
+            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4">
+              <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <Zap size={18} aria-hidden="true" style={{ color: palette.primary }} />
                 Optimización de Budget
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-3">{optimizer.summary}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">{optimizer.summary}</p>
               <div className="space-y-2">
                 {optimizer.recommendations.map((rec, i) => (
-                  <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+                  <div key={i} className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
                     <div className="flex items-center gap-2 text-sm">
                       <span className="text-red-500">{rec.fromCampaign.name}</span>
                       <span className="text-slate-400">→</span>
@@ -246,14 +249,14 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
           )}
 
           {/* Knowledge Base */}
-          <div className="bg-slate-50 dark:bg-slate-800 dark:bg-gray-700/50 rounded-xl p-4">
-            <h3 className="font-medium text-slate-900 dark:text-white dark:text-white mb-3">Aprendizajes</h3>
+          <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4">
+            <h3 className="font-medium text-slate-900 dark:text-white mb-3">Aprendizajes</h3>
             <div className="grid md:grid-cols-2 gap-3">
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Lo que funciona</p>
                 {knowledge.learnings.filter(l => l.type === 'works').map(l => (
-                  <div key={l.id} className="flex items-start gap-2 text-sm text-green-600 mb-1">
-                    <CheckCircle size={14} className="mt-0.5 flex-shrink-0" />
+                  <div key={l.id} className="flex items-start gap-2 text-sm text-green-600 dark:text-green-400 mb-1">
+                    <CheckCircle size={14} className="mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span>{l.text}</span>
                   </div>
                 ))}
@@ -261,8 +264,8 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Insights</p>
                 {knowledge.learnings.filter(l => l.type === 'insight').map(l => (
-                  <div key={l.id} className="flex items-start gap-2 text-sm text-blue-600 mb-1">
-                    <Zap size={14} className="mt-0.5 flex-shrink-0" />
+                  <div key={l.id} className="flex items-start gap-2 text-sm text-blue-600 dark:text-blue-400 mb-1">
+                    <Zap size={14} className="mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span>{l.text}</span>
                   </div>
                 ))}
@@ -271,27 +274,27 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
             <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-600">
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Mejor anuncio</p>
-                <p className="text-sm font-medium text-slate-900 dark:text-white dark:text-white truncate">{knowledge.bestAd?.name || '-'}</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{knowledge.bestAd?.name || '-'}</p>
                 {knowledge.bestAd && <p className="text-xs text-green-600">CPR ${knowledge.bestAd.cpr.toFixed(0)}</p>}
               </div>
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Mejores días</p>
-                <p className="text-sm font-medium text-slate-900 dark:text-white dark:text-white">{knowledge.bestDays.join(', ') || '-'}</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{knowledge.bestDays.join(', ') || '-'}</p>
               </div>
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Vida útil promedio</p>
-                <p className="text-sm font-medium text-slate-900 dark:text-white dark:text-white">{knowledge.avgLifespanDays.toFixed(0)} días</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{knowledge.avgLifespanDays.toFixed(0)} días</p>
               </div>
             </div>
           </div>
 
           {/* Creative Intelligence */}
-          <div className="bg-slate-50 dark:bg-slate-800 dark:bg-gray-700/50 rounded-xl p-4">
-            <h3 className="font-medium text-slate-900 dark:text-white dark:text-white mb-3">Inteligencia Creativa</h3>
+          <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4">
+            <h3 className="font-medium text-slate-900 dark:text-white mb-3">Inteligencia Creativa</h3>
             <div className="space-y-2 mb-4">
               {creative.patterns.map((p, i) => (
-                <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-slate-200 dark:border-slate-700">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white dark:text-white">{p.pattern}</p>
+                <div key={i} className="bg-white dark:bg-slate-800 rounded-lg p-2 border border-slate-200 dark:border-slate-700">
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">{p.pattern}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">{p.impact}</p>
                 </div>
               ))}
@@ -305,8 +308,8 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
           {/* Quality & Saturation Row */}
           <div className="grid md:grid-cols-2 gap-4">
             {/* Account Quality */}
-            <div className="bg-slate-50 dark:bg-slate-800 dark:bg-gray-700/50 rounded-xl p-4">
-              <h3 className="font-medium text-slate-900 dark:text-white dark:text-white mb-3">Calidad de Cuenta</h3>
+            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4">
+              <h3 className="font-medium text-slate-900 dark:text-white mb-3">Calidad de Cuenta</h3>
               <div className="flex items-center gap-4">
                 <div className="relative">
                   <svg className="w-16 h-16 transform -rotate-90">
@@ -320,7 +323,7 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-lg font-bold text-slate-900 dark:text-white dark:text-white">{quality.score}</span>
+                    <span className="text-lg font-bold text-slate-900 dark:text-white">{quality.score}</span>
                   </div>
                 </div>
                 <div className="flex-1">
@@ -339,8 +342,8 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
             </div>
 
             {/* Audience Saturation */}
-            <div className="bg-slate-50 dark:bg-slate-800 dark:bg-gray-700/50 rounded-xl p-4">
-              <h3 className="font-medium text-slate-900 dark:text-white dark:text-white mb-3">Saturación de Audiencia</h3>
+            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4">
+              <h3 className="font-medium text-slate-900 dark:text-white mb-3">Saturación de Audiencia</h3>
               <div className="flex items-center gap-4">
                 <div className="relative">
                   <svg className="w-16 h-16 transform -rotate-90">
@@ -354,7 +357,7 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-lg font-bold text-slate-900 dark:text-white dark:text-white">{saturation.saturationScore}</span>
+                    <span className="text-lg font-bold text-slate-900 dark:text-white">{saturation.saturationScore}</span>
                   </div>
                 </div>
                 <div className="flex-1">
@@ -375,17 +378,17 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
 
           {/* Pattern Mining */}
           {patterns.length > 0 && (
-            <div className="bg-slate-50 dark:bg-slate-800 dark:bg-gray-700/50 rounded-xl p-4">
-              <h3 className="font-medium text-slate-900 dark:text-white dark:text-white mb-3">Patrones Detectados</h3>
+            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4">
+              <h3 className="font-medium text-slate-900 dark:text-white mb-3">Patrones Detectados</h3>
               <div className="grid md:grid-cols-2 gap-2">
                 {patterns.slice(0, 4).map((p, i) => (
-                  <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+                  <div key={i} className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-medium ${
-                        p.category === 'format' ? 'bg-blue-100 text-blue-700' :
-                        p.category === 'creative' ? 'bg-purple-100 text-purple-700' :
-                        p.category === 'timing' ? 'bg-orange-100 text-orange-700' :
-                        'bg-green-100 text-green-700'
+                        p.category === 'format' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
+                        p.category === 'creative' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' :
+                        p.category === 'timing' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' :
+                        'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                       }`}>
                         {p.category}
                       </span>
@@ -396,7 +399,7 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
                         {p.confidence}
                       </span>
                     </div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white dark:text-white">{p.pattern}</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{p.pattern}</p>
                     <p className="text-xs text-green-600">{p.impact}</p>
                   </div>
                 ))}
@@ -416,7 +419,7 @@ function ClientDetailPanel({ clientId, onClose }: { clientId: string; onClose: (
                 <ul className="space-y-1">
                   {playbook.do.slice(0, 2).map((item, i) => (
                     <li key={i} className="flex items-center gap-1">
-                      <CheckCircle size={12} /> {item}
+                      <CheckCircle size={12} aria-hidden="true" /> {item}
                     </li>
                   ))}
                 </ul>
@@ -461,37 +464,37 @@ export default function Agency() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white dark:text-white">Panel de Agencia</h1>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Panel de Agencia</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Vista general de todos los clientes</p>
         </div>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border-l-4" style={{ borderLeftColor: palette.primary }}>
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border-l-4" style={{ borderLeftColor: palette.primary }}>
           <div className="flex items-center gap-2 mb-1">
-            <Users size={16} className="text-slate-400" />
+            <Users size={16} className="text-slate-400" aria-hidden="true" />
             <span className="text-xs text-slate-500 dark:text-slate-400">Clientes Activos</span>
           </div>
           <p className="text-2xl font-semibold" style={{ color: palette.primary }}>{overview.activeClients}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border-l-4" style={{ borderLeftColor: palette.secondary }}>
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border-l-4" style={{ borderLeftColor: palette.secondary }}>
           <div className="flex items-center gap-2 mb-1">
-            <Target size={16} className="text-slate-400" />
+            <Target size={16} className="text-slate-400" aria-hidden="true" />
             <span className="text-xs text-slate-500 dark:text-slate-400">Budget Mensual</span>
           </div>
           <p className="text-2xl font-semibold" style={{ color: palette.secondary }}>{formatMoney(overview.totalMonthlyBudget)}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border-l-4" style={{ borderLeftColor: palette.success }}>
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border-l-4" style={{ borderLeftColor: palette.success }}>
           <div className="flex items-center gap-2 mb-1">
-            <TrendingUp size={16} className="text-slate-400" />
+            <TrendingUp size={16} className="text-slate-400" aria-hidden="true" />
             <span className="text-xs text-slate-500 dark:text-slate-400">Resultados del Mes</span>
           </div>
           <p className="text-2xl font-semibold" style={{ color: palette.success }}>{formatNumber(overview.totalResultsThisMonth)}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border-l-4" style={{ borderLeftColor: palette.warning }}>
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border-l-4" style={{ borderLeftColor: palette.warning }}>
           <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle size={16} className="text-slate-400" />
+            <AlertTriangle size={16} className="text-slate-400" aria-hidden="true" />
             <span className="text-xs text-slate-500 dark:text-slate-400">Acciones Urgentes</span>
           </div>
           <p className="text-2xl font-semibold" style={{ color: palette.warning }}>{overview.urgentActions.length}</p>
@@ -514,8 +517,8 @@ export default function Agency() {
                 )}>
                   {action.priority === 'high' ? 'URGENTE' : 'MEDIO'}
                 </span>
-                <span className="font-medium text-slate-900 dark:text-white dark:text-white">{action.clientName}:</span>
-                <span className="text-slate-600 dark:text-slate-400 dark:text-slate-400">{action.action}</span>
+                <span className="font-medium text-slate-900 dark:text-white">{action.clientName}:</span>
+                <span className="text-slate-600 dark:text-slate-400">{action.action}</span>
               </div>
             ))}
           </div>
@@ -523,9 +526,9 @@ export default function Agency() {
       )}
 
       {/* Clients Health */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm">
         <div className="p-4 border-b border-slate-100 dark:border-slate-700">
-          <h3 className="font-medium text-slate-900 dark:text-white dark:text-white">Salud de Clientes</h3>
+          <h3 className="font-medium text-slate-900 dark:text-white">Salud de Clientes</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">Click en un cliente para ver detalles</p>
         </div>
         <div className="p-2 space-y-2">
@@ -540,13 +543,13 @@ export default function Agency() {
       </div>
 
       {/* Weekly Goals */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-        <h3 className="font-medium text-slate-900 dark:text-white dark:text-white mb-3">Objetivos de la Semana</h3>
+      <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm">
+        <h3 className="font-medium text-slate-900 dark:text-white mb-3">Objetivos de la Semana</h3>
         <div className="space-y-3">
           {overview.weeklyGoals.map((goal, i) => (
             <div key={i}>
               <div className="flex items-center justify-between text-sm mb-1">
-                <span className="text-slate-600 dark:text-slate-400 dark:text-slate-400">{goal.goal}</span>
+                <span className="text-slate-600 dark:text-slate-400">{goal.goal}</span>
                 <span className={cn(
                   'font-medium',
                   goal.status === 'ahead' ? 'text-green-600' :
@@ -555,7 +558,7 @@ export default function Agency() {
                   {goal.progress}%
                 </span>
               </div>
-              <div className="h-1.5 bg-slate-100 dark:bg-slate-800 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                 <div
                   className={cn(
                     'h-full rounded-full',

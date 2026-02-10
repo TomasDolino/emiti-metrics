@@ -24,7 +24,7 @@ interface AIReportGeneratorProps {
   clientName?: string
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
 const periodOptions = [
   { value: 'week', label: 'Última semana' },
@@ -96,9 +96,13 @@ export default function AIReportGenerator({ clientId, clientName }: AIReportGene
         }
       }
 
-      const response = await fetch(`${API_BASE}/api/ai/generate-report`, {
+      const token = localStorage.getItem('metrics_token') || ''
+      const response = await fetch(`${API_BASE}/ai/generate-report`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           client_id: clientId || 'demo',
           client_name: clientName || 'Cliente Demo',
@@ -139,9 +143,9 @@ export default function AIReportGenerator({ clientId, clientName }: AIReportGene
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-lg flex items-center justify-center"
@@ -150,10 +154,10 @@ export default function AIReportGenerator({ clientId, clientName }: AIReportGene
             <FileText className="w-5 h-5" style={{ color: palette.primary }} />
           </div>
           <div>
-            <h2 className="font-semibold text-gray-900 dark:text-white">
+            <h2 className="font-semibold text-slate-900 dark:text-white">
               Generador de Reportes
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-slate-500">
               Reportes ejecutivos en lenguaje natural
             </p>
           </div>
@@ -166,7 +170,7 @@ export default function AIReportGenerator({ clientId, clientName }: AIReportGene
           <div className="space-y-6">
             {/* Period Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Período del reporte
               </label>
               <div className="flex gap-2">
@@ -178,7 +182,7 @@ export default function AIReportGenerator({ clientId, clientName }: AIReportGene
                       'flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                       period === opt.value
                         ? 'text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                     )}
                     style={period === opt.value ? { backgroundColor: palette.primary } : undefined}
                   >
@@ -190,7 +194,7 @@ export default function AIReportGenerator({ clientId, clientName }: AIReportGene
 
             {/* Format Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Formato del reporte
               </label>
               <div className="space-y-2">
@@ -202,7 +206,7 @@ export default function AIReportGenerator({ clientId, clientName }: AIReportGene
                       'w-full text-left px-4 py-3 rounded-lg border-2 transition-all',
                       format === opt.value
                         ? 'border-current'
-                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                        : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'
                     )}
                     style={format === opt.value ? { borderColor: palette.primary } : undefined}
                   >
@@ -214,20 +218,20 @@ export default function AIReportGenerator({ clientId, clientName }: AIReportGene
                         )}
                         style={format === opt.value ? { borderColor: palette.primary } : undefined}
                       />
-                      <span className="font-medium text-gray-900 dark:text-white">{opt.label}</span>
+                      <span className="font-medium text-slate-900 dark:text-white">{opt.label}</span>
                     </div>
-                    <p className="text-sm text-gray-500 ml-6 mt-1">{opt.description}</p>
+                    <p className="text-sm text-slate-500 ml-6 mt-1">{opt.description}</p>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Client Info */}
-            <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                 <Calendar className="w-4 h-4" />
                 <span>
-                  Cliente: <strong className="text-gray-900 dark:text-white">{clientName || 'Selecciona un cliente'}</strong>
+                  Cliente: <strong className="text-slate-900 dark:text-white">{clientName || 'Selecciona un cliente'}</strong>
                 </span>
               </div>
             </div>
@@ -262,19 +266,19 @@ export default function AIReportGenerator({ clientId, clientName }: AIReportGene
           {/* Report Preview */}
           <div className="flex flex-col">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-medium text-gray-900 dark:text-white">Vista previa</h3>
+              <h3 className="font-medium text-slate-900 dark:text-white">Vista previa</h3>
               {report && (
                 <div className="flex gap-2">
                   <button
                     onClick={copyToClipboard}
-                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                   >
                     {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                     {copied ? 'Copiado' : 'Copiar'}
                   </button>
                   <button
                     onClick={downloadReport}
-                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                   >
                     <Download className="w-3 h-3" />
                     Descargar
@@ -283,20 +287,20 @@ export default function AIReportGenerator({ clientId, clientName }: AIReportGene
               )}
             </div>
 
-            <div className="flex-1 min-h-[400px] bg-gray-50 dark:bg-gray-900 rounded-xl p-4 overflow-y-auto">
+            <div className="flex-1 min-h-[400px] bg-slate-50 dark:bg-slate-900 rounded-xl p-4 overflow-y-auto">
               {report ? (
                 <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <pre className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 font-sans">
+                  <pre className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 font-sans">
                     {report}
                   </pre>
                 </div>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-center">
-                  <FileText className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
-                  <p className="text-gray-500">
+                  <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
+                  <p className="text-slate-500">
                     El reporte generado aparecerá aquí
                   </p>
-                  <p className="text-sm text-gray-400 mt-1">
+                  <p className="text-sm text-slate-400 mt-1">
                     Configura las opciones y haz click en generar
                   </p>
                 </div>
@@ -308,13 +312,15 @@ export default function AIReportGenerator({ clientId, clientName }: AIReportGene
               <div className="flex gap-3 mt-4">
                 <button
                   onClick={generateReport}
-                  className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                 >
                   <RefreshCw className="w-4 h-4" />
                   Regenerar
                 </button>
                 <button
-                  className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                  disabled={true}
+                  title="Proximamente"
+                  className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundColor: palette.primary }}
                 >
                   <Mail className="w-4 h-4" />

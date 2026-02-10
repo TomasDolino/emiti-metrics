@@ -428,6 +428,23 @@ class ApiClient {
     const response = await fetch(`${this.baseUrl.replace('/api', '')}/health`)
     return response.json()
   }
+
+  // ==================== Meta Sync ====================
+
+  async syncClientMeta(clientId: string, days: number = 7): Promise<{
+    success: boolean
+    client_id: string
+    client_name: string
+    ads_synced: number
+    metrics_added: number
+    metrics_updated: number
+    total_metrics: number
+    message?: string
+  }> {
+    return this.request(`/meta/sync/${clientId}?days=${days}`, {
+      method: 'POST',
+    })
+  }
 }
 
 // Export singleton instance

@@ -106,9 +106,9 @@ export default function Metrics() {
         <p className="text-red-500">{error}</p>
         <button
           onClick={fetchData}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 min-h-[40px]"
         >
-          <RefreshCw size={16} />
+          <RefreshCw size={16} aria-hidden="true" />
           Reintentar
         </button>
       </div>
@@ -120,25 +120,25 @@ export default function Metrics() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white dark:text-white">Métricas Detalladas</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Análisis profundo de rendimiento por período</p>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Metricas Detalladas</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Analisis profundo de rendimiento por periodo</p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Chart Type */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 dark:bg-gray-800 rounded-lg p-1">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
             {(['line', 'area', 'bar'] as const).map((type) => (
               <button
                 key={type}
                 onClick={() => setChartType(type)}
                 className={cn(
-                  'px-3 py-1 text-xs font-medium rounded-md transition-colors',
+                  'px-3 py-1.5 text-xs font-medium rounded-md transition-colors min-h-[36px]',
                   chartType === type
-                    ? 'bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:text-white shadow-sm'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
                     : 'text-slate-500 dark:text-slate-400'
                 )}
               >
-                {type === 'line' ? 'Líneas' : type === 'area' ? 'Área' : 'Barras'}
+                {type === 'line' ? 'Lineas' : type === 'area' ? 'Area' : 'Barras'}
               </button>
             ))}
           </div>
@@ -146,10 +146,10 @@ export default function Metrics() {
           {/* Toggle amounts */}
           <button
             onClick={() => setShowAmounts(!showAmounts)}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-gray-800 text-slate-500 dark:text-slate-400"
-            title={showAmounts ? 'Ocultar montos' : 'Mostrar montos'}
+            className="p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 min-w-[40px] min-h-[40px] flex items-center justify-center"
+            aria-label={showAmounts ? 'Ocultar montos' : 'Mostrar montos'}
           >
-            {showAmounts ? <Eye size={18} /> : <EyeOff size={18} />}
+            {showAmounts ? <Eye size={18} aria-hidden="true" /> : <EyeOff size={18} aria-hidden="true" />}
           </button>
         </div>
       </div>
@@ -169,24 +169,27 @@ export default function Metrics() {
               key={key}
               onClick={() => toggleMetric(key)}
               className={cn(
-                'p-3 rounded-xl transition-all text-left border-l-4',
+                'p-3 rounded-xl transition-all text-left border-l-4 min-h-[72px]',
                 isSelected
-                  ? 'bg-white dark:bg-gray-800 ring-2 ring-offset-1 shadow-sm'
-                  : 'bg-slate-50 dark:bg-slate-800 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-800'
+                  ? 'bg-white dark:bg-slate-800 ring-2 ring-offset-1 shadow-sm'
+                  : 'bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800'
               )}
               style={{
                 borderLeftColor: config.color,
                 ...(isSelected ? { ringColor: config.color } : {})
               }}
+              aria-pressed={isSelected}
+              aria-label={`${isSelected ? 'Deseleccionar' : 'Seleccionar'} metrica ${config.label}`}
             >
               <div className="flex items-center gap-2 mb-1">
                 <div
                   className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: config.color }}
+                  aria-hidden="true"
                 />
                 <span className="text-xs text-slate-500 dark:text-slate-400">{config.label}</span>
               </div>
-              <p className="text-lg font-semibold text-slate-900 dark:text-white dark:text-white">
+              <p className="text-lg font-semibold text-slate-900 dark:text-white">
                 {config.format(value)}
               </p>
             </button>
@@ -195,8 +198,8 @@ export default function Metrics() {
       </div>
 
       {/* Main Chart */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-        <h3 className="font-medium text-slate-900 dark:text-white dark:text-white mb-4">Evolución Temporal</h3>
+      <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm">
+        <h3 className="font-medium text-slate-900 dark:text-white mb-4">Evolucion Temporal</h3>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             {chartType === 'line' ? (
@@ -293,14 +296,14 @@ export default function Metrics() {
       </div>
 
       {/* Data Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
         <div className="p-3 border-b border-slate-100 dark:border-slate-700">
-          <h3 className="font-medium text-slate-900 dark:text-white dark:text-white">Datos Diarios</h3>
+          <h3 className="font-medium text-slate-900 dark:text-white">Datos Diarios</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800 dark:bg-gray-700/50">
+              <tr className="bg-slate-50 dark:bg-slate-700/50">
                 <th className="text-left py-2 px-3 font-medium text-slate-500 dark:text-slate-400 text-xs">Fecha</th>
                 <th className="text-right py-2 px-3 font-medium text-slate-500 dark:text-slate-400 text-xs">Gasto</th>
                 <th className="text-right py-2 px-3 font-medium text-slate-500 dark:text-slate-400 text-xs">Resultados</th>
@@ -311,19 +314,19 @@ export default function Metrics() {
             </thead>
             <tbody>
               {dailyData.slice(-14).reverse().map((day, i) => (
-                <tr key={i} className="border-b border-slate-50 dark:border-slate-700/50 hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-gray-700/30">
-                  <td className="py-2 px-3 text-slate-900 dark:text-white dark:text-white text-xs">
+                <tr key={i} className="border-b border-slate-50 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                  <td className="py-2 px-3 text-slate-900 dark:text-white text-xs">
                     {new Date(day.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })}
                   </td>
-                  <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400 dark:text-slate-400 text-xs">
+                  <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400 text-xs">
                     {showAmounts ? formatMoney(day.spend) : '•••'}
                   </td>
-                  <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400 dark:text-slate-400 text-xs">{formatNumber(day.results)}</td>
-                  <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400 dark:text-slate-400 text-xs">
+                  <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400 text-xs">{formatNumber(day.results)}</td>
+                  <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400 text-xs">
                     {showAmounts ? formatMoney(day.cpr) : '•••'}
                   </td>
-                  <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400 dark:text-slate-400 text-xs">{formatPercent(day.ctr)}</td>
-                  <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400 dark:text-slate-400 text-xs">{formatNumber(day.impressions)}</td>
+                  <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400 text-xs">{formatPercent(day.ctr)}</td>
+                  <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400 text-xs">{formatNumber(day.impressions)}</td>
                 </tr>
               ))}
             </tbody>

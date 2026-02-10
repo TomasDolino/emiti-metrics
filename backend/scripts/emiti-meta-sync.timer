@@ -1,0 +1,13 @@
+[Unit]
+Description=Emiti Metrics - Meta Ads Sync Timer (3x daily)
+
+[Timer]
+# Run at 8:00, 14:00, and 20:00 (Argentina time = UTC-3)
+# So we schedule for 11:00, 17:00, and 23:00 UTC
+OnCalendar=*-*-* 11:00:00
+OnCalendar=*-*-* 17:00:00
+OnCalendar=*-*-* 23:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

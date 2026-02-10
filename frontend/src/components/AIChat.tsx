@@ -127,7 +127,7 @@ export default function AIChat({ clientName, selectedClientId, isFloating = true
     if (isOpen) {
       fetchSuggestions()
     }
-  }, [location.pathname])
+  }, [location.pathname, isOpen])
 
   // Storage functions
   const loadStoredData = () => {
@@ -179,8 +179,8 @@ export default function AIChat({ clientName, selectedClientId, isFloating = true
       }
 
       setAlerts(newAlerts)
-    } catch (error) {
-      console.error('Error fetching alerts:', error)
+    } catch {
+      // Silent fail - alerts are non-critical
     }
   }
 
@@ -188,7 +188,8 @@ export default function AIChat({ clientName, selectedClientId, isFloating = true
   const fetchSuggestions = async () => {
     try {
       const page = getPageFromPath(location.pathname)
-      const response = await fetch(`${import.meta.env.PROD ? 'https://metrics.emiti.cloud' : 'http://localhost:8000'}/api/ai/suggestions/${page}`)
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+      const response = await fetch(`${apiBase}/ai/suggestions/${page}`)
       if (response.ok) {
         const data = await response.json()
         setSuggestions(data.suggestions || [])
@@ -228,8 +229,8 @@ export default function AIChat({ clientName, selectedClientId, isFloating = true
       link.download = `chart-${new Date().toISOString().split('T')[0]}.png`
       link.href = canvas.toDataURL('image/png')
       link.click()
-    } catch (err) {
-      console.error('Export error:', err)
+    } catch {
+      // Silent fail - export is non-critical
     }
   }
 
@@ -267,8 +268,7 @@ export default function AIChat({ clientName, selectedClientId, isFloating = true
         })),
         patterns: dashboard.patterns?.slice(0, 3) || []
       }
-    } catch (error) {
-      console.error('Error building context:', error)
+    } catch {
       return {}
     }
   }
@@ -277,12 +277,13 @@ export default function AIChat({ clientName, selectedClientId, isFloating = true
   const callClaudeAI = async (query: string): Promise<string> => {
     try {
       const dataContext = await buildDataContext()
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
-      const response = await fetch(`${import.meta.env.PROD ? 'https://metrics.emiti.cloud' : 'http://localhost:8000'}/api/ai/chat/sync`, {
+      const response = await fetch(`${apiBase}/ai/chat/sync`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+          'Authorization': `Bearer ${localStorage.getItem('metrics_token') || ''}`
         },
         body: JSON.stringify({
           message: query,
@@ -302,7 +303,6 @@ export default function AIChat({ clientName, selectedClientId, isFloating = true
       const data = await response.json()
       return data.response || 'No pude generar una respuesta.'
     } catch (error) {
-      console.error('Claude API error:', error)
       throw error
     }
   }
@@ -456,8 +456,7 @@ export default function AIChat({ clientName, selectedClientId, isFloating = true
         confidence: 'medium'
       }
 
-    } catch (error) {
-      console.error('Query error:', error)
+    } catch {
       return {
         response: 'Hubo un error al procesar la consulta. Por favor, intenta de nuevo.',
         chartType: null,
@@ -514,6 +513,7 @@ export default function AIChat({ clientName, selectedClientId, isFloating = true
   }
 
   const clearChat = () => {
+    if (messages.length > 0 && !window.confirm('¿Limpiar todo el historial del chat?')) return
     setMessages([])
   }
 
@@ -685,16 +685,16 @@ export default function AIChat({ clientName, selectedClientId, isFloating = true
                   <Zap size={14} className={smartMode ? 'text-yellow-300' : ''} />
                   {smartMode ? 'IA' : 'IA'}
                 </button>
-                <button onClick={() => setShowHistory(!showHistory)} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                <button onClick={() => setShowHistory(!showHistory)} className="p-2 hover:bg-white/20 rounded-lg transition-colors" aria-label="Ver historial">
                   <Clock className="w-4 h-4 text-white" />
                 </button>
-                <button onClick={() => setIsExpanded(!isExpanded)} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                <button onClick={() => setIsExpanded(!isExpanded)} className="p-2 hover:bg-white/20 rounded-lg transition-colors" aria-label={isExpanded ? 'Contraer' : 'Expandir'}>
                   {isExpanded ? <Minimize2 className="w-4 h-4 text-white" /> : <Maximize2 className="w-4 h-4 text-white" />}
                 </button>
-                <button onClick={clearChat} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                <button onClick={clearChat} className="p-2 hover:bg-white/20 rounded-lg transition-colors" aria-label="Limpiar chat">
                   <Trash2 className="w-4 h-4 text-white" />
                 </button>
-                <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/20 rounded-lg transition-colors" aria-label="Cerrar">
                   <X className="w-4 h-4 text-white" />
                 </button>
               </div>

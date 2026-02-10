@@ -73,8 +73,8 @@ export default function MetaConnect() {
       const response = await fetch(`${API_BASE}/meta/status`)
       const data = await response.json()
       setMetaStatus(data)
-    } catch (err) {
-      console.error('Error fetching Meta status:', err)
+    } catch {
+      setError('Error fetching Meta status')
     }
   }
 
@@ -87,8 +87,8 @@ export default function MetaConnect() {
       })
       const data = await response.json()
       setTokenStatus(data)
-    } catch (err) {
-      console.error('Error fetching token status:', err)
+    } catch {
+      setError('Error fetching token status')
     }
   }
 
@@ -107,8 +107,8 @@ export default function MetaConnect() {
 
       const data = await response.json()
       setAds(data.ads || [])
-    } catch (err) {
-      console.error('Error fetching ads:', err)
+    } catch {
+      setError('Error fetching ads')
     } finally {
       setIsLoadingAds(false)
     }
@@ -206,8 +206,9 @@ export default function MetaConnect() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      <div className="flex items-center justify-center h-64" role="status" aria-label="Cargando">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" aria-hidden="true" />
+        <span className="sr-only">Cargando...</span>
       </div>
     )
   }
@@ -219,8 +220,8 @@ export default function MetaConnect() {
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Meta Integration</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Connect your Meta Ads account</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 rounded-lg border p-8 text-center">
-          <Facebook className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-8 text-center">
+          <Facebook className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" aria-hidden="true" />
           <p className="text-slate-500 dark:text-slate-400">Select a client to connect their Meta account</p>
         </div>
       </div>
@@ -239,24 +240,29 @@ export default function MetaConnect() {
         </div>
         <button
           onClick={() => { fetchTokenStatus(); fetchAds(); }}
-          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+          className="p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
+          aria-label="Actualizar estado de conexión"
         >
-          <RefreshCw className="w-5 h-5 text-slate-500" />
+          <RefreshCw className="w-5 h-5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5" />
+        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg flex items-center gap-2" role="alert">
+          <AlertTriangle className="w-5 h-5" aria-hidden="true" />
           {error}
-          <button onClick={() => setError(null)} className="ml-auto">
-            <XCircle className="w-4 h-4" />
+          <button
+            onClick={() => setError(null)}
+            className="ml-auto p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
+            aria-label="Cerrar mensaje de error"
+          >
+            <XCircle className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       )}
 
       {/* Connection Status */}
-      <div className="bg-white dark:bg-slate-900 rounded-lg border p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div
@@ -272,6 +278,7 @@ export default function MetaConnect() {
                   'w-6 h-6',
                   tokenStatus?.connected ? 'text-blue-600' : 'text-slate-400'
                 )}
+                aria-hidden="true"
               />
             </div>
             <div>
@@ -280,7 +287,7 @@ export default function MetaConnect() {
               </h3>
               {tokenStatus?.connected ? (
                 <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <CheckCircle className="w-4 h-4 text-green-500" aria-hidden="true" />
                   <span className="text-green-600 dark:text-green-400">Connected</span>
                   {tokenStatus.ad_account_id && (
                     <span className="text-slate-400">
@@ -289,7 +296,7 @@ export default function MetaConnect() {
                   )}
                   {tokenStatus.needs_renewal && (
                     <span className="text-amber-500 flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3" />
+                      <AlertTriangle className="w-3 h-3" aria-hidden="true" />
                       Token expiring soon
                     </span>
                   )}
@@ -306,19 +313,19 @@ export default function MetaConnect() {
             {tokenStatus?.connected ? (
               <button
                 onClick={handleDisconnect}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30"
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               >
-                <Unlink className="w-4 h-4" />
+                <Unlink className="w-4 h-4" aria-hidden="true" />
                 Disconnect
               </button>
             ) : (
               <button
                 onClick={handleConnect}
                 disabled={!metaStatus?.configured}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
                 style={{ backgroundColor: palette.primary }}
               >
-                <Link2 className="w-4 h-4" />
+                <Link2 className="w-4 h-4" aria-hidden="true" />
                 Connect Meta Account
               </button>
             )}
@@ -339,7 +346,7 @@ export default function MetaConnect() {
 
       {/* Ads with Images */}
       {tokenStatus?.connected && (
-        <div className="bg-white dark:bg-slate-900 rounded-lg border">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
           <div className="p-4 border-b border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-slate-900 dark:text-white">
@@ -348,12 +355,13 @@ export default function MetaConnect() {
               <button
                 onClick={fetchAds}
                 disabled={isLoadingAds}
-                className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                className="p-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 disabled:opacity-50"
+                aria-label="Actualizar lista de anuncios"
               >
                 {isLoadingAds ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                 ) : (
-                  <RefreshCw className="w-4 h-4" />
+                  <RefreshCw className="w-4 h-4" aria-hidden="true" />
                 )}
               </button>
             </div>
@@ -361,12 +369,13 @@ export default function MetaConnect() {
 
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {isLoadingAds ? (
-              <div className="p-8 text-center">
-                <Loader2 className="w-6 h-6 animate-spin text-slate-400 mx-auto" />
+              <div className="p-8 text-center" role="status" aria-label="Cargando anuncios">
+                <Loader2 className="w-6 h-6 animate-spin text-slate-400 mx-auto" aria-hidden="true" />
+                <span className="sr-only">Cargando anuncios...</span>
               </div>
             ) : ads.length === 0 ? (
               <div className="p-8 text-center">
-                <ImageIcon className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <ImageIcon className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" aria-hidden="true" />
                 <p className="text-slate-500 dark:text-slate-400">No ads found</p>
               </div>
             ) : (
@@ -385,7 +394,7 @@ export default function MetaConnect() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-6 h-6 text-slate-400" />
+                        <ImageIcon className="w-6 h-6 text-slate-400" aria-hidden="true" />
                       </div>
                     )}
                   </div>
@@ -414,12 +423,12 @@ export default function MetaConnect() {
                       <button
                         onClick={() => handlePauseAd(ad.name)}
                         disabled={actionLoading === ad.name}
-                        className="px-3 py-1.5 text-xs font-medium text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 flex items-center gap-1"
+                        className="px-3 py-2 text-xs font-medium text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50"
                       >
                         {actionLoading === ad.name ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
+                          <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
                         ) : (
-                          <Pause className="w-3 h-3" />
+                          <Pause className="w-3 h-3" aria-hidden="true" />
                         )}
                         Pause
                       </button>
@@ -428,9 +437,10 @@ export default function MetaConnect() {
                       href={`https://www.facebook.com/adsmanager/manage/ads?act=${tokenStatus.ad_account_id?.replace('act_', '')}&selected_ad_ids=${ad.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                      className="p-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
+                      aria-label={`Ver ${ad.name} en Facebook Ads Manager`}
                     >
-                      <ExternalLink className="w-4 h-4" />
+                      <ExternalLink className="w-4 h-4" aria-hidden="true" />
                     </a>
                   </div>
                 </div>
@@ -442,35 +452,35 @@ export default function MetaConnect() {
 
       {/* Quick Actions */}
       {tokenStatus?.connected && (
-        <div className="bg-white dark:bg-slate-900 rounded-lg border p-6">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
           <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Quick Actions</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <button
-              className="p-4 rounded-lg border hover:bg-slate-50 dark:hover:bg-slate-800 text-center"
+              className="p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
               onClick={() => window.open(`https://business.facebook.com/adsmanager/manage/campaigns?act=${tokenStatus.ad_account_id?.replace('act_', '')}`, '_blank')}
             >
-              <Facebook className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+              <Facebook className="w-6 h-6 mx-auto mb-2 text-blue-600" aria-hidden="true" />
               <p className="text-sm font-medium text-slate-900 dark:text-white">Ads Manager</p>
             </button>
             <button
-              className="p-4 rounded-lg border hover:bg-slate-50 dark:hover:bg-slate-800 text-center"
+              className="p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
               onClick={() => window.open('https://business.facebook.com/creativetools/text-overlay', '_blank')}
             >
-              <ImageIcon className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+              <ImageIcon className="w-6 h-6 mx-auto mb-2 text-purple-600" aria-hidden="true" />
               <p className="text-sm font-medium text-slate-900 dark:text-white">Creative Hub</p>
             </button>
             <button
-              className="p-4 rounded-lg border hover:bg-slate-50 dark:hover:bg-slate-800 text-center"
+              className="p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
               onClick={() => window.open('https://business.facebook.com/insights', '_blank')}
             >
-              <TrendingUp className="w-6 h-6 mx-auto mb-2 text-green-600" />
+              <TrendingUp className="w-6 h-6 mx-auto mb-2 text-green-600" aria-hidden="true" />
               <p className="text-sm font-medium text-slate-900 dark:text-white">Insights</p>
             </button>
             <button
-              className="p-4 rounded-lg border hover:bg-slate-50 dark:hover:bg-slate-800 text-center"
+              className="p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
               onClick={() => fetchAds()}
             >
-              <RefreshCw className="w-6 h-6 mx-auto mb-2 text-slate-600" />
+              <RefreshCw className="w-6 h-6 mx-auto mb-2 text-slate-600 dark:text-slate-400" aria-hidden="true" />
               <p className="text-sm font-medium text-slate-900 dark:text-white">Sync Ads</p>
             </button>
           </div>

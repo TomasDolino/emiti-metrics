@@ -3,11 +3,11 @@ import { minePatterns, mockClients } from '../lib/mockData'
 import { Lightbulb, TrendingUp, Clock, MessageSquare, Users, Video } from 'lucide-react'
 
 const categoryIcons: Record<string, React.ReactNode> = {
-  format: <Video className="w-5 h-5" />,
-  creative: <Lightbulb className="w-5 h-5" />,
-  timing: <Clock className="w-5 h-5" />,
-  messaging: <MessageSquare className="w-5 h-5" />,
-  audience: <Users className="w-5 h-5" />,
+  format: <Video className="w-5 h-5" aria-hidden="true" />,
+  creative: <Lightbulb className="w-5 h-5" aria-hidden="true" />,
+  timing: <Clock className="w-5 h-5" aria-hidden="true" />,
+  messaging: <MessageSquare className="w-5 h-5" aria-hidden="true" />,
+  audience: <Users className="w-5 h-5" aria-hidden="true" />,
 }
 
 const categoryColors: Record<string, string> = {
@@ -51,14 +51,14 @@ export default function Patterns() {
           </div>
           <div className="text-sm text-slate-500 dark:text-slate-400">Alta confianza</div>
         </div>
-        <div className="bg-white dark:bg-slate-900 rounded-lg border p-4">
-          <div className="text-2xl font-bold text-blue-600">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
             {[...new Set(patterns.map(p => p.category))].length}
           </div>
           <div className="text-sm text-slate-500 dark:text-slate-400">Categorías</div>
         </div>
-        <div className="bg-white dark:bg-slate-900 rounded-lg border p-4">
-          <div className="text-2xl font-bold text-purple-600">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
             {patterns.filter(p => p.category === 'format').length}
           </div>
           <div className="text-sm text-slate-500 dark:text-slate-400">Patrones de formato</div>
@@ -67,8 +67,8 @@ export default function Patterns() {
 
       {/* Patterns Grid */}
       {patterns.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 rounded-lg border p-8 text-center">
-          <Lightbulb className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-8 text-center">
+          <Lightbulb className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" aria-hidden="true" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">No hay patrones detectados</h3>
           <p className="text-slate-500 dark:text-slate-400 mt-2">
             Se necesitan más datos para detectar patrones significativos.
@@ -81,7 +81,7 @@ export default function Patterns() {
           {patterns.map((pattern, idx) => (
             <div
               key={idx}
-              className="bg-white dark:bg-slate-900 rounded-lg border p-5 hover:shadow-md transition-shadow"
+              className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${categoryColors[pattern.category] || 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}`}>
@@ -98,8 +98,8 @@ export default function Patterns() {
                 {pattern.pattern}
               </h3>
 
-              <div className="flex items-center gap-2 text-green-600 mb-3">
-                <TrendingUp className="w-4 h-4" />
+              <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-3">
+                <TrendingUp className="w-4 h-4" aria-hidden="true" />
                 <span className="font-medium">{pattern.impact}</span>
               </div>
 
@@ -113,7 +113,7 @@ export default function Patterns() {
       )}
 
       {/* Legend */}
-      <div className="bg-white dark:bg-slate-900 rounded-lg border p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
         <h3 className="font-medium text-slate-900 dark:text-white mb-3">Categorías de Patrones</h3>
         <div className="flex flex-wrap gap-4">
           {Object.entries(categoryColors).map(([cat, color]) => (

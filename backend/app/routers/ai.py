@@ -37,7 +37,13 @@ from ..services.ai_service import (
     detect_anomalies,
     analyze_anomalies_with_ai,
     generate_weekly_digest,
-    get_contextual_suggestions
+    get_contextual_suggestions,
+    get_model_usage_stats,
+    select_model,
+    select_model_smart,
+    CLAUDE_OPUS,
+    CLAUDE_SONNET,
+    CLAUDE_HAIKU
 )
 from ..services.ai_memory import (
     save_message,
@@ -74,6 +80,7 @@ class CreativeAnalysisRequest(BaseModel):
     image_base64: str
     image_type: str = "image/jpeg"
     context: Optional[str] = ""
+    analysis_type: str = "full"  # 'visual', 'copy', or 'full'
 
 
 class CompareCreativesRequest(BaseModel):
@@ -106,6 +113,81 @@ async def get_ai_status(current_user: UserDB = Depends(get_current_user)):
     Check AI service status and configuration.
     """
     return await check_ai_status()
+
+
+@router.get("/model-routing/stats")
+async def get_routing_stats(current_user: UserDB = Depends(get_current_user)):
+    """
+    Get smart model routing usage statistics.
+    Shows how often each model (Opus vs Sonnet) is being used.
+    """
+    return get_model_usage_stats()
+
+
+@router.get("/model-routing/preview")
+async def preview_model_selection(task_type: str, query: str = "", use_haiku: bool = False):
+    """
+    Preview which model would be selected for a given task/query.
+    Useful for debugging the routing logic.
+
+    Args:
+        task_type: Type of task (chat, executive_report, etc.)
+        query: Sample query text
+        use_haiku: If true, uses Haiku to classify ambiguous queries (adds ~200ms)
+    """
+    if use_haiku and query:
+        model, max_tokens = await select_model_smart(task_type, query, use_haiku=True)
+        routing_method = "smart (with Haiku classification)"
+    else:
+        model, max_tokens = select_model(task_type, query)
+        routing_method = "rule-based"
+
+    # Determine the reason
+    opus_tasks = ["executive_report", "weekly_digest", "strategic_recommendations", "anomaly_explanation", "compare_creatives"]
+    if task_type in opus_tasks:
+        reason = "OPUS_TASKS list (always Opus)"
+    elif "opus" in model:
+        reason = "Query complexity analysis → Complex"
+    else:
+        reason = "Default fast routing → Sonnet"
+
+    return {
+        "task_type": task_type,
+        "query_preview": query[:100] + "..." if len(query) > 100 else query,
+        "selected_model": model,
+        "model_name": "Opus 4.5" if "opus" in model else "Sonnet 4" if "sonnet" in model else "Haiku 4.5",
+        "max_tokens": max_tokens,
+        "is_opus": "opus" in model,
+        "routing_method": routing_method,
+        "reason": reason
+    }
+
+
+@router.post("/model-routing/test")
+async def test_smart_routing(queries: List[str]):
+    """
+    Test smart routing with multiple queries to see classification results.
+    Returns which model each query would use.
+    """
+    results = []
+    for query in queries[:10]:  # Max 10 queries
+        model, _ = await select_model_smart("chat", query, use_haiku=True)
+        results.append({
+            "query": query[:80] + "..." if len(query) > 80 else query,
+            "model": "Opus" if "opus" in model else "Sonnet",
+            "is_opus": "opus" in model
+        })
+
+    opus_count = sum(1 for r in results if r["is_opus"])
+    return {
+        "results": results,
+        "summary": {
+            "total": len(results),
+            "opus": opus_count,
+            "sonnet": len(results) - opus_count,
+            "opus_percentage": round(opus_count / len(results) * 100, 1) if results else 0
+        }
+    }
 
 
 @router.post("/chat")
@@ -157,21 +239,67 @@ class CRMChatRequest(BaseModel):
     message: str
     data_context: Optional[Dict] = {}
     chat_history: Optional[List[ChatMessage]] = []
+    user_id: Optional[str] = "crm_default"
+    session_id: Optional[str] = None
+
+
+class CRMFeedbackRequest(BaseModel):
+    message_id: str
+    rating: int  # 1-5
+    user_id: Optional[str] = "crm_default"
+    original_query: Optional[str] = None
+    response: Optional[str] = None
 
 
 @router.post("/chat/crm")
 async def chat_crm_endpoint(request: CRMChatRequest):
     """
-    Chat for CRM Grupo Albisu.
+    Chat for CRM Grupo Albisu with persistent memory.
     No auth required - uses separate API key validation.
+
+    Features:
+    - Persistent conversation history per user
+    - Knowledge base search for relevant context
+    - Learning from feedback over time
     """
-    response = await chat_crm(
+    response, conversation_id = await chat_crm(
         user_message=request.message,
         data_context=request.data_context or {},
-        chat_history=[m.model_dump() for m in request.chat_history] if request.chat_history else []
+        chat_history=[m.model_dump() for m in request.chat_history] if request.chat_history else [],
+        user_id=request.user_id or "crm_default"
     )
 
-    return {"response": response}
+    return {
+        "response": response,
+        "conversation_id": conversation_id,
+        "memory_enabled": True
+    }
+
+
+@router.post("/chat/crm/feedback")
+async def crm_chat_feedback(request: CRMFeedbackRequest):
+    """
+    Submit feedback on CRM AI response.
+    Used to improve future responses.
+    """
+    # Save feedback
+    save_feedback(
+        conversation_id=int(request.message_id) if request.message_id.isdigit() else 0,
+        rating=request.rating,
+        message_id=request.message_id,
+        comment=f"Query: {request.original_query}" if request.original_query else None
+    )
+
+    # If rating is 4-5 (good), save as training example
+    if request.rating >= 4 and request.original_query and request.response:
+        add_training_example(
+            prompt=request.original_query,
+            completion=request.response,
+            category="crm_chat",
+            quality_score=request.rating / 5.0
+        )
+
+    return {"success": True, "message": "Feedback recorded"}
 
 
 @router.post("/analyze-creative")
@@ -179,11 +307,13 @@ async def chat_crm_endpoint(request: CRMChatRequest):
 async def analyze_creative_endpoint(request: Request, creative_request: CreativeAnalysisRequest, current_user: UserDB = Depends(get_current_user)):
     """
     Analyze an ad creative image using Claude Vision.
+    Supports: 'visual' (design only), 'copy' (text/SEO), or 'full' (both).
     """
     result = await analyze_creative(
         image_data=creative_request.image_base64,
         image_type=creative_request.image_type,
-        additional_context=creative_request.context
+        additional_context=creative_request.context,
+        analysis_type=creative_request.analysis_type
     )
 
     if "error" in result:
