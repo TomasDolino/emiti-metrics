@@ -3,6 +3,7 @@ import { useSelectedClient } from '../components/Layout'
 import { useTheme } from '../lib/theme'
 import { simulateBudgetChange, simulatePauseAd, getAdsAnalysis, mockClients } from '../lib/mockData'
 import { Calculator, TrendingUp, Pause, DollarSign, Target, AlertCircle } from 'lucide-react'
+import { safeNumber } from '../lib/utils'
 
 export default function Simulator() {
   const { selectedClientId } = useSelectedClient()
@@ -184,13 +185,13 @@ export default function Simulator() {
                     <span className="font-medium text-slate-900 dark:text-white">CPR</span>
                   </div>
                   <div className="text-center">
-                    ${budgetResult.current.cpr.toFixed(0)}
+                    ${safeNumber(budgetResult.current.cpr).toFixed(0)}
                   </div>
                   <div className="text-center font-medium">
-                    ${budgetResult.projected.cpr.toFixed(0)}
-                    <span className={`ml-2 text-sm ${budgetResult.delta.cprChange <= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {budgetResult.delta.cprChange >= 0 ? '+' : ''}
-                      {budgetResult.delta.cprChange.toFixed(1)}%
+                    ${safeNumber(budgetResult.projected.cpr).toFixed(0)}
+                    <span className={`ml-2 text-sm ${safeNumber(budgetResult.delta.cprChange) <= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      {safeNumber(budgetResult.delta.cprChange) >= 0 ? '+' : ''}
+                      {safeNumber(budgetResult.delta.cprChange).toFixed(1)}%
                     </span>
                   </div>
                 </div>
@@ -226,7 +227,7 @@ export default function Simulator() {
                   <option value="">-- Elegir anuncio --</option>
                   {ads.map(ad => (
                     <option key={ad.adName} value={ad.adName}>
-                      {ad.adName} (CPR: ${ad.avgCostPerResult.toFixed(0)})
+                      {ad.adName} (CPR: ${safeNumber(ad.avgCostPerResult).toFixed(0)})
                     </option>
                   ))}
                 </select>
@@ -258,7 +259,7 @@ export default function Simulator() {
                     </div>
                     <div>
                       <div className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                        {pauseResult.adContribution.percentOfTotal.toFixed(1)}%
+                        {safeNumber(pauseResult.adContribution.percentOfTotal).toFixed(1)}%
                       </div>
                       <div className="text-xs text-blue-600 dark:text-blue-400">Del total</div>
                     </div>
@@ -271,19 +272,19 @@ export default function Simulator() {
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
                       <div className="text-lg font-bold text-green-700 dark:text-green-300">
-                        {pauseResult.withRedistribution.results.toFixed(0)}
+                        {safeNumber(pauseResult.withRedistribution.results).toFixed(0)}
                       </div>
                       <div className="text-xs text-green-600 dark:text-green-400">Resultados</div>
                     </div>
                     <div>
                       <div className="text-lg font-bold text-green-700 dark:text-green-300">
-                        ${pauseResult.withRedistribution.cpr.toFixed(0)}
+                        ${safeNumber(pauseResult.withRedistribution.cpr).toFixed(0)}
                       </div>
                       <div className="text-xs text-green-600 dark:text-green-400">CPR</div>
                     </div>
                     <div>
                       <div className="text-lg font-bold text-green-700 dark:text-green-300">
-                        +{pauseResult.withRedistribution.extraResults.toFixed(0)}
+                        +{safeNumber(pauseResult.withRedistribution.extraResults).toFixed(0)}
                       </div>
                       <div className="text-xs text-green-600 dark:text-green-400">Extra</div>
                     </div>

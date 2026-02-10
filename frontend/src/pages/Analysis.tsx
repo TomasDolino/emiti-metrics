@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { useTheme } from '../lib/theme'
 import { api, type AdAnalysis } from '../lib/api'
-import { formatMoney, formatPercent, formatNumber, getClassificationColor, cn } from '../lib/utils'
+import { formatMoney, formatPercent, formatNumber, getClassificationColor, cn, safeNumber } from '../lib/utils'
 import type { AdClassification } from '../lib/utils'
 import { useSelectedClient } from '../components/Layout'
 
@@ -33,7 +33,7 @@ function AnalysisRow({ analysis, isExpanded, onToggle, showAmounts }: AnalysisRo
   const borderColor = getClassificationColor(analysis.classification as AdClassification)
 
   // Calculate fatigue score based on frequency and days running
-  const fatigueScore = Math.min(100, Math.round((analysis.frequency / 4) * 50 + (analysis.days_running / 30) * 50))
+  const fatigueScore = Math.min(100, Math.round((safeNumber(analysis.frequency) / 4) * 50 + (safeNumber(analysis.days_running) / 30) * 50))
 
   // Get action icon based on action type
   const getActionIcon = () => {
@@ -106,7 +106,7 @@ function AnalysisRow({ analysis, isExpanded, onToggle, showAmounts }: AnalysisRo
             'text-sm font-medium',
             analysis.frequency > 3.5 ? 'text-red-500' : analysis.frequency > 2.5 ? 'text-amber-500' : 'text-slate-900 dark:text-white'
           )}>
-            {analysis.frequency.toFixed(1)}
+            {safeNumber(analysis.frequency).toFixed(1)}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400">Freq</p>
         </div>

@@ -3,7 +3,7 @@ import { GitCompare, TrendingUp, TrendingDown, Trophy, AlertTriangle, Lightbulb,
 import { useTheme } from '../lib/theme'
 import { useSelectedClient } from '../components/Layout'
 import { mockClients, compareClients, type ClientSummary } from '../lib/mockData'
-import { formatMoney, formatPercent, formatNumber, cn } from '../lib/utils'
+import { formatMoney, formatPercent, formatNumber, cn, safeNumber } from '../lib/utils'
 
 // Date period options
 type DatePeriod = '7d' | '14d' | '30d' | 'month' | 'last_month' | 'custom'
@@ -189,7 +189,7 @@ function ClientCompareCard({ summary }: { summary: ClientSummary }) {
               : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
           )}>
             {summary.trend === 'up' ? <TrendingUp size={12} aria-hidden="true" /> : <TrendingDown size={12} aria-hidden="true" />}
-            {Math.abs(summary.trendPercent).toFixed(0)}%
+            {Math.abs(safeNumber(summary.trendPercent)).toFixed(0)}%
           </div>
         )}
       </div>
@@ -428,7 +428,7 @@ export default function Compare() {
                     </h4>
                   </div>
                   <p className="text-sm text-amber-700 dark:text-amber-300 mb-3">
-                    CPR promedio de tus clientes de {industry}: <strong className="text-lg">${avgCpr.toFixed(0)}</strong>
+                    CPR promedio de tus clientes de {industry}: <strong className="text-lg">${safeNumber(avgCpr).toFixed(0)}</strong>
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {industryClients.map(c => (
@@ -441,7 +441,7 @@ export default function Compare() {
                             : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
                         )}
                       >
-                        {c.client.name}: ${c.avgCpr.toFixed(0)}
+                        {c.client.name}: ${safeNumber(c.avgCpr).toFixed(0)}
                         {c.avgCpr < avgCpr ? ' (mejor)' : ' (mejorable)'}
                       </span>
                     ))}

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Image, Eye, EyeOff, ChevronRight, ChevronDown, TrendingUp, TrendingDown, Target, DollarSign, Loader2, RefreshCw, Lightbulb, Zap, Clock, Pause, AlertTriangle } from 'lucide-react'
 import { useTheme } from '../lib/theme'
 import { api, type AdAnalysis } from '../lib/api'
-import { formatMoney, formatNumber, formatPercent, getClassificationColor, cn } from '../lib/utils'
+import { formatMoney, formatNumber, formatPercent, getClassificationColor, cn, safeNumber } from '../lib/utils'
 import type { AdClassification } from '../lib/utils'
 import { useSelectedClient } from '../components/Layout'
 
@@ -19,7 +19,7 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
   const borderColor = getClassificationColor(ad.classification as AdClassification)
 
   // Calculate fatigue score based on frequency and days running
-  const fatigueScore = Math.min(100, Math.round((ad.frequency / 4) * 50 + (ad.days_running / 30) * 50))
+  const fatigueScore = Math.min(100, Math.round((safeNumber(ad.frequency) / 4) * 50 + (safeNumber(ad.days_running) / 30) * 50))
 
   // Get action icon based on action type
   const getActionIcon = () => {
@@ -97,7 +97,7 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
             'text-sm font-medium',
             ad.frequency > 3.5 ? 'text-red-500' : ad.frequency > 2.5 ? 'text-amber-500' : 'text-slate-900 dark:text-white'
           )}>
-            {ad.frequency.toFixed(1)}
+            {safeNumber(ad.frequency).toFixed(1)}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400">freq</p>
         </div>
@@ -162,7 +162,7 @@ function AdRow({ ad, showAmounts }: AdRowProps) {
               <TrendingDown size={16} className="text-slate-400" aria-hidden="true" />
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Frecuencia</p>
-                <p className="text-sm font-medium text-slate-900 dark:text-white">{ad.frequency.toFixed(1)}</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{safeNumber(ad.frequency).toFixed(1)}</p>
               </div>
             </div>
           </div>
