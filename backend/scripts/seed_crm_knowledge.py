@@ -2,159 +2,83 @@
 Seed CRM Knowledge Base - Pre-load business knowledge for AI
 Run this once to populate the knowledge base with Grupo Albisu specific info.
 
-Usage: cd /var/www/metrics-backend && python scripts/seed_crm_knowledge.py
+Usage: cd /var/www/metrics-backend && source venv/bin/activate && python scripts/seed_crm_knowledge.py
 """
 import sys
 import os
 
-# Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.services.ai_memory import add_knowledge, init_ai_memory_db
 
-# Initialize database
 init_ai_memory_db()
 
-# ==================== BUSINESS KNOWLEDGE ====================
-
 KNOWLEDGE_ENTRIES = [
-    # Marcas
     {
-        "category": "marcas",
-        "title": "Sillas Paris",
-        "content": "Marca especializada en sillas de alta calidad. Productos principales: sillas de comedor, banquetas, sillas de escritorio. Rango de precios: $50,000 - $200,000 ARS. Público objetivo: hogares de clase media-alta que buscan diseño y durabilidad.",
-        "tags": ["marca", "sillas", "productos"]
+        "category": "negocio",
+        "title": "Estructura del Grupo Albisu",
+        "content": "Grupo Albisu es una familia con 13 marcas de muebles y decoración. Dueños: Justo (Amueblarte PH), Valentín (VA Home Design, Home Stock, House Deco, Mora Interiores, Wood Store, Akila Design), Juan Cruz (Caoba Muebles), Federica (De la Carpintería, FA Home Design), Teo Benoit (Todo Muebles), Agustín Mansilla (Don Merced). Casa A es del grupo. Admins: Marcos y Tomas.",
+        "tags": ["marcas", "familia", "estructura"],
     },
     {
-        "category": "marcas",
-        "title": "Mesas y Sillas",
-        "content": "Marca de comedores completos. Productos: mesas de comedor (4, 6, 8 personas), juegos de comedor, mesas extensibles. Rango de precios: $150,000 - $800,000 ARS. El ticket promedio más alto del grupo.",
-        "tags": ["marca", "mesas", "comedores"]
+        "category": "negocio",
+        "title": "Cálculo de comisiones",
+        "content": "La comisión es 3% del subtotal (sin recargos de tarjeta). Se calcula como subtotalProductos * 0.03. Se muestra en el ranking de vendedores y estadísticas individuales. La comisión se liquida cuando el pedido está cobrado.",
+        "tags": ["comision", "vendedores", "calculo"],
     },
     {
-        "category": "marcas",
-        "title": "Mora Interiores",
-        "content": "Marca premium de decoración y muebles de diseño. Productos: sillones, sofás, muebles de living, decoración. Rango de precios: $200,000 - $1,500,000 ARS. Público: arquitectos, decoradores, hogares premium.",
-        "tags": ["marca", "decoracion", "premium"]
+        "category": "negocio",
+        "title": "Recargos de tarjeta de crédito",
+        "content": "Recargos por tarjeta: 1 cuota=21%, 3 cuotas=23%, 6 cuotas=33%. Se aplica sobre el subtotal. La comisión del vendedor NO incluye el recargo. El total con recargo = subtotal + (subtotal * porcentaje_recargo).",
+        "tags": ["tarjeta", "recargo", "pagos"],
     },
-
-    # Estados de pedido
     {
         "category": "operaciones",
-        "title": "Estados de pedido",
-        "content": """Estados del pipeline de pedidos:
-- vendido: Pedido nuevo, requiere gestión inicial
-- confirmado: Cliente confirmó, se debe pasar a producción
-- en_produccion: En fabricación con proveedores
-- laqueado: En proceso de laqueado/pintura
-- tapiceria: En proceso de tapizado
-- listo: Terminado, listo para coordinar entrega
-- entregado: Entregado al cliente
-- con_demora: Tiene algún problema o retraso
-Un pedido normal debería tardar 15-30 días desde vendido hasta entregado.""",
-        "tags": ["estados", "pipeline", "operaciones"]
+        "title": "Estados de pedido y flujo",
+        "content": "Flujo: vendido (nuevo) → en_produccion (fabricándose) → laqueado (pintura) → tapiceria (tapizado) → listo (para entregar) → entregado. El estado 'con_demora' es especial y se aplica cuando hay retrasos. No todos los pedidos pasan por laqueado/tapiceria.",
+        "tags": ["estados", "produccion", "flujo"],
     },
-
-    # Métricas clave
+    {
+        "category": "operaciones",
+        "title": "Umbrales de alerta",
+        "content": "Alertas: 1) 'vendido' hace +7 días = Sin gestionar. 2) 'en_produccion' hace +14 días = Producción demorada. 3) 'listo' hace +5 días = Listo sin entregar (plata parada). 4) 'entregado' con saldo>0 hace +30 días = Saldo pendiente. Priorizar siempre por monto económico.",
+        "tags": ["alertas", "umbrales", "tiempos"],
+    },
     {
         "category": "metricas",
-        "title": "KPIs importantes",
-        "content": """Métricas clave del negocio:
-- Ticket promedio: Objetivo >$150,000 ARS
-- Tasa de conversión: De consulta a venta, objetivo >15%
-- Tiempo de entrega: Objetivo <25 días
-- Eficiencia de cobranza: Seña inicial >40% del total
-- Pedidos con demora: Objetivo <10% del total activo
-- Comisión vendedores: 3-5% según marca y volumen""",
-        "tags": ["metricas", "kpis", "objetivos"]
+        "title": "Definiciones de métricas",
+        "content": "Total Ventas = sum(total_amount). Total Cobrado = sum(seña). Saldo Pendiente = sum(saldo). Ticket Promedio = Ventas/Pedidos. Eficiencia Cobranza = (Cobrado/Ventas)*100. Pipeline = pedidos activos por estado (excluye entregados). El pipeline NO filtra por fecha.",
+        "tags": ["metricas", "definiciones", "dashboard"],
     },
-
-    # Proveedores
     {
-        "category": "operaciones",
-        "title": "Proveedores de producción",
-        "content": """Principales proveedores:
-- Carpintería: Fabricación de estructuras de madera (10-15 días)
-- Laqueado: Pintura y terminación (5-7 días)
-- Tapicería: Tapizado de sillas y sillones (5-10 días)
-- Herrería: Bases metálicas para mesas (7-10 días)
-Cada pedido puede pasar por 1-3 proveedores según el producto.""",
-        "tags": ["proveedores", "produccion", "tiempos"]
+        "category": "metricas",
+        "title": "Pipeline vs métricas de período",
+        "content": "IMPORTANTE: El pipeline muestra TODOS los pedidos activos sin importar fecha. Un pedido 'listo' de hace 3 meses sigue en pipeline. Las métricas de ventas SÍ filtran por período (mes actual). Nunca mezclar datos de pipeline con métricas mensuales.",
+        "tags": ["pipeline", "periodo", "datos"],
     },
-
-    # Estacionalidad
     {
-        "category": "ventas",
-        "title": "Estacionalidad",
-        "content": """Patrones de ventas:
-- Marzo-Mayo: Temporada alta (mudanzas, renovación)
-- Junio-Agosto: Temporada baja (invierno)
-- Septiembre-Noviembre: Temporada media-alta
-- Diciembre: Pico por fiestas y regalos
-- Enero-Febrero: Temporada baja (vacaciones)
-Hot Sale y CyberMonday generan picos de consultas.""",
-        "tags": ["estacionalidad", "ventas", "patrones"]
+        "category": "roles",
+        "title": "Permisos por rol",
+        "content": "Admin (Marcos, Tomas): todo. Owner (Valentín, Juan Cruz, Federica, etc.): datos de sus marcas, facturación, márgenes. Seller (Abril, Romi, Fabi, Nicole, etc.): solo sus ventas y comisiones. Los sellers NO ven márgenes ni datos de otras marcas.",
+        "tags": ["roles", "permisos", "seguridad"],
     },
-
-    # Alertas
     {
-        "category": "alertas",
-        "title": "Cuándo alertar",
-        "content": """Situaciones que requieren atención:
-- Pedido >7 días en estado 'vendido' sin gestionar
-- Pedido >20 días en producción
-- Stock de producto popular <3 unidades
-- Saldo pendiente >60 días después de entrega
-- Más de 5 pedidos 'con_demora' simultáneos
-- Caída de ventas >30% vs semana anterior""",
-        "tags": ["alertas", "umbrales", "atencion"]
+        "category": "faq",
+        "title": "Orders vs Invoices",
+        "content": "El CRM tiene dos sistemas independientes: 'orders' (pedidos de venta - Dashboard/Gestión) y 'invoices' (facturas - Facturación). Son tablas separadas. Un pedido puede o no tener factura asociada. El Dashboard lee de orders, NO de invoices.",
+        "tags": ["orders", "invoices", "facturacion"],
     },
-
-    # Comisiones
     {
-        "category": "ventas",
-        "title": "Sistema de comisiones",
-        "content": """Comisiones de vendedores:
-- Sillas Paris: 3% sobre venta
-- Mesas y Sillas: 4% sobre venta
-- Mora Interiores: 5% sobre venta (premium)
-- Bonus: +1% si supera objetivo mensual
-Las comisiones se liquidan cuando el pedido está 100% cobrado.""",
-        "tags": ["comisiones", "vendedores", "incentivos"]
+        "category": "faq",
+        "title": "Products vs Catalog Products",
+        "content": "Dos sistemas de productos: 'products' (Stock - inventario físico con cantidades) y 'catalog_products' (Catálogo - productos con precios de venta y costo por proveedor). Stock para inventario, Catálogo para márgenes y catálogo de venta.",
+        "tags": ["productos", "stock", "catalogo"],
     },
-
-    # Clientes
-    {
-        "category": "clientes",
-        "title": "Tipos de clientes",
-        "content": """Segmentos de clientes:
-- Particulares: 70% de ventas, compra única o esporádica
-- Arquitectos/Decoradores: 20%, compras recurrentes, descuentos especiales
-- Empresas: 10%, proyectos grandes, plazos de pago extendidos
-Los clientes recurrentes (>2 compras) tienen 40% más de ticket promedio.""",
-        "tags": ["clientes", "segmentos", "tipos"]
-    },
-
-    # Mejores prácticas
-    {
-        "category": "best_practices",
-        "title": "Mejores prácticas de venta",
-        "content": """Recomendaciones:
-1. Pedir seña mínima 40% para iniciar producción
-2. Confirmar disponibilidad de tela/material antes de prometer fecha
-3. Enviar fotos del avance en producción al cliente
-4. Coordinar entrega con 48hs de anticipación
-5. Hacer seguimiento post-entrega a los 7 días
-6. Ofrecer productos complementarios (ej: sillas con mesa)""",
-        "tags": ["ventas", "consejos", "practicas"]
-    }
 ]
 
 
 def seed_knowledge():
-    """Insert all knowledge entries."""
     print("Seeding CRM knowledge base...")
-
     for entry in KNOWLEDGE_ENTRIES:
         try:
             entry_id = add_knowledge(
@@ -162,12 +86,11 @@ def seed_knowledge():
                 title=entry["title"],
                 content=entry["content"],
                 tags=entry.get("tags"),
-                source="seed_script"
+                source="seed_script_v2"
             )
             print(f"  Added: {entry['title']} (ID: {entry_id})")
         except Exception as e:
             print(f"  Error adding {entry['title']}: {e}")
-
     print(f"\nDone! Added {len(KNOWLEDGE_ENTRIES)} knowledge entries.")
 
 

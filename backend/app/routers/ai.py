@@ -58,6 +58,7 @@ from ..services.ai_service import (
     CLAUDE_SONNET,
     CLAUDE_HAIKU
 )
+from ..services.crm_predictions import generate_all_predictions
 from ..services.ai_memory import (
     save_message,
     get_conversation_history,
@@ -313,6 +314,27 @@ async def crm_chat_feedback(request: CRMFeedbackRequest, _api_key: str = Depends
         )
 
     return {"success": True, "message": "Feedback recorded"}
+
+
+class CRMPredictionsRequest(BaseModel):
+    orders: List[Dict]
+    brands: Optional[List[Dict]] = []
+
+
+@router.post("/chat/crm/predictions")
+async def crm_predictions_endpoint(
+    request: CRMPredictionsRequest,
+    _api_key: str = Depends(verify_crm_api_key)
+):
+    """
+    Generate predictive analytics for CRM data.
+    Requires CRM API key via X-CRM-API-Key header.
+    """
+    predictions = generate_all_predictions(
+        orders=request.orders,
+        brands=request.brands
+    )
+    return predictions
 
 
 @router.post("/analyze-creative")
