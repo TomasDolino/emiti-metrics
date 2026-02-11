@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from typing import List, Dict, Optional
 import json
 import os
+import httpx
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -18,6 +19,10 @@ from ..database import UserDB
 # CRM API Key for cross-service auth
 CRM_API_KEY = os.getenv("CRM_API_KEY", "")
 
+# Supabase config for CRM token verification
+CRM_SUPABASE_URL = os.getenv("CRM_SUPABASE_URL", "https://jugaswtevxrhzuiuoxbt.supabase.co")
+CRM_SUPABASE_KEY = os.getenv("CRM_SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1Z2Fzd3RldnhyaHp1aXVveGJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2OTAxNzUsImV4cCI6MjA4NTI2NjE3NX0.E2TEjIWce-iIBxUuuzoRJws_Yp46wk750JRXkcA4TIc")
+
 
 async def verify_crm_api_key(x_crm_api_key: str = Header(alias="X-CRM-API-Key")):
     """Validate CRM API key for cross-service endpoints."""
@@ -26,6 +31,35 @@ async def verify_crm_api_key(x_crm_api_key: str = Header(alias="X-CRM-API-Key"))
     if x_crm_api_key != CRM_API_KEY:
         raise HTTPException(status_code=401, detail="Invalid CRM API key")
     return x_crm_api_key
+
+
+async def verify_crm_auth(
+    request: Request,
+    _api_key: str = Depends(verify_crm_api_key),
+) -> dict:
+    """Verify CRM user via Supabase JWT token + API key.
+    Returns the Supabase user info or raises 401."""
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authorization token")
+
+    token = auth_header.replace("Bearer ", "")
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(
+                f"{CRM_SUPABASE_URL}/auth/v1/user",
+                headers={
+                    "apikey": CRM_SUPABASE_KEY,
+                    "Authorization": f"Bearer {token}",
+                }
+            )
+        if resp.status_code != 200:
+            raise HTTPException(status_code=401, detail="Invalid or expired session")
+        return resp.json()
+    except httpx.TimeoutException:
+        # If Supabase is slow, allow request with just API key (graceful degradation)
+        return {"id": "unverified", "email": "unknown"}
 
 # Rate limiter - uses remote address as key
 def get_rate_limit_key(request: Request) -> str:
@@ -266,21 +300,22 @@ class CRMFeedbackRequest(BaseModel):
 
 
 @router.post("/chat/crm")
-async def chat_crm_endpoint(request: CRMChatRequest, _api_key: str = Depends(verify_crm_api_key)):
+@limiter.limit("15/minute")
+async def chat_crm_endpoint(
+    http_request: Request,
+    request: CRMChatRequest,
+    crm_user: dict = Depends(verify_crm_auth),
+):
     """
     Chat for CRM Grupo Albisu with persistent memory.
-    Requires CRM API key via X-CRM-API-Key header.
-
-    Features:
-    - Persistent conversation history per user
-    - Knowledge base search for relevant context
-    - Learning from feedback over time
+    Requires Supabase auth token + CRM API key.
     """
+    user_id = request.user_id or crm_user.get("email", "crm_default")
     response, conversation_id = await chat_crm(
         user_message=request.message,
         data_context=request.data_context or {},
         chat_history=[m.model_dump() for m in request.chat_history] if request.chat_history else [],
-        user_id=request.user_id or "crm_default"
+        user_id=user_id
     )
 
     return {
@@ -291,7 +326,8 @@ async def chat_crm_endpoint(request: CRMChatRequest, _api_key: str = Depends(ver
 
 
 @router.post("/chat/crm/feedback")
-async def crm_chat_feedback(request: CRMFeedbackRequest, _api_key: str = Depends(verify_crm_api_key)):
+@limiter.limit("30/minute")
+async def crm_chat_feedback(http_request: Request, request: CRMFeedbackRequest, crm_user: dict = Depends(verify_crm_auth)):
     """
     Submit feedback on CRM AI response.
     Requires CRM API key via X-CRM-API-Key header.
@@ -322,9 +358,11 @@ class CRMPredictionsRequest(BaseModel):
 
 
 @router.post("/chat/crm/predictions")
+@limiter.limit("10/minute")
 async def crm_predictions_endpoint(
+    http_request: Request,
     request: CRMPredictionsRequest,
-    _api_key: str = Depends(verify_crm_api_key)
+    crm_user: dict = Depends(verify_crm_auth),
 ):
     """
     Generate predictive analytics for CRM data.
