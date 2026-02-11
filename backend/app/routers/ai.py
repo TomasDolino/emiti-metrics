@@ -2,17 +2,30 @@
 AI Router for Emiti Metrics
 Endpoints for AI-powered features with memory and learning
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Request
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Request, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 import json
+import os
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from ..auth import get_current_user
 from ..database import UserDB
+
+# CRM API Key for cross-service auth
+CRM_API_KEY = os.getenv("CRM_API_KEY", "")
+
+
+async def verify_crm_api_key(x_crm_api_key: str = Header(alias="X-CRM-API-Key")):
+    """Validate CRM API key for cross-service endpoints."""
+    if not CRM_API_KEY:
+        raise HTTPException(status_code=500, detail="CRM_API_KEY not configured on server")
+    if x_crm_api_key != CRM_API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid CRM API key")
+    return x_crm_api_key
 
 # Rate limiter - uses remote address as key
 def get_rate_limit_key(request: Request) -> str:
@@ -252,10 +265,10 @@ class CRMFeedbackRequest(BaseModel):
 
 
 @router.post("/chat/crm")
-async def chat_crm_endpoint(request: CRMChatRequest):
+async def chat_crm_endpoint(request: CRMChatRequest, _api_key: str = Depends(verify_crm_api_key)):
     """
     Chat for CRM Grupo Albisu with persistent memory.
-    No auth required - uses separate API key validation.
+    Requires CRM API key via X-CRM-API-Key header.
 
     Features:
     - Persistent conversation history per user
@@ -277,10 +290,10 @@ async def chat_crm_endpoint(request: CRMChatRequest):
 
 
 @router.post("/chat/crm/feedback")
-async def crm_chat_feedback(request: CRMFeedbackRequest):
+async def crm_chat_feedback(request: CRMFeedbackRequest, _api_key: str = Depends(verify_crm_api_key)):
     """
     Submit feedback on CRM AI response.
-    Used to improve future responses.
+    Requires CRM API key via X-CRM-API-Key header.
     """
     # Save feedback
     save_feedback(
