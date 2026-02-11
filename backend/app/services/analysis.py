@@ -56,7 +56,7 @@ def calculate_ctr(clicks: int, impressions: int) -> float:
 def calculate_cpr(spend: float, results: int) -> float:
     """Cost per result = spend / results"""
     if results == 0:
-        return float('inf')
+        return 0.0
     return spend / results
 
 
@@ -107,7 +107,7 @@ def classify_ad(
     total_results = df['results'].sum()
     avg_ctr = df['ctr'].mean()
     avg_frequency = df['frequency'].mean()
-    avg_cpr = total_spend / total_results if total_results > 0 else float('inf')
+    avg_cpr = total_spend / total_results if total_results > 0 else 0
 
     # Check fatigue first (most important)
     if len(df) >= 7:

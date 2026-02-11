@@ -116,7 +116,8 @@ function CampaignRow({ campaign, showAmounts, palette, onAction }: CampaignRowPr
   const borderColor = isActive ? palette.success : '#9ca3af'
   const budgetUsed = campaign.daily_budget > 0 ? (campaign.spend / campaign.daily_budget) * 100 : 0
   const budgetPercent = Math.min(budgetUsed, 100)
-  const ctr = campaign.impressions > 0 ? (campaign.results / campaign.impressions) * 100 : 0
+  // Use CTR from backend (already calculated as clicks/impressions*100)
+  const ctr = campaign.ctr || 0
 
   // Performance indicator
   const getPerformanceColor = () => {

@@ -45,7 +45,7 @@ export function calculateCTR(clicks: number, impressions: number): number {
 }
 
 export function calculateCPR(spend: number, results: number): number {
-  if (results === 0) return Infinity
+  if (results === 0) return 0
   return spend / results
 }
 

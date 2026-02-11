@@ -92,6 +92,7 @@ export interface Campaign {
   results: number
   impressions: number
   cpr: number
+  ctr: number
   ads_count: number
   created_at: string
 }

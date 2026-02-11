@@ -158,14 +158,14 @@ def mine_patterns(df: pd.DataFrame) -> List[Dict]:
     }).reset_index()
 
     day_stats['cpr'] = day_stats.apply(
-        lambda r: r['spend'] / r['results'] if r['results'] > 0 else float('inf'),
+        lambda r: r['spend'] / r['results'] if r['results'] > 0 else 999999,
         axis=1
     )
 
     best_day = day_stats.loc[day_stats['cpr'].idxmin()]
     worst_day = day_stats.loc[day_stats['cpr'].idxmax()]
 
-    if best_day['cpr'] < worst_day['cpr'] * 0.7 and best_day['cpr'] < float('inf'):
+    if best_day['cpr'] < worst_day['cpr'] * 0.7 and best_day['cpr'] < 999999:
         patterns.append({
             'pattern': f'{day_names[int(best_day["day_of_week"])]} es el mejor día para conversiones',
             'impact': f'CPR ${best_day["cpr"]:.0f} vs ${worst_day["cpr"]:.0f}',
@@ -308,7 +308,7 @@ def simulate_pause_ad(df: pd.DataFrame, ad_name: str) -> Dict:
             'cpr': (other_spend + ad_spend) / (other_results + redistributed_results) if (other_results + redistributed_results) > 0 else 0,
             'extra_results': redistributed_results
         },
-        'recommendation': 'Pausar' if other_cpr < (ad_spend / ad_results if ad_results > 0 else float('inf')) else 'Mantener'
+        'recommendation': 'Pausar' if other_cpr < (ad_spend / ad_results if ad_results > 0 else 999999) else 'Mantener'
     }
 
 
@@ -684,7 +684,7 @@ def generate_playbook(df: pd.DataFrame, client_name: str) -> Dict:
             'spend': 'sum',
             'results': 'sum'
         })
-        day_stats['cpr'] = day_stats['spend'] / day_stats['results'].replace(0, float('inf'))
+        day_stats['cpr'] = day_stats.apply(lambda r: r['spend'] / r['results'] if r['results'] > 0 else 999999, axis=1)
         best_day = day_stats['cpr'].idxmin()
         day_names = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 

@@ -172,7 +172,8 @@ async def get_dashboard_summary(
     avg_cpr = total_spend / total_results if total_results > 0 else 0
     avg_ctr = (total_clicks / total_impressions * 100) if total_impressions > 0 else 0
     avg_cpm = (total_spend / total_impressions * 1000) if total_impressions > 0 else 0
-    avg_frequency = sum(m.frequency or 0 for m in metrics) / len(metrics) if metrics else 0
+    # Frequency = total impressions / total reach (NOT average of daily frequencies)
+    avg_frequency = total_impressions / total_reach if total_reach > 0 else 0
 
     # Daily aggregation
     daily_data = {}
@@ -202,14 +203,14 @@ async def get_dashboard_summary(
                 "results": 0,
                 "impressions": 0,
                 "clicks": 0,
-                "frequency_sum": 0,
+                "reach": 0,
                 "days": set()
             }
         ad_data[key]["spend"] += m.spend or 0
         ad_data[key]["results"] += m.results or 0
         ad_data[key]["impressions"] += m.impressions or 0
         ad_data[key]["clicks"] += m.clicks or 0
-        ad_data[key]["frequency_sum"] += m.frequency or 0
+        ad_data[key]["reach"] += m.reach or 0
         if m.date:
             ad_data[key]["days"].add(m.date.strftime("%Y-%m-%d"))
 
@@ -221,7 +222,8 @@ async def get_dashboard_summary(
         days_running = len(ad["days"])
         cpr = ad["spend"] / ad["results"] if ad["results"] > 0 else 0
         ctr = (ad["clicks"] / ad["impressions"] * 100) if ad["impressions"] > 0 else 0
-        freq = ad["frequency_sum"] / days_running if days_running > 0 else 0
+        # Frequency = impressions / reach (consistent with Meta's definition)
+        freq = ad["impressions"] / ad["reach"] if ad["reach"] > 0 else 0
 
         analysis = classify_ad(cpr, ctr, freq, ad["results"], days_running, ad["spend"])
         classification_counts[analysis["classification"]] += 1
@@ -377,14 +379,14 @@ async def get_ads_analysis(
                 "results": 0,
                 "impressions": 0,
                 "clicks": 0,
-                "frequency_sum": 0,
+                "reach": 0,
                 "days": set()
             }
         ad_data[key]["spend"] += m.spend or 0
         ad_data[key]["results"] += m.results or 0
         ad_data[key]["impressions"] += m.impressions or 0
         ad_data[key]["clicks"] += m.clicks or 0
-        ad_data[key]["frequency_sum"] += m.frequency or 0
+        ad_data[key]["reach"] += m.reach or 0
         if m.date:
             ad_data[key]["days"].add(m.date.strftime("%Y-%m-%d"))
 
@@ -393,7 +395,8 @@ async def get_ads_analysis(
         days_running = len(ad["days"])
         cpr = ad["spend"] / ad["results"] if ad["results"] > 0 else 0
         ctr = (ad["clicks"] / ad["impressions"] * 100) if ad["impressions"] > 0 else 0
-        freq = ad["frequency_sum"] / days_running if days_running > 0 else 0
+        # Frequency = impressions / reach (consistent with Meta's definition)
+        freq = ad["impressions"] / ad["reach"] if ad["reach"] > 0 else 0
 
         analysis = classify_ad(cpr, ctr, freq, ad["results"], days_running, ad["spend"])
 

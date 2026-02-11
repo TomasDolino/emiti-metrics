@@ -11,7 +11,7 @@ import {
   RefreshCw, Copy, Check, Mic, MicOff, Zap, Clock, Star, StarOff, Bell, Download
 } from 'lucide-react'
 import { useTheme } from '../lib/theme'
-import { cn } from '../lib/utils'
+import { cn, safeNumber } from '../lib/utils'
 import { api } from '../lib/api'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell,
@@ -236,15 +236,17 @@ export default function AIChat({ clientName, selectedClientId, isFloating = true
 
   // Helper functions
   const formatMoney = (amount: number) => {
-    if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`
-    if (amount >= 1000) return `$${Math.round(amount / 1000)}k`
-    return `$${amount.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
+    const safe = safeNumber(amount)
+    if (safe >= 1000000) return `$${(safe / 1000000).toFixed(1)}M`
+    if (safe >= 1000) return `$${Math.round(safe / 1000)}k`
+    return `$${safe.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
   }
 
   const formatNumber = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}k`
-    return num.toLocaleString('es-AR', { maximumFractionDigits: 0 })
+    const safe = safeNumber(num)
+    if (safe >= 1000000) return `${(safe / 1000000).toFixed(1)}M`
+    if (safe >= 1000) return `${(safe / 1000).toFixed(1)}k`
+    return safe.toLocaleString('es-AR', { maximumFractionDigits: 0 })
   }
 
   // Build data context for Claude AI

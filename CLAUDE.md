@@ -77,3 +77,15 @@ scp -r dist/* root@76.13.166.17:/var/www/metrics/
 ## Pending Tasks
 - #26: Configure Cloudflare free (WAF, CDN, DDoS protection)
 - #27: Configure Backblaze B2 offsite backups (~$5/mes)
+
+## Memory Management
+**IMPORTANTE**: Actualizar MEMORY.md frecuentemente para no perder info cuando se compacta el contexto.
+
+Actualizar memory cuando:
+- Se aprende algo nuevo del negocio/proyecto
+- Se toman decisiones importantes
+- Se completan tareas significativas
+- Se descubren bugs o soluciones
+- Hay info que se va a necesitar en futuras sesiones
+
+Formato: Conciso, con bullets, priorizar lo accionable.
